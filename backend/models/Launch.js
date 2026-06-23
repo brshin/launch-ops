@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const launchSchema = new mongoose.Schema({
+    apiId: String,
     name: String,
     status: Object,
     last_updated: String,
