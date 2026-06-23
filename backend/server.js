@@ -12,23 +12,31 @@ const fetchUpcomingLaunches = async() => {
     const response = await fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/');
     const data = await response.json();
 
-    // console.log(data);
-
     saveData(data);
 };
 
 const saveData = async (data) => {
-    // Save the first entity for testing
-    console.log(data.results[0]);
-    const entity = data.results[0];
-    console.log(entity);
-
-    const nextLaunch = new Launch({
-        name: entity.name
-    });
-
-    await nextLaunch.save();
-    console.log("Entity saved successfully")
+    const launches = data.results;
+    for (const launch of launches) {
+        const nextLaunch = new Launch({
+            name: launch.name,
+            status: launch.status,
+            last_updated: launch.last_updated,
+            net: launch.net,
+            net_precision: launch.net_precision,
+            window_start: launch.window_start,
+            window_end: launch.window_end,
+            image: launch.image,
+            launch_service_provider: launch.launch_service_provider,
+            rocket: launch.rocket,
+            mission: launch.mission,
+            pad: launch.pad
+        });
+    
+        await nextLaunch.save();
+        
+        console.log("Entity saved successfully");
+    };
 };
 
 fetchUpcomingLaunches();
