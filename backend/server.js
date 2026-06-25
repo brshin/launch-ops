@@ -17,10 +17,32 @@ redisClient.on('error', (err) => console.log('Redis Client Error', err));
 redisClient.connect().then(() => console.log('Connected to Redis'));
 
 app.get('/launches', async (req, res) => {
-    const launches = await Launch.find();
 
-    res.json(launches);
-})
+    const cacheKey = 'upcoming-launches';
+
+    try {
+        // Redis
+        const cachedLaunches = await redisClient.get(cacheKey);
+
+        if (cachedLaunches) {
+            console.log("Serving from Redis cache");
+            return res.json(JSON.parse(cachedLaunches));
+        }
+        
+        //Fetch from MongoDB
+        const launches = await Launch.find();
+        console.log("Cache miss - recieved from database instead");
+
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(launches));
+
+        res.json(launches);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
+
+});
 
 const connectDB = async() => {
     try {
