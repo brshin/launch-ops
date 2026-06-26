@@ -35,7 +35,21 @@ const fetchUpcomingLaunches = async() => {
 };
 
 const saveData = async (data) => {
-    const launches = data.results;
+    const launches = data.results.map((launch) => ({
+        apiId: launch.id,
+        name: launch.name,
+        status: launch.status,
+        last_updated: launch.last_updated,
+        net: launch.net,
+        net_precision: launch.net_precision,
+        window_start: launch.window_start,
+        window_end: launch.window_end,
+        image: launch.image,
+        launch_service_provider: launch.launch_service_provider,
+        rocket: launch.rocket,
+        mission: launch.mission,
+        pad: launch.pad
+    }));
     
     // Save to Redis
     try {
@@ -53,26 +67,9 @@ const saveData = async (data) => {
     // MongoDB
 
     for (const launch of launches) {
-        const filter = { apiId: launch.id };
+        const filter = { apiId: launch.apiId };
 
-        const update = {
-            $set: {
-                name: launch.name,
-                status: launch.status,
-                last_updated: launch.last_updated,
-                net: launch.net,
-                net_precision: launch.net_precision,
-                window_start: launch.window_start,
-                window_end: launch.window_end,
-                image: launch.image,
-                launch_service_provider: launch.launch_service_provider,
-                rocket: launch.rocket,
-                mission: launch.mission,
-                pad: launch.pad
-            }
-        };
-
-        await Launch.updateOne(filter, update, { upsert: true });
+        await Launch.updateOne(filter, { $set: launch }, { upsert: true });
         console.log("Data updated successfully.");
     }
 };
