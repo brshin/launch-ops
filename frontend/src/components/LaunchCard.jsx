@@ -9,38 +9,29 @@ export default function LaunchCard({ launch }) {
         const now = new Date().getTime();
         const difference = target - now;
 
-        if (difference <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+        const absDiff = Math.abs(difference);
 
         return {
-            hours: Math.floor((difference / (1000 * 60 * 60))),
-            minutes: Math.floor((difference / 1000 / 60) % 60),
-            seconds: Math.floor((difference / 1000) % 60)
+            difference,
+            hours: Math.floor((absDiff / (1000 * 60 * 60))),
+            minutes: Math.floor((absDiff / 1000 / 60) % 60),
+            seconds: Math.floor((absDiff / 1000) % 60)
         };
     };
 
     const [time, setTime] = useState(calculateTimeLeft());
 
+    const status = launch.status.abbrev;
+
     useEffect(() => {
         const timer = setInterval(() => {
-            const target = new Date(launch.net).getTime();
-            const now = new Date().getTime();
-            const difference = target - now;
-
-            const hours = Math.floor((difference / (1000 * 60 * 60)));
-            const minutes = Math.floor((difference / 1000 / 60) % 60);
-            const seconds = Math.floor((difference / 1000) % 60);
-            
-            setTime({
-                hours,
-                minutes,
-                seconds
-            });
+            setTime(calculateTimeLeft());
 
         }, 1000);
 
         return () => clearInterval(timer);
 
-    }, []);
+    }, [launch.net]);
 
 
     return (
@@ -58,10 +49,8 @@ export default function LaunchCard({ launch }) {
                     </h2>
                 </div>
                 
-                {/* Wrap both the Status Badge and the Clock in a flex column aligned to the end (right side) */}
                 <div className="flex flex-col items-end gap-3">
                     
-                    {/* Your Existing SYS STAT Badge (Untouched, let it be its own thing) */}
                     <div className="flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 hover:border-cyan-500/80 transition-all duration-300">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
@@ -72,18 +61,46 @@ export default function LaunchCard({ launch }) {
                         </span>
                     </div>
 
-                    {/* The New T-Minus Digital Clock */}
                     <div className="flex items-center gap-3 px-2">
-                        <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
-                            T-Minus
-                        </span>
-                        {/* tabular-nums prevents the text from wiggling as seconds tick */}
-                        {/* Adjusted: Smaller text (lg/xl) and slightly tightened drop shadow */}
-                        <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                            {String(time.hours).padStart(2, '0')}:
-                            {String(time.minutes).padStart(2, '0')}:
-                            {String(time.seconds).padStart(2, '0')}
-                        </span>
+                        {status === 'Hold' ? (
+                            <span className="text-lg md:text-xl font-mono font-bold text-amber-500 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
+                                COUNTDOWN HOLD
+                            </span>
+                        ) : status === 'Failure' || status === 'Partial Failure' ? (
+                            <span className="text-lg md:text-xl font-mono font-bold text-red-500 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">
+                                MISSION FAILURE
+                            </span>
+                        ) : status === 'TBD' || status === 'TBC' ? (
+                            <span className="text-sm md:text-base font-mono font-bold text-slate-500 tracking-widest uppercase">
+                                Awaiting Target Time
+                            </span>
+                        ) : status === 'In Flight' || status === 'Success' ? (
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
+                                    T-Plus
+                                </span>
+                                <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+                                    {String(time.hours).padStart(2, '0')}:
+                                    {String(time.minutes).padStart(2, '0')}:
+                                    {String(time.seconds).padStart(2, '0')}
+                                </span>
+                            </div>
+                        ) : time.difference <= 0 ? (
+                            <span className="text-lg md:text-xl font-mono font-bold text-cyan-600 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(8,145,178,0.4)]">
+                                AWAITING TELEMETRY
+                            </span>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
+                                    T-Minus
+                                </span>
+                                <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+                                    {String(time.hours).padStart(2, '0')}:
+                                    {String(time.minutes).padStart(2, '0')}:
+                                    {String(time.seconds).padStart(2, '0')}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                 </div>

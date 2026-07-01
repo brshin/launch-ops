@@ -112,8 +112,6 @@ export default function App() {
                 <button
                   key={launch.apiId || index}
                   onClick={() => setSelectedIndex(index)}
-                  // 1. shrink-0 added. 
-                  // 2. Padding is now responsive (smaller on mobile, standard on md screens)
                   className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-all duration-300 flex flex-col relative overflow-hidden group hover:translate-x-1 cursor-pointer ${
                     selectedIndex === index 
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
@@ -122,26 +120,22 @@ export default function App() {
                 >
                   {selectedIndex === index && <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>}
                   
-                  {/* Wrapper to put Date and Time on the same line */}
                   <div className="flex justify-between items-center mb-1 w-full">
                     
-                    {/* The Date (Your original styling, minus the mb-1 since the wrapper handles it) */}
                     <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-widest group-hover:text-cyan-300 transition-colors">
                       {new Date(launch.net).toLocaleDateString()}
                     </span>
 
-                    {/* The Time: Styled slightly dimmer (cyan-700) to act as secondary metadata */}
                     <span className="text-[8px] md:text-[9px] leading-tight font-mono text-cyan-700 tracking-widest group-hover:text-cyan-400 transition-colors">
                       {new Date(launch.net).toLocaleTimeString([], { 
                         hour: "2-digit", 
                         minute: "2-digit",
-                        hour12: false // Optional: forces 24-hour military time for that SpaceX feel
+                        hour12: false
                       })}
                     </span>
 
                   </div>
 
-                  {/* The Launch Name (Your original styling) */}
                   <span className={`block w-full font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-400 group-hover:text-cyan-50'}`}>
                     {launch.name}
                   </span>
