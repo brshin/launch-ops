@@ -1,6 +1,47 @@
+import { useState, useEffect } from "react";
+
 export default function LaunchCard({ launch }) {
     
     const imageUrl = launch.image?.image_url || 'https://via.placeholder.com/800x800/000000/0891b2/?text=NO+VISUAL';
+
+    const calculateTimeLeft = () => {
+        const target = new Date(launch.net).getTime();
+        const now = new Date().getTime();
+        const difference = target - now;
+
+        if (difference <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+
+        return {
+            hours: Math.floor((difference / (1000 * 60 * 60))),
+            minutes: Math.floor((difference / 1000 / 60) % 60),
+            seconds: Math.floor((difference / 1000) % 60)
+        };
+    };
+
+    const [time, setTime] = useState(calculateTimeLeft());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const target = new Date(launch.net).getTime();
+            const now = new Date().getTime();
+            const difference = target - now;
+
+            const hours = Math.floor((difference / (1000 * 60 * 60)));
+            const minutes = Math.floor((difference / 1000 / 60) % 60);
+            const seconds = Math.floor((difference / 1000) % 60);
+            
+            setTime({
+                hours,
+                minutes,
+                seconds
+            });
+
+        }, 1000);
+
+        return () => clearInterval(timer);
+
+    }, []);
+
 
     return (
         <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.08)] p-8 relative animate-[pulse_0.4s_ease-in-out_1]">
@@ -17,14 +58,34 @@ export default function LaunchCard({ launch }) {
                     </h2>
                 </div>
                 
-                <div className="flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 hover:border-cyan-500/80 transition-all duration-300">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
-                    </span>
-                    <span className="text-[10px] font-mono text-cyan-300 uppercase tracking-widest">
-                        SYS STAT: {launch.status?.abbrev || 'UNK'}
-                    </span>
+                {/* Wrap both the Status Badge and the Clock in a flex column aligned to the end (right side) */}
+                <div className="flex flex-col items-end gap-3">
+                    
+                    {/* Your Existing SYS STAT Badge (Untouched, let it be its own thing) */}
+                    <div className="flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 hover:border-cyan-500/80 transition-all duration-300">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
+                        </span>
+                        <span className="text-[10px] font-mono text-cyan-300 uppercase tracking-widest">
+                            SYS STAT: {launch.status?.abbrev || 'UNK'}
+                        </span>
+                    </div>
+
+                    {/* The New T-Minus Digital Clock */}
+                    <div className="flex items-center gap-3 px-2">
+                        <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
+                            T-Minus
+                        </span>
+                        {/* tabular-nums prevents the text from wiggling as seconds tick */}
+                        {/* Adjusted: Smaller text (lg/xl) and slightly tightened drop shadow */}
+                        <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+                            {String(time.hours).padStart(2, '0')}:
+                            {String(time.minutes).padStart(2, '0')}:
+                            {String(time.seconds).padStart(2, '0')}
+                        </span>
+                    </div>
+
                 </div>
             </div>
 
