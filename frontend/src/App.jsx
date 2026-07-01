@@ -122,12 +122,26 @@ export default function App() {
                 >
                   {selectedIndex === index && <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>}
                   
-                  {/* Added leading-tight to fix the gap above the date, responsive text sizes */}
-                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 mb-1 tracking-widest group-hover:text-cyan-300 transition-colors">
-                    {new Date(launch.net).toLocaleDateString()}
-                  </span>
-                  
-                  {/* Added block and leading-tight to perfectly center the bounding box of the text */}
+                  {/* Wrapper to put Date and Time on the same line */}
+                  <div className="flex justify-between items-center mb-1 w-full">
+                    
+                    {/* The Date (Your original styling, minus the mb-1 since the wrapper handles it) */}
+                    <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-widest group-hover:text-cyan-300 transition-colors">
+                      {new Date(launch.net).toLocaleDateString()}
+                    </span>
+
+                    {/* The Time: Styled slightly dimmer (cyan-700) to act as secondary metadata */}
+                    <span className="text-[8px] md:text-[9px] leading-tight font-mono text-cyan-700 tracking-widest group-hover:text-cyan-400 transition-colors">
+                      {new Date(launch.net).toLocaleTimeString([], { 
+                        hour: "2-digit", 
+                        minute: "2-digit",
+                        hour12: false // Optional: forces 24-hour military time for that SpaceX feel
+                      })}
+                    </span>
+
+                  </div>
+
+                  {/* The Launch Name (Your original styling) */}
                   <span className={`block w-full font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-400 group-hover:text-cyan-50'}`}>
                     {launch.name}
                   </span>
