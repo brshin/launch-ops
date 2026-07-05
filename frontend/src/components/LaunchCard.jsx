@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function LaunchCard({ launch }) {
     
-    const imageUrl = launch.image?.image_url || 'https://via.placeholder.com/800x800/000000/0891b2/?text=NO+VISUAL';
+    const imageUrl = launch.image?.image_url || null;
 
     const calculateTimeLeft = () => {
         const target = new Date(launch.net).getTime();
@@ -152,11 +152,29 @@ export default function LaunchCard({ launch }) {
 
                 <div className="w-[45%] h-full relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] group cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]">
                     
+                {imageUrl ? (
                     <img 
                         src={imageUrl}
                         className="w-full h-full object-cover opacity-80 mix-blend-screen transition-all duration-[3000ms] group-hover:scale-105 group-hover:opacity-100"
                         alt="Launch Visual"
+                        onError={(e) => { 
+                            // If the API sends a broken image link, hide it so the CSS background takes over
+                            e.currentTarget.style.display = 'none'; 
+                        }}
                     />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-[#020617] mix-blend-screen opacity-80 transition-all duration-500 group-hover:opacity-100">
+                        <div className="relative flex items-center justify-center mb-6">
+                            <div className="absolute w-24 h-24 border border-cyan-900/40 rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                            <div className="absolute w-16 h-16 border border-cyan-800/50 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                            <div className="absolute w-8 h-8 border border-cyan-700/50 rounded-full"></div>
+                            <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#22d3ee]"></div>
+                        </div>
+                        <span className="text-cyan-700 font-mono text-[10px] tracking-[0.5em] uppercase z-10 group-hover:text-cyan-500 transition-colors">
+                            NO VISUAL FEED
+                        </span>
+                    </div>
+                )}
                     
                     <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
                     
