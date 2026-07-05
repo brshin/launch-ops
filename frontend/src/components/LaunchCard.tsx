@@ -1,6 +1,11 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { Launch } from "../types/launch";
 
-export default function LaunchCard({ launch }) {
+interface LaunchCardProps {
+    launch: Launch;
+}
+
+export default function LaunchCard({ launch }: LaunchCardProps) {
     
     const imageUrl = launch.image?.image_url || null;
 
@@ -158,7 +163,6 @@ export default function LaunchCard({ launch }) {
                         className="w-full h-full object-cover opacity-80 mix-blend-screen transition-all duration-[3000ms] group-hover:scale-105 group-hover:opacity-100"
                         alt="Launch Visual"
                         onError={(e) => { 
-                            // If the API sends a broken image link, hide it so the CSS background takes over
                             e.currentTarget.style.display = 'none'; 
                         }}
                     />
