@@ -1,44 +1,20 @@
 
 export interface Status {
-    id: number;
-    name: string;
     abbrev: string;
-    description: string;
-}
-
-export interface NetPrecision {
-    id: number;
-    name: string;
-    abbrev: string;
-    description: string;
-}
-
-export interface License {
-    id: number;
-    name: string;
-    priority: number;
-    link: string | null;
 }
 
 export interface Image {
-    id: number;
     name: string;
     image_url: string;
     thumbnail_url: string;
     credit: string;
-    license: License;
-    single_use: boolean;
-    variants: any[];
 }
 
 export interface Type {
-    id: number;
     name: string;
 }
 
 export interface LaunchServiceProvider {
-    response_mode: string;
-    id: number;
     url: string;
     name: string;
     abbrev: string;
@@ -46,14 +22,10 @@ export interface LaunchServiceProvider {
 }
 
 export interface Family {
-    response_mode: string;
-    id: number;
     name: string;
 }
 
 export interface Configuration {
-    response_mode: string;
-    id: number;
     url: string;
     name: string;
     families: Family[];
@@ -62,33 +34,12 @@ export interface Configuration {
 }
 
 export interface Rocket {
-    id: number;
     configuration: Configuration;
 }
 
-export interface BaseCelestialBody {
-    response_mode: string;
-    id: number;
-    name: string;
-}
-
 export interface Orbit {
-    id: number;
     name: string;
     abbrev: string;
-    celestial_body: BaseCelestialBody;
-}
-
-export interface Mission {
-    id: number;
-    name: string;
-    type: string;
-    description: string;
-    image: string | null;
-    orbit: Orbit;
-    agencies: string[];
-    info_urls: string[];
-    vid_urls: string[];
 }
 
 export interface Country {
@@ -97,37 +48,50 @@ export interface Country {
     alpha_2_code: string;
     alpha_3_code: string;
     nationality_name: string;
-    nationality_name_composed: string;
 }
 
-export interface DetailedCelestialBody {
-    response_mode: string;
-    id: number;
+export interface Logo {
+    image_url: string;
+    thumbnail_url: string;
+}
+
+export interface SocialLogo {
+    image_url: string;
+    thumbnail_url: string;
+}
+
+export interface Agency {
     name: string;
+    abbrev: string;
     type: Type;
-    diameter: number;
-    mass: number;
-    gravity: number;
-    length_of_day: string;
-    atmosphere: boolean;
-    image: Image;
+    country: Country[];
     description: string;
-    wiki_url: string;
-    total_attempted_launches: number;
-    successful_launches: number;
-    failed_launches: number;
-    total_attempted_landings: number;
-    successful_landings: number;
-    failed_landings: number;
+    administrator: string;
+    founding_year: number;
+    launchers: string;
+    spacecraft: string;
+    image: Image;
+    logo: Logo;
+    social_logo: SocialLogo;
+    // Additional stats avaliable via API; only with Agency call from Mission, not Pad.
+    // total_launch_count: number;
+    // successful_launches: number;
+    // failed_launches: number;
+}
+
+export interface Mission {
+    name: string;
+    type: string;
+    description: string;
+    image: string | null;
+    orbit: Orbit;
+    agencies: Agency[];
+    info_urls: string[];
+    vid_urls: string[];
 }
 
 export interface Location {
-    response_mode: string;
-    id: number;
-    url: string;
     name: string;
-    celestial_body: DetailedCelestialBody;
-    active: boolean;
     country: Country;
     description: string;
     image: Image;
@@ -140,15 +104,10 @@ export interface Location {
 }
 
 export interface Pad {
-    id: number;
-    url: string;
-    active: boolean;
-    agencies: string[];
+    agencies: Agency[];
     name: string;
     image: Image;
     description: string;
-    info_url: string | null;
-    wiki_url: string | null;
     map_url: string;
     latitude: number;
     longitude: number;
@@ -156,7 +115,6 @@ export interface Pad {
     map_image: string;
     total_launch_count: number;
     orbital_launch_attempt_count: number;
-    fastest_turnaround: string;
     location: Location;
 }
 
@@ -166,7 +124,6 @@ export interface Launch {
     status: Status;
     last_updated: string;
     net: string;
-    net_precision: NetPrecision;
     window_start: string;
     window_end: string;
     image: Image;
