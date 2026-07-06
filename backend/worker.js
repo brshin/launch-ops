@@ -28,10 +28,26 @@ const connectDB = async() => {
 connectDB();
 
 const fetchUpcomingLaunches = async() => {
-    const response = await fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/');
-    const data = await response.json();
+    try {
+        const response = await fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/');
 
-    saveData(data);
+        if (!response.ok) {
+            console.error(`API Error: HTTP ${response.status}`);
+            return;
+        }
+
+        const data = await response.json();
+
+        if (!data.results) {
+            console.error("API returned 200 OK, but missing 'results' array.");
+            return;
+        }
+
+        saveData(data);
+    } catch (error) {
+        console.error("Failed to fetch from API: ", error);
+    }
+    
 };
 
 const saveData = async (data) => {
@@ -70,7 +86,7 @@ const saveData = async (data) => {
         const filter = { apiId: launch.apiId };
 
         await Launch.updateOne(filter, { $set: launch }, { upsert: true });
-        console.log("Data updated successfully.");
+        // console.log("Data updated successfully.");
     }
 };
 
