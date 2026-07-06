@@ -60,9 +60,7 @@ export default function App() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0891b215_1px,transparent_1px),linear-gradient(to_bottom,#0891b215_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_100%_100%_at_50%_50%,#000_40%,transparent_100%)] opacity-50"></div>
       </div>
 
-      {/* MAIN CONTENT WRAPPER
-        Changed to flex-col so the header sits on top, and panels sit below
-      */}
+      {/* MAIN CONTENT WRAPPER */}
       <div className="relative z-10 flex flex-col w-full h-full p-6 md:p-10">
 
         {/* TOP NAVIGATION / HEADER */}
@@ -107,7 +105,15 @@ export default function App() {
               </h2>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 
+  [&::-webkit-scrollbar]:w-1.5 
+  [&::-webkit-scrollbar-track]:bg-black/20 
+  [&::-webkit-scrollbar-track]:border-l 
+  [&::-webkit-scrollbar-track]:border-cyan-900/30 
+  [&::-webkit-scrollbar-thumb]:bg-cyan-800/80 
+  [&::-webkit-scrollbar-thumb]:rounded-sm 
+  hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
+  hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]">
               {launches.map((launch, index) => (
                 <button
                   key={launch.apiId || index}
