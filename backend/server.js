@@ -17,7 +17,19 @@ const { createClient } = require('redis');
 const redisClient = createClient();
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
-redisClient.connect().then(() => console.log('Connected to Redis'));
+redisClient.connect().then(() => console.log('Redis Client connected to Redis'));
+
+const redisSubscriber = redisClient.duplicate();
+
+const setupPubSub = async() => {
+    await redisSubscriber.connect().then(() => console.log('Redis Subscriber connected to Redis'));
+
+    await redisSubscriber.subscribe('launch-updates', async (message) => {
+        console.log(`Pub/Sub Event Received: ${message}`);
+    });
+};
+
+setupPubSub();
 
 app.get('/launches', async (req, res) => {
 

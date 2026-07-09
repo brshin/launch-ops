@@ -73,6 +73,14 @@ const saveData = async (data) => {
 
         await redisClient.setEx(cacheKey, 600, JSON.stringify(launches));
         console.log("Saved upcoming-launches to Redis");
+
+        // Redis Pub
+        try {
+            await redisClient.publish('launch-updates', 'CACHE_UPDATED');
+            console.log("Published cache update notification via Redis Pub/Sub");
+        } catch (err) {
+            console.error("Failed to publish to Redis:", err);
+        }
     }
     catch (error) {
         console.error(error);
