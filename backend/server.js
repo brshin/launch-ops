@@ -1,4 +1,7 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -10,6 +13,27 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+// Wrap Express in a raw HTTP server
+const server = http.createServer(app);
+
+// Attach Socket.io to the server
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+// When IO hears the 'connect' event, run this function.
+io.on('connection', (socket) => {
+    console.log(`📡 Frontend connected: ${socket.id}`);
+
+    // When IO hears the 'disconnect' event, run this function.
+    socket.on('disconnect', () => {
+        console.log(`🔌 Frontend disconnected: ${socket.id}`);
+    });
+});
 
 // Redis Client Initializer
 const { createClient } = require('redis');
