@@ -17,6 +17,7 @@ const starfield = Array.from({ length: 250 }).map(() => ({
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [liveTime, setLiveTime] = useState('');
 
   useEffect(() => {
     fetch('http://localhost:3000/launches')
@@ -37,6 +38,30 @@ export default function App() {
       socket.off('live-launch-data');
     };
     
+  }, []);
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      
+      const timeStr = now.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit', 
+        hour12: false 
+      });
+      
+      const zoneStr = Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll('_', ' ');
+      const offsetNum = -now.getTimezoneOffset() / 60;
+      const offsetStr = `UTC${offsetNum >= 0 ? '+' : ''}${offsetNum}`;
+      
+      setLiveTime(`${timeStr} // ${zoneStr} (${offsetStr})`);
+    };
+
+    updateClock(); 
+    const timer = setInterval(updateClock, 1000); 
+
+    return () => clearInterval(timer); 
   }, []);
 
   const activeLaunch = launches[selectedIndex];
@@ -101,7 +126,7 @@ export default function App() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
             <p className="text-[10px] md:text-xs font-mono text-cyan-300 uppercase tracking-widest">
-              SYS TIME: {timeInfo}
+              SYS TIME: {liveTime || "INITIALIZING..."}
             </p>
           </div>
           
