@@ -29,7 +29,7 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
     console.log(`📡 Frontend connected: ${socket.id}`);
 
-    // When IO hears the 'disconnect' event, run this function.
+    // When server-side socket (of a specific client's connection) hears the 'disconnect' event, run this function.
     socket.on('disconnect', () => {
         console.log(`🔌 Frontend disconnected: ${socket.id}`);
     });
@@ -50,6 +50,20 @@ const setupPubSub = async() => {
 
     await redisSubscriber.subscribe('launch-updates', async (message) => {
         console.log(`Pub/Sub Event Received: ${message}`);
+
+        // Send received data to client via WebSocket
+        try {
+            const cachedData = await redisClient.get('upcoming-launches');
+            console.log(cachedData);
+
+            if (cachedData) {
+                // Blast the data to every connected client simultaneously
+                io.emit('live-launch-data', JSON.parse(cachedData));
+                console.log("🚀 Fresh telemetry blasted to all connected clients!");
+            }
+        } catch (err) {
+            console.error("Failed to emit live data:", err);
+        }
     });
 };
 
@@ -101,6 +115,6 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(` Server is running on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Server & WebSockets running on http://localhost:${PORT}`);
 });
