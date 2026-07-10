@@ -1,9 +1,11 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 
 const mongoose = require('mongoose');
-require('dotenv').config();
+
 
 const cors = require("cors");
 
@@ -20,7 +22,7 @@ const server = http.createServer(app);
 // Attach Socket.io to the server
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: process.env.FRONTEND_URL || "*",
         methods: ["GET", "POST"]
     }
 });
@@ -38,7 +40,7 @@ io.on('connection', (socket) => {
 // Redis Client Initializer
 const { createClient } = require('redis');
 
-const redisClient = createClient();
+const redisClient = createClient({ url: process.env.REDIS_URL });
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
 redisClient.connect().then(() => console.log('Redis Client connected to Redis'));
@@ -116,5 +118,5 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server & WebSockets running on http://localhost:${PORT}`);
+    console.log(`Server & WebSockets running on port ${PORT}`);
 });

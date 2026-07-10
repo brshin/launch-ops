@@ -3,7 +3,9 @@ import LaunchCard from './components/LaunchCard';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 
-const socket = io('http://localhost:3000');
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+const socket = io(API_URL);
 
 const starfield = Array.from({ length: 250 }).map(() => ({
   x: Math.random() * 100,
@@ -12,7 +14,7 @@ const starfield = Array.from({ length: 250 }).map(() => ({
   opacity: Math.random() * 0.8 + 0.2,
   animationDelay: `${Math.random() * 5}s`,
   animationDuration: `${Math.random() * 3 + 2}s`
-}));
+})); 
 
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
@@ -20,7 +22,7 @@ export default function App() {
   const [liveTime, setLiveTime] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:3000/launches')
+    fetch(`${API_URL}/launches`)
       .then((res) => res.json())
       .then((data) => setLaunches(data))
       .catch((err) => console.error(err));

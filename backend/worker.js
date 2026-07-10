@@ -1,15 +1,16 @@
-// Worker fetches API data every minute
+require('dotenv').config();
+
+// Worker fetches API data every 5 minutes
 
 const cron = require('node-cron');
 const mongoose = require('mongoose');
-require('dotenv').config();
 
 const Launch = require('./models/Launch');
 
 // Redis Client Initializer
 const { createClient } = require('redis');
 
-const redisClient = createClient();
+const redisClient = createClient({ url: process.env.REDIS_URL });
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
 redisClient.connect().then(() => console.log('Connected to Redis'));
