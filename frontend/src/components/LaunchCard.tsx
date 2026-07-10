@@ -38,6 +38,45 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
 
     }, [launch.net]);
 
+    const getStatusColors = (status: string) => {
+        switch (status) {
+            case 'Success':
+            case 'In Flight':
+            case 'Go':
+                return {
+                    dot: 'bg-cyan-400',
+                    glow: 'shadow-[0_0_5px_#22d3ee]',
+                    text: 'text-cyan-300',
+                    borderHover: 'hover:border-cyan-500/80',
+                };
+            case 'Hold':
+            case 'TBD':
+            case 'TBC':
+                return {
+                    dot: 'bg-amber-400',
+                    glow: 'shadow-[0_0_5px_#fbbf24]',
+                    text: 'text-amber-300',
+                    borderHover: 'hover:border-amber-500/80',
+                };
+            case 'Failure':
+            case 'Partial Failure':
+                return {
+                    dot: 'bg-red-500',
+                    glow: 'shadow-[0_0_5px_#ef4444]',
+                    text: 'text-red-400',
+                    borderHover: 'hover:border-red-500/80',
+                };
+            default:
+                return {
+                    dot: 'bg-slate-400',
+                    glow: 'shadow-[0_0_5px_#94a3b8]',
+                    text: 'text-slate-300',
+                    borderHover: 'hover:border-slate-500/80',
+                };
+        }
+    };
+
+    const statusColors = getStatusColors(status);
 
     return (
         <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.08)] p-8 relative animate-[pulse_0.4s_ease-in-out_1]">
@@ -56,13 +95,13 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                 
                 <div className="flex flex-col items-end gap-3">
                     
-                    <div className="flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 hover:border-cyan-500/80 transition-all duration-300">
+                    <div className={`flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300`}>
                         <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusColors.dot} opacity-75`}></span>
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
-                        <span className="text-[10px] font-mono text-cyan-300 uppercase tracking-widest">
-                            SYS STAT: {launch.status?.abbrev || 'UNK'}
+                        <span className={`text-[10px] font-mono uppercase tracking-widest ${statusColors.text}`}>
+                            SYS STAT: {status || 'UNK'}
                         </span>
                     </div>
 

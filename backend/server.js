@@ -54,7 +54,7 @@ const setupPubSub = async() => {
         // Send received data to client via WebSocket
         try {
             const cachedData = await redisClient.get('upcoming-launches');
-            console.log(cachedData);
+            // console.log(cachedData);
 
             if (cachedData) {
                 // Blast the data to every connected client simultaneously
