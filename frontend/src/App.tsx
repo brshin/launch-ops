@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import LaunchCard from './components/LaunchCard';
 import { io } from 'socket.io-client';
+import { Launch } from "./types/launch";
 
 const socket = io('http://localhost:3000');
 
@@ -14,7 +15,7 @@ const starfield = Array.from({ length: 250 }).map(() => ({
 }));
 
 export default function App() {
-  const [launches, setLaunches] = useState([]);
+  const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
