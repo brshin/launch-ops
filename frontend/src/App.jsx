@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import LaunchCard from './components/LaunchCard';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:3000');
 
 const starfield = Array.from({ length: 250 }).map(() => ({
   x: Math.random() * 100,
@@ -19,6 +22,20 @@ export default function App() {
       .then((res) => res.json())
       .then((data) => setLaunches(data))
       .catch((err) => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    // WebSocket
+    socket.on('live-launch-data', (freshData) => {
+      console.log('🚀 Real-time telemetry received from server!', freshData);
+
+      setLaunches(freshData);
+    });
+
+    return () => {
+      socket.off('live-launch-data');
+    };
+    
   }, []);
 
   const activeLaunch = launches[selectedIndex];
