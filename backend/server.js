@@ -117,6 +117,9 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+require('./worker');
+
 server.listen(PORT, () => {
     console.log(`Server & WebSockets running on port ${PORT}`);
 });
