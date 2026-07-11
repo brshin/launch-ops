@@ -106,3 +106,5 @@ cron.schedule('*/5 * * * *', async () => {
 });
 
 console.log('Cron worker started...');
+
+fetchUpcomingLaunches();
