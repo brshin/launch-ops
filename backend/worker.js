@@ -72,7 +72,8 @@ const saveData = async (data) => {
     try {
         const cacheKey = 'upcoming-launches';
 
-        await redisClient.setEx(cacheKey, 600, JSON.stringify(launches));
+        // 24 hr cache
+        await redisClient.setEx(cacheKey, 86400, JSON.stringify(launches));
         console.log("Saved upcoming-launches to Redis");
 
         // Redis Pub
