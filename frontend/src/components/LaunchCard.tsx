@@ -90,7 +90,7 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
     const statusColors = getStatusColors(status);
 
     return (
-        <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.08)] p-4 sm:p-6 lg:p-8 relative animate-[pulse_0.4s_ease-in-out_1] overflow-hidden min-h-0">
+        <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative animate-[pulse_0.4s_ease-in-out_1] overflow-hidden min-h-0">
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 

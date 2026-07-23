@@ -76,7 +76,7 @@ export default function App() {
 
 
   return (
-    <div className="relative w-screen h-[100dvh] overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
       
       {/* Space Background */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
@@ -106,14 +106,14 @@ export default function App() {
       </div>
 
       {/* MAIN CONTENT WRAPPER */}
-      <div className="relative z-10 flex flex-col w-full h-full p-4 sm:p-6 md:p-10 min-h-0 overflow-hidden">
+      <div className="relative z-10 flex flex-col w-full h-full p-6 md:p-10 min-h-0">
 
         {/* TOP NAVIGATION / HEADER */}
-        <header className="w-full flex justify-between items-end mb-4 sm:mb-6 border-b border-cyan-900/60 pb-4 relative z-20 shrink-0">
+        <header className="w-full flex justify-between items-end mb-6 border-b border-cyan-900/60 pb-4 relative z-20 shrink-0">
           
           {/* Left Side: Brand & Subtitle */}
           <div className="flex flex-col cursor-default">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
               Launch<span className="text-cyan-500">Ops</span>
             </h1>
             <p className="text-[10px] md:text-xs font-mono text-cyan-400 uppercase tracking-[0.4em] mt-1 opacity-80">
@@ -135,10 +135,10 @@ export default function App() {
         </header>
 
         {/* PANELS WRAPPER */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 w-full relative z-10 overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 w-full relative z-10">
           
           {/* LEFT PANEL: The Manifest */}
-          <div className="w-full lg:w-[320px] h-[200px] sm:h-[240px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_30px_rgba(8,145,178,0.05)] overflow-hidden">
+          <div className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden">
             
             <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0">
               <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3">
@@ -196,11 +196,11 @@ export default function App() {
           </div>
 
           {/* RIGHT PANEL: Main Display */}
-          <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 overflow-hidden flex flex-col">
+          <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col">
             {activeLaunch ? (
               <LaunchCard key={activeLaunch.apiId} launch={activeLaunch} />
             ) : (
-              <div className="w-full h-full flex items-center justify-center border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] animate-pulse">
+              <div className="w-full h-full flex items-center justify-center border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] animate-pulse shadow-[0_0_35px_rgba(8,145,178,0.12)]">
                 Awaiting Telemetry Sync...
               </div>
             )}
