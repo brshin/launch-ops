@@ -19,7 +19,11 @@ const starfield = Array.from({ length: 250 }).map(() => ({
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [liveTime, setLiveTime] = useState('');
+  const [sysClock, setSysClock] = useState<{
+    time: string;
+    date: string;
+    offset: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/launches`)
@@ -45,19 +49,24 @@ export default function App() {
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      
-      const timeStr = now.toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false 
-      });
-      
-      const zoneStr = Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll('_', ' ');
       const offsetNum = -now.getTimezoneOffset() / 60;
-      const offsetStr = `UTC${offsetNum >= 0 ? '+' : ''}${offsetNum}`;
-      
-      setLiveTime(`${timeStr} // ${zoneStr} (${offsetStr})`);
+
+      setSysClock({
+        date: now
+          .toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          })
+          .toUpperCase(),
+        time: now.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }),
+        offset: `UTC${offsetNum >= 0 ? '+' : ''}${offsetNum}`,
+      });
     };
 
     updateClock(); 
@@ -67,13 +76,6 @@ export default function App() {
   }, []);
 
   const activeLaunch = launches[selectedIndex];
-
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const offset = -new Date().getTimezoneOffset() / 60;
-
-  const timeInfo =
-  `${Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll('_', ' ')} (UTC${-new Date().getTimezoneOffset() / 60 >= 0 ? '+' : ''}${-new Date().getTimezoneOffset() / 60})`;
-
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
@@ -123,13 +125,24 @@ export default function App() {
 
           {/* Right Side: Local Time / System Status */}
           <div className="hidden sm:flex items-center gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md">
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
-            <p className="text-[10px] md:text-xs font-mono text-cyan-300 uppercase tracking-widest">
-              SYS TIME: {liveTime || "INITIALIZING..."}
-            </p>
+            <div className="flex flex-col font-mono uppercase leading-none">
+              <div className="flex items-center justify-between gap-4 mb-1.5">
+                <span className="text-[9px] tracking-[0.3em] text-cyan-500/80">Sys Time</span>
+                <span className="text-[9px] tracking-widest text-cyan-600">
+                  {sysClock?.offset ?? '—'}
+                </span>
+              </div>
+              <span className="text-sm md:text-base tracking-[0.2em] text-cyan-100 tabular-nums">
+                {sysClock?.time ?? 'INITIALIZING...'}
+              </span>
+              <span className="mt-1 text-[10px] tracking-[0.25em] text-cyan-400/70 tabular-nums">
+                {sysClock?.date ?? '—'}
+              </span>
+            </div>
           </div>
           
         </header>
