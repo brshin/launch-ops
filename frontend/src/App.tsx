@@ -131,18 +131,20 @@ export default function App() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
             <div className="flex flex-col font-mono uppercase leading-none">
-              <div className="flex items-center justify-between gap-4 mb-1.5">
-                <span className="text-[9px] tracking-[0.3em] text-cyan-500/80">Sys Time</span>
-                <span className="text-[9px] tracking-widest text-cyan-600">
+              <div className="flex items-center justify-between gap-4 mb-1">
+                <span className="text-[9px] tracking-[0.3em] text-cyan-500">Sys Time</span>
+                <span className="text-[9px] tracking-widest text-cyan-500">
                   {sysClock?.offset ?? '—'}
                 </span>
               </div>
-              <span className="text-sm md:text-base tracking-[0.2em] text-cyan-100 tabular-nums">
-                {sysClock?.time ?? 'INITIALIZING...'}
-              </span>
-              <span className="mt-1 text-[10px] tracking-[0.25em] text-cyan-400/70 tabular-nums">
-                {sysClock?.date ?? '—'}
-              </span>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-sm md:text-base tracking-[0.2em] text-cyan-100 tabular-nums">
+                  {sysClock?.time ?? 'INITIALIZING...'}
+                </span>
+                <span className="text-[10px] tracking-[0.2em] text-cyan-500 tabular-nums">
+                  {sysClock?.date ?? '—'}
+                </span>
+              </div>
             </div>
           </div>
           
