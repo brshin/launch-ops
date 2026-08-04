@@ -224,24 +224,9 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                                 {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
                             </p>
                         </div>
-                        <div className="sm:col-span-2 bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden flex flex-col justify-center">
-                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee]"></div>
-                            
-                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
-                                Launch Coordinates
-                            </h3>
-                            
-                            <p className="text-sm md:text-base text-cyan-50 font-mono tracking-wider truncate group-hover:text-white transition-colors leading-tight">
-                                {launch.pad?.name || 'TBA'}
-                            </p>
-                            
-                            <p className="text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] mt-1 truncate group-hover:text-cyan-300 transition-colors">
-                                {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
-                            </p>
-                        </div>
                     </div>
 
-                    <div className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink bg-black/40 border border-cyan-900/50 p-4 rounded-lg flex flex-col overflow-hidden hover:border-cyan-700/50 transition-all duration-300 group relative min-h-[140px]">
+                    <div className="w-full flex-1 min-h-[180px] lg:min-h-0 flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:border-cyan-700/50 transition-all duration-300 group relative">
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
                         
                         <div className="flex justify-between items-start mb-3 border-b border-cyan-900/50 pb-2.5 shrink-0 gap-3">
@@ -257,7 +242,7 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                                 </span>
                             </div>
                         </div>
-                        <p className={`text-xs text-slate-400 leading-relaxed font-mono line-clamp-6 group-hover:text-cyan-100 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
+                        <p className={`flex-1 min-h-0 text-xs text-slate-400 leading-relaxed font-mono group-hover:text-cyan-100 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
                             {launch.mission?.description || 'No mission details available at this time.'}
                         </p>
                     </div>
