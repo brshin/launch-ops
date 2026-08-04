@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LaunchCard from './components/LaunchCard';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
+import { getLaunchTitle } from "./utils/launchTitle";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -201,7 +202,7 @@ export default function App() {
                   </div>
 
                   <span className={`block w-full font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-400 group-hover:text-cyan-50'}`}>
-                    {launch.name}
+                    {getLaunchTitle(launch)}
                   </span>
                 </button>
               ))}

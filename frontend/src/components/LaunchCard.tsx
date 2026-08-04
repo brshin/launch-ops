@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Launch } from "../types/launch";
+import { getLaunchTitle } from "../utils/launchTitle";
 
 interface LaunchCardProps {
     launch: Launch;
@@ -114,7 +115,7 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                         OP-SYS // {launch.launch_service_provider?.name || 'UNKNOWN'}
                     </p>
                     <h2 className="text-xl sm:text-2xl font-mono font-bold text-slate-100 uppercase tracking-[0.2em] text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50">
-                        {launch.name}
+                        {getLaunchTitle(launch)}
                     </h2>
                 </div>
                 
