@@ -212,11 +212,16 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                                 </span>
                             </p>
                         </div>
-                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden">
-                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
-                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">Window Range</h3>
-                            <p className="text-sm text-cyan-50 font-mono tracking-wider">
-                                {launch.window_start ? new Date(launch.window_start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBA'} - {launch.window_end ? new Date(launch.window_end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBA'}
+                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center">
+                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee]"></div>
+                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
+                                Launch Coordinates
+                            </h3>
+                            <p className="text-sm text-cyan-50 font-mono tracking-wider break-words leading-tight group-hover:text-white transition-colors">
+                                {launch.pad?.name || 'TBA'}
+                            </p>
+                            <p className="mt-1 text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 transition-colors">
+                                {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
                             </p>
                         </div>
                         <div className="sm:col-span-2 bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden flex flex-col justify-center">
