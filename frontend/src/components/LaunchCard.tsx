@@ -208,16 +208,21 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                         </div>
                     </div>
 
-                    <div className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink bg-black/40 border border-cyan-900/50 p-6 rounded-lg flex flex-col overflow-hidden hover:border-cyan-700/50 transition-all duration-300 group relative min-h-[140px]">
+                    <div className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink bg-black/40 border border-cyan-900/50 p-4 rounded-lg flex flex-col overflow-hidden hover:border-cyan-700/50 transition-all duration-300 group relative min-h-[140px]">
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
                         
-                        <div className="flex justify-between items-end mb-4 border-b border-cyan-900/50 pb-3 shrink-0">
-                            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest">
+                        <div className="flex justify-between items-start mb-3 border-b border-cyan-900/50 pb-2.5 shrink-0 gap-3">
+                            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest leading-tight min-w-0 pt-0.5">
                                 Directive: {launch.mission?.name || 'Classified'}
                             </h3>
-                            <span className="text-[9px] font-mono text-cyan-300 uppercase bg-cyan-950/50 px-2 py-1 rounded-sm border border-cyan-800/50">
-                                ORBIT: {launch.mission?.orbit?.name || 'UNK'}
-                            </span>
+                            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                <span className="text-[9px] font-mono text-cyan-300 uppercase bg-cyan-950/50 px-2 py-1 rounded-sm border border-cyan-800/50">
+                                    TYPE: {launch.mission?.type || 'UNKNOWN'}
+                                </span>
+                                <span className="text-[9px] font-mono text-cyan-300 uppercase bg-cyan-950/50 px-2 py-1 rounded-sm border border-cyan-800/50">
+                                    ORBIT: {launch.mission?.orbit?.name || 'UNK'}
+                                </span>
+                            </div>
                         </div>
                         <p className={`text-xs text-slate-400 leading-relaxed font-mono line-clamp-6 group-hover:text-cyan-100 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
                             {launch.mission?.description || 'No mission details available at this time.'}
