@@ -193,6 +193,24 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                                     month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit"
                                 })}
                             </p>
+                            <p className="mt-1.5 text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
+                                <span className="mr-1.5">Window</span>
+                                <span className="tabular-nums tracking-normal">
+                                    {launch.window_start
+                                        ? new Date(launch.window_start).toLocaleTimeString([], {
+                                              hour: '2-digit',
+                                              minute: '2-digit',
+                                          })
+                                        : 'TBA'}
+                                    {' – '}
+                                    {launch.window_end
+                                        ? new Date(launch.window_end).toLocaleTimeString([], {
+                                              hour: '2-digit',
+                                              minute: '2-digit',
+                                          })
+                                        : 'TBA'}
+                                </span>
+                            </p>
                         </div>
                         <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden">
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
