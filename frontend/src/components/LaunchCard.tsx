@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Launch } from "../types/launch";
-import { getLaunchTitle } from "../utils/launchTitle";
+import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
 
 interface LaunchCardProps {
     launch: Launch;
@@ -103,6 +103,10 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
     };
 
     const statusColors = getStatusColors(status);
+    const title = getLaunchTitle(launch);
+    const rocketName = getRocketName(launch);
+    const showRocketSubtitle =
+        !!rocketName && rocketName.toLowerCase() !== title.toLowerCase();
 
     return (
         <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative animate-[pulse_0.4s_ease-in-out_1] overflow-hidden min-h-0">
@@ -111,12 +115,17 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
 
             <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3">
                 <div className="group cursor-default">
-                    <p className="text-[10px] font-mono text-cyan-600 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
+                    <p className="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
                         OP-SYS // {launch.launch_service_provider?.name || 'UNKNOWN'}
                     </p>
                     <h2 className="text-xl sm:text-2xl font-mono font-bold text-slate-100 uppercase tracking-[0.2em] text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50">
-                        {getLaunchTitle(launch)}
+                        {title}
                     </h2>
+                    {showRocketSubtitle && (
+                        <p className="mt-1.5 text-[11px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.25em] transition-colors group-hover:text-cyan-300">
+                            {rocketName}
+                        </p>
+                    )}
                 </div>
                 
                 <div className="flex flex-col items-start sm:items-end gap-3 w-full sm:w-auto">
