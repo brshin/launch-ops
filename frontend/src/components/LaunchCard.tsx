@@ -29,11 +29,25 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
 
         return {
             difference,
-            hours: Math.floor((absDiff / (1000 * 60 * 60))),
+            days: Math.floor(absDiff / (1000 * 60 * 60 * 24)),
+            hours: Math.floor((absDiff / (1000 * 60 * 60)) % 24),
             minutes: Math.floor((absDiff / 1000 / 60) % 60),
-            seconds: Math.floor((absDiff / 1000) % 60)
+            seconds: Math.floor((absDiff / 1000) % 60),
         };
     };
+
+    const formatCountdown = ({
+        days,
+        hours,
+        minutes,
+        seconds,
+    }: {
+        days: number;
+        hours: number;
+        minutes: number;
+        seconds: number;
+    }) =>
+        `${days}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
     const [time, setTime] = useState(calculateTimeLeft());
 
@@ -135,9 +149,7 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                                     T-Plus
                                 </span>
                                 <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {String(time.hours).padStart(2, '0')}:
-                                    {String(time.minutes).padStart(2, '0')}:
-                                    {String(time.seconds).padStart(2, '0')}
+                                    {formatCountdown(time)}
                                 </span>
                             </div>
                         ) : time.difference <= 0 ? (
@@ -150,9 +162,7 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                                     T-Minus
                                 </span>
                                 <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {String(time.hours).padStart(2, '0')}:
-                                    {String(time.minutes).padStart(2, '0')}:
-                                    {String(time.seconds).padStart(2, '0')}
+                                    {formatCountdown(time)}
                                 </span>
                             </div>
                         )}
