@@ -4,6 +4,7 @@ import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
 
 interface LaunchCardProps {
     launch: Launch;
+    feedLive: boolean;
 }
 
 const customScrollbar = `
@@ -17,7 +18,7 @@ const customScrollbar = `
   hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
 `;
 
-export default function LaunchCard({ launch }: LaunchCardProps) {
+export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
     
     const imageUrl = launch.image?.image_url || null;
 
@@ -291,12 +292,37 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                 </div>
             </div>
 
-            <div className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] text-cyan-600 font-mono uppercase tracking-[0.2em] shrink-0">
-                <span className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></span>
-                    SECURE SAT-LINK ACTIVE
+            <div className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0">
+                <span
+                    className={`flex items-center gap-2 transition-colors duration-300 ${
+                        feedLive ? 'text-cyan-400' : 'text-amber-500/90'
+                    }`}
+                    title={
+                        feedLive
+                            ? 'Connected to the live launch feed'
+                            : 'Disconnected from the live launch feed'
+                    }
+                >
+                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+                        {feedLive && (
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                        )}
+                        <span
+                            className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                                feedLive
+                                    ? 'bg-cyan-400 shadow-[0_0_5px_#22d3ee]'
+                                    : 'bg-amber-500 shadow-[0_0_5px_#f59e0b]'
+                            }`}
+                        />
+                    </span>
+                    {feedLive ? 'Live Feed' : 'Feed Offline'}
                 </span>
-                <span>DATA TIMESTAMP: {launch.last_updated ? new Date(launch.last_updated).toLocaleString() : 'N/A'}</span>
+                <span className="text-cyan-600">
+                    DATA TIMESTAMP:{' '}
+                    {launch.last_updated
+                        ? new Date(launch.last_updated).toLocaleString()
+                        : 'N/A'}
+                </span>
             </div>
             
         </div>

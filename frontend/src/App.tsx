@@ -20,6 +20,7 @@ const starfield = Array.from({ length: 250 }).map(() => ({
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [feedLive, setFeedLive] = useState(socket.connected);
   const [sysClock, setSysClock] = useState<{
     time: string;
     date: string;
@@ -34,17 +35,24 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // WebSocket
+    const onConnect = () => setFeedLive(true);
+    const onDisconnect = () => setFeedLive(false);
+
+    // Sync in case the socket connected before this effect ran
+    setFeedLive(socket.connected);
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     socket.on('live-launch-data', (freshData) => {
       console.log('🚀 Real-time telemetry received from server!', freshData);
-
       setLaunches(freshData);
     });
 
     return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
       socket.off('live-launch-data');
     };
-    
   }, []);
 
   useEffect(() => {
@@ -214,7 +222,11 @@ export default function App() {
           {/* RIGHT PANEL: Main Display */}
           <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col">
             {activeLaunch ? (
-              <LaunchCard key={activeLaunch.apiId} launch={activeLaunch} />
+              <LaunchCard
+                key={activeLaunch.apiId}
+                launch={activeLaunch}
+                feedLive={feedLive}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] animate-pulse shadow-[0_0_35px_rgba(8,145,178,0.12)]">
                 Awaiting Telemetry Sync...
