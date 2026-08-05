@@ -3,6 +3,7 @@ import LaunchCard from './components/LaunchCard';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
+import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -58,23 +59,11 @@ export default function App() {
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      const offsetNum = -now.getTimezoneOffset() / 60;
 
       setSysClock({
-        date: now
-          .toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-          })
-          .toUpperCase(),
-        time: now.toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false,
-        }),
-        offset: `UTC${offsetNum >= 0 ? '+' : ''}${offsetNum}`,
+        date: formatLocalDate(now),
+        time: formatLocalTime(now, { includeSeconds: true }),
+        offset: getLocalUtcOffsetLabel(now),
       });
     };
 
@@ -85,22 +74,6 @@ export default function App() {
   }, []);
 
   const activeLaunch = launches[selectedIndex];
-
-  const formatQueueNet = (iso: string) => {
-    const d = new Date(iso);
-    const date = d
-      .toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-      })
-      .toUpperCase();
-    const time = d.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    return `${date} · ${time}`;
-  };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
@@ -180,14 +153,20 @@ export default function App() {
           {/* LEFT PANEL: Launch Queue */}
           <div className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden">
             
-            <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0">
-              <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3">
-                <span className="relative flex h-2 w-2">
+            <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-3">
+              <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3 min-w-0">
+                <span className="relative flex h-2 w-2 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
                 Launch Queue
               </h2>
+              <span
+                className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
+                title="Queue times shown in your local timezone"
+              >
+                {sysClock?.offset ?? getLocalUtcOffsetLabel()}
+              </span>
             </div>
             
             <div className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 
@@ -218,7 +197,7 @@ export default function App() {
                   {selectedIndex === index && <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>}
                   
                   <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 transition-colors">
-                    {formatQueueNet(launch.net)}
+                    {formatLocalDateTime(launch.net, { includeYear: false }).label}
                   </span>
 
                   <div className="flex items-baseline justify-between gap-2 w-full min-w-0">

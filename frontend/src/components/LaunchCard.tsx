@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
+import {
+    formatLocalDateTime,
+    formatLocalTime,
+    getLocalUtcOffsetLabel,
+} from "../utils/localTime";
 
 interface LaunchCardProps {
     launch: Launch;
@@ -109,26 +114,16 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
     const showRocketSubtitle =
         !!rocketName && rocketName.toLowerCase() !== title.toLowerCase();
 
-    const formatLastUpdated = (iso: string) => {
-        const d = new Date(iso);
-        const date = d
-            .toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-            })
-            .toUpperCase();
-        const time = d.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-        });
-        return { date, time };
-    };
-
     const lastUpdated = launch.last_updated
-        ? formatLastUpdated(launch.last_updated)
+        ? formatLocalDateTime(launch.last_updated, { includeSeconds: true })
+        : null;
+    const tZero = formatLocalDateTime(launch.net);
+    const localOffsetLabel = getLocalUtcOffsetLabel();
+    const windowStart = launch.window_start
+        ? formatLocalTime(launch.window_start)
+        : null;
+    const windowEnd = launch.window_end
+        ? formatLocalTime(launch.window_end)
         : null;
 
     const isKnownMeta = (value?: string | null) => {
@@ -225,28 +220,28 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
                         <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden">
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
-                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">T-Zero Target</h3>
-                            <p className="text-sm text-cyan-50 font-mono tracking-wider">
-                                {new Date(launch.net).toLocaleString("en-US", {
-                                    month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit"
-                                })}
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                                <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 transition-colors">
+                                    T-Zero Target
+                                </h3>
+                                <span
+                                    className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
+                                    title="Times shown in your local timezone"
+                                >
+                                    {localOffsetLabel}
+                                </span>
+                            </div>
+                            <p className="text-sm text-cyan-50 font-mono tracking-wider tabular-nums">
+                                <span>{tZero.date}</span>
+                                <span className="mx-1.5 text-cyan-700">·</span>
+                                <span>{tZero.time}</span>
                             </p>
                             <p className="mt-1.5 text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
                                 <span className="mr-1.5">Window</span>
                                 <span className="tabular-nums tracking-normal">
-                                    {launch.window_start
-                                        ? new Date(launch.window_start).toLocaleTimeString([], {
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                          })
-                                        : 'TBA'}
+                                    {windowStart ?? 'TBA'}
                                     {' – '}
-                                    {launch.window_end
-                                        ? new Date(launch.window_end).toLocaleTimeString([], {
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                          })
-                                        : 'TBA'}
+                                    {windowEnd ?? 'TBA'}
                                 </span>
                             </p>
                         </div>
@@ -362,9 +357,12 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                 </span>
                 <span
                     className="flex items-baseline gap-2 text-cyan-500"
-                    title="When the launch provider last updated this record"
+                    title="When the launch provider last updated this record (local time)"
                 >
                     <span className="tracking-[0.25em]">Last Updated</span>
+                    <span className="text-cyan-600 tracking-wider">
+                        {localOffsetLabel}
+                    </span>
                     {lastUpdated ? (
                         <span className="flex items-baseline gap-1.5 text-cyan-400 tabular-nums tracking-[0.15em]">
                             <span>{lastUpdated.date}</span>
