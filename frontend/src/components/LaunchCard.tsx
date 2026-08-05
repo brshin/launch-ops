@@ -183,9 +183,16 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                 MISSION FAILURE
                             </span>
                         ) : status === 'TBD' || status === 'TBC' ? (
-                            <span className="text-sm md:text-base font-mono font-bold text-slate-500 tracking-widest uppercase">
-                                Awaiting Target Time
-                            </span>
+                            <div className="flex flex-col items-start sm:items-end gap-0.5">
+                                <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
+                                    Net · Provisional
+                                </span>
+                                <span className="text-lg md:text-xl font-mono font-bold text-slate-300 tracking-widest tabular-nums">
+                                    <span>{tZero.date}</span>
+                                    <span className="mx-1.5 text-slate-600">·</span>
+                                    <span>{tZero.time}</span>
+                                </span>
+                            </div>
                         ) : status === 'In Flight' || status === 'Success' ? (
                             <div className="flex items-center gap-3">
                                 <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
