@@ -125,10 +125,10 @@ export default function App() {
           </div>
 
           {/* Right Side: Local Time / System Status */}
-          <div className="hidden sm:flex items-center gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md">
-            <span className="relative flex h-2 w-2 shrink-0">
+          <div className="hidden sm:flex items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md">
+            <span className="relative mt-[3px] flex h-1.5 w-1.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
             <div className="flex flex-col font-mono uppercase leading-none">
               <div className="flex items-center justify-between gap-4 mb-1">
