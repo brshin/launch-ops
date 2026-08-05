@@ -109,6 +109,28 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
     const showRocketSubtitle =
         !!rocketName && rocketName.toLowerCase() !== title.toLowerCase();
 
+    const formatLastUpdated = (iso: string) => {
+        const d = new Date(iso);
+        const date = d
+            .toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            })
+            .toUpperCase();
+        const time = d.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        });
+        return { date, time };
+    };
+
+    const lastUpdated = launch.last_updated
+        ? formatLastUpdated(launch.last_updated)
+        : null;
+
     return (
         <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative animate-[pulse_0.4s_ease-in-out_1] overflow-hidden min-h-0">
             
@@ -317,11 +339,20 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     </span>
                     {feedLive ? 'Live Feed' : 'Feed Offline'}
                 </span>
-                <span className="text-cyan-600">
-                    DATA TIMESTAMP:{' '}
-                    {launch.last_updated
-                        ? new Date(launch.last_updated).toLocaleString()
-                        : 'N/A'}
+                <span
+                    className="flex items-baseline gap-2 text-cyan-600"
+                    title="When the launch provider last updated this record"
+                >
+                    <span className="tracking-[0.25em]">Last Updated</span>
+                    {lastUpdated ? (
+                        <span className="flex items-baseline gap-1.5 text-cyan-500 tabular-nums tracking-[0.15em]">
+                            <span>{lastUpdated.date}</span>
+                            <span className="text-cyan-700">·</span>
+                            <span>{lastUpdated.time}</span>
+                        </span>
+                    ) : (
+                        <span className="text-cyan-700 tracking-[0.15em]">—</span>
+                    )}
                 </span>
             </div>
             
