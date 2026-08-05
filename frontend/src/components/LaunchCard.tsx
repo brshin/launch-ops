@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Launch } from "../types/launch";
+import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
+import {
+    formatLocalDateTime,
+    formatLocalTime,
+    getLocalUtcOffsetLabel,
+} from "../utils/localTime";
 
 interface LaunchCardProps {
     launch: Launch;
+    feedLive: boolean;
 }
 
 const customScrollbar = `
@@ -16,7 +23,7 @@ const customScrollbar = `
   hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
 `;
 
-export default function LaunchCard({ launch }: LaunchCardProps) {
+export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
     
     const imageUrl = launch.image?.image_url || null;
 
@@ -29,11 +36,25 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
 
         return {
             difference,
-            hours: Math.floor((absDiff / (1000 * 60 * 60))),
+            days: Math.floor(absDiff / (1000 * 60 * 60 * 24)),
+            hours: Math.floor((absDiff / (1000 * 60 * 60)) % 24),
             minutes: Math.floor((absDiff / 1000 / 60) % 60),
-            seconds: Math.floor((absDiff / 1000) % 60)
+            seconds: Math.floor((absDiff / 1000) % 60),
         };
     };
+
+    const formatCountdown = ({
+        days,
+        hours,
+        minutes,
+        seconds,
+    }: {
+        days: number;
+        hours: number;
+        minutes: number;
+        seconds: number;
+    }) =>
+        `${days}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
     const [time, setTime] = useState(calculateTimeLeft());
 
@@ -88,6 +109,37 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
     };
 
     const statusColors = getStatusColors(status);
+    const title = getLaunchTitle(launch);
+    const rocketName = getRocketName(launch);
+    const showRocketSubtitle =
+        !!rocketName && rocketName.toLowerCase() !== title.toLowerCase();
+
+    const lastUpdated = launch.last_updated
+        ? formatLocalDateTime(launch.last_updated, { includeSeconds: true })
+        : null;
+    const tZero = formatLocalDateTime(launch.net);
+    const localOffsetLabel = getLocalUtcOffsetLabel();
+    const windowStart = launch.window_start
+        ? formatLocalTime(launch.window_start)
+        : null;
+    const windowEnd = launch.window_end
+        ? formatLocalTime(launch.window_end)
+        : null;
+
+    const isKnownMeta = (value?: string | null) => {
+        if (!value?.trim()) return false;
+        const normalized = value.trim().toLowerCase();
+        return normalized !== 'unknown' && normalized !== 'unk';
+    };
+
+    const missionType = isKnownMeta(launch.mission?.type)
+        ? launch.mission!.type
+        : null;
+    const missionOrbit = isKnownMeta(launch.mission?.orbit?.abbrev)
+        ? launch.mission!.orbit.abbrev
+        : isKnownMeta(launch.mission?.orbit?.name)
+          ? launch.mission!.orbit.name
+          : null;
 
     return (
         <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative animate-[pulse_0.4s_ease-in-out_1] overflow-hidden min-h-0">
@@ -96,12 +148,17 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
 
             <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3">
                 <div className="group cursor-default">
-                    <p className="text-[10px] font-mono text-cyan-600 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
-                        OP-SYS // {launch.launch_service_provider?.name || 'UNKNOWN'}
+                    <p className="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
+                        {launch.launch_service_provider?.name || 'UNKNOWN'}
                     </p>
                     <h2 className="text-xl sm:text-2xl font-mono font-bold text-slate-100 uppercase tracking-[0.2em] text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50">
-                        {launch.name}
+                        {title}
                     </h2>
+                    {showRocketSubtitle && (
+                        <p className="mt-1.5 text-[11px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.25em] transition-colors group-hover:text-cyan-300">
+                            {rocketName}
+                        </p>
+                    )}
                 </div>
                 
                 <div className="flex flex-col items-start sm:items-end gap-3 w-full sm:w-auto">
@@ -112,7 +169,7 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
                         <span className={`text-[10px] font-mono uppercase tracking-widest ${statusColors.text}`}>
-                            SYS STAT: {status || 'UNK'}
+                            Status: {status || 'Unk'}
                         </span>
                     </div>
 
@@ -126,18 +183,23 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                                 MISSION FAILURE
                             </span>
                         ) : status === 'TBD' || status === 'TBC' ? (
-                            <span className="text-sm md:text-base font-mono font-bold text-slate-500 tracking-widest uppercase">
-                                Awaiting Target Time
-                            </span>
+                            <div className="flex flex-col items-start sm:items-end gap-0.5">
+                                <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
+                                    Net · Provisional
+                                </span>
+                                <span className="text-lg md:text-xl font-mono font-bold text-slate-300 tracking-widest tabular-nums">
+                                    <span>{tZero.date}</span>
+                                    <span className="mx-1.5 text-slate-600">·</span>
+                                    <span>{tZero.time}</span>
+                                </span>
+                            </div>
                         ) : status === 'In Flight' || status === 'Success' ? (
                             <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
+                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
                                     T-Plus
                                 </span>
                                 <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {String(time.hours).padStart(2, '0')}:
-                                    {String(time.minutes).padStart(2, '0')}:
-                                    {String(time.seconds).padStart(2, '0')}
+                                    {formatCountdown(time)}
                                 </span>
                             </div>
                         ) : time.difference <= 0 ? (
@@ -146,13 +208,11 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                             </span>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
+                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
                                     T-Minus
                                 </span>
                                 <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {String(time.hours).padStart(2, '0')}:
-                                    {String(time.minutes).padStart(2, '0')}:
-                                    {String(time.seconds).padStart(2, '0')}
+                                    {formatCountdown(time)}
                                 </span>
                             </div>
                         )}
@@ -167,49 +227,68 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
                         <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden">
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
-                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">T-Zero Target</h3>
-                            <p className="text-sm text-cyan-50 font-mono tracking-wider">
-                                {new Date(launch.net).toLocaleString("en-US", {
-                                    month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit"
-                                })}
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                                <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 transition-colors">
+                                    T-Zero Target
+                                </h3>
+                                <span
+                                    className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
+                                    title="Times shown in your local timezone"
+                                >
+                                    {localOffsetLabel}
+                                </span>
+                            </div>
+                            <p className="text-sm text-cyan-50 font-mono tracking-wider tabular-nums">
+                                <span>{tZero.date}</span>
+                                <span className="mx-1.5 text-cyan-700">·</span>
+                                <span>{tZero.time}</span>
+                            </p>
+                            <p className="mt-1.5 text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
+                                <span className="mr-1.5">Window</span>
+                                <span className="tabular-nums tracking-normal">
+                                    {windowStart ?? 'TBA'}
+                                    {' – '}
+                                    {windowEnd ?? 'TBA'}
+                                </span>
                             </p>
                         </div>
-                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden">
-                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
-                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">Window Range</h3>
-                            <p className="text-sm text-cyan-50 font-mono tracking-wider">
-                                {launch.window_start ? new Date(launch.window_start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBA'} - {launch.window_end ? new Date(launch.window_end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBA'}
-                            </p>
-                        </div>
-                        <div className="sm:col-span-2 bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden flex flex-col justify-center">
+                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center">
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee]"></div>
-                            
                             <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
                                 Launch Coordinates
                             </h3>
-                            
-                            <p className="text-sm md:text-base text-cyan-50 font-mono tracking-wider truncate group-hover:text-white transition-colors leading-tight">
+                            <p className="text-sm text-cyan-50 font-mono tracking-wider break-words leading-tight group-hover:text-white transition-colors">
                                 {launch.pad?.name || 'TBA'}
                             </p>
-                            
-                            <p className="text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] mt-1 truncate group-hover:text-cyan-300 transition-colors">
+                            <p className="mt-1 text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 transition-colors">
                                 {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
                             </p>
                         </div>
                     </div>
 
-                    <div className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink bg-black/40 border border-cyan-900/50 p-6 rounded-lg flex flex-col overflow-hidden hover:border-cyan-700/50 transition-all duration-300 group relative min-h-[140px]">
+                    <div className="w-full flex-1 min-h-[180px] lg:min-h-0 flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative">
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
                         
-                        <div className="flex justify-between items-end mb-4 border-b border-cyan-900/50 pb-3 shrink-0">
-                            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest">
-                                Directive: {launch.mission?.name || 'Classified'}
+                        <div className="flex justify-between items-center mb-3 border-b border-cyan-900/50 pb-2.5 shrink-0 gap-3">
+                            <h3 className="text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 transition-colors">
+                                Mission Brief
                             </h3>
-                            <span className="text-[9px] font-mono text-cyan-300 uppercase bg-cyan-950/50 px-2 py-1 rounded-sm border border-cyan-800/50">
-                                ORBIT: {launch.mission?.orbit?.name || 'UNK'}
-                            </span>
+                            {(missionType || missionOrbit) && (
+                                <div className="flex items-center gap-2 shrink-0 min-w-0">
+                                    {missionType && (
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                            {missionType}
+                                        </span>
+                                    )}
+                                    {missionOrbit && (
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                            {missionOrbit}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        <p className={`text-xs text-slate-400 leading-relaxed font-mono line-clamp-6 group-hover:text-cyan-100 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
+                        <p className={`flex-1 min-h-0 text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
                             {launch.mission?.description || 'No mission details available at this time.'}
                         </p>
                     </div>
@@ -258,12 +337,49 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
                 </div>
             </div>
 
-            <div className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] text-cyan-600 font-mono uppercase tracking-[0.2em] shrink-0">
-                <span className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></span>
-                    SECURE SAT-LINK ACTIVE
+            <div className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0">
+                <span
+                    className={`flex items-center gap-2 transition-colors duration-300 ${
+                        feedLive ? 'text-cyan-400' : 'text-amber-500/90'
+                    }`}
+                    title={
+                        feedLive
+                            ? 'Connected to the live launch feed'
+                            : 'Disconnected from the live launch feed'
+                    }
+                >
+                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+                        {feedLive && (
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                        )}
+                        <span
+                            className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                                feedLive
+                                    ? 'bg-cyan-400 shadow-[0_0_5px_#22d3ee]'
+                                    : 'bg-amber-500 shadow-[0_0_5px_#f59e0b]'
+                            }`}
+                        />
+                    </span>
+                    {feedLive ? 'Live Feed' : 'Feed Offline'}
                 </span>
-                <span>DATA TIMESTAMP: {launch.last_updated ? new Date(launch.last_updated).toLocaleString() : 'N/A'}</span>
+                <span
+                    className="flex items-baseline gap-2 text-cyan-500"
+                    title="When the launch provider last updated this record (local time)"
+                >
+                    <span className="tracking-[0.25em]">Last Updated</span>
+                    <span className="text-cyan-600 tracking-wider">
+                        {localOffsetLabel}
+                    </span>
+                    {lastUpdated ? (
+                        <span className="flex items-baseline gap-1.5 text-cyan-400 tabular-nums tracking-[0.15em]">
+                            <span>{lastUpdated.date}</span>
+                            <span className="text-cyan-700">·</span>
+                            <span>{lastUpdated.time}</span>
+                        </span>
+                    ) : (
+                        <span className="text-cyan-700 tracking-[0.15em]">—</span>
+                    )}
+                </span>
             </div>
             
         </div>

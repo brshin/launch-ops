@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import LaunchCard from './components/LaunchCard';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
+import { getLaunchTitle } from "./utils/launchTitle";
+import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -19,7 +21,12 @@ const starfield = Array.from({ length: 250 }).map(() => ({
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [liveTime, setLiveTime] = useState('');
+  const [feedLive, setFeedLive] = useState(socket.connected);
+  const [sysClock, setSysClock] = useState<{
+    time: string;
+    date: string;
+    offset: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/launches`)
@@ -29,35 +36,35 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // WebSocket
+    const onConnect = () => setFeedLive(true);
+    const onDisconnect = () => setFeedLive(false);
+
+    // Sync in case the socket connected before this effect ran
+    setFeedLive(socket.connected);
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     socket.on('live-launch-data', (freshData) => {
       console.log('🚀 Real-time telemetry received from server!', freshData);
-
       setLaunches(freshData);
     });
 
     return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
       socket.off('live-launch-data');
     };
-    
   }, []);
 
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      
-      const timeStr = now.toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false 
+
+      setSysClock({
+        date: formatLocalDate(now),
+        time: formatLocalTime(now, { includeSeconds: true }),
+        offset: getLocalUtcOffsetLabel(now),
       });
-      
-      const zoneStr = Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll('_', ' ');
-      const offsetNum = -now.getTimezoneOffset() / 60;
-      const offsetStr = `UTC${offsetNum >= 0 ? '+' : ''}${offsetNum}`;
-      
-      setLiveTime(`${timeStr} // ${zoneStr} (${offsetStr})`);
     };
 
     updateClock(); 
@@ -67,13 +74,6 @@ export default function App() {
   }, []);
 
   const activeLaunch = launches[selectedIndex];
-
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const offset = -new Date().getTimezoneOffset() / 60;
-
-  const timeInfo =
-  `${Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll('_', ' ')} (UTC${-new Date().getTimezoneOffset() / 60 >= 0 ? '+' : ''}${-new Date().getTimezoneOffset() / 60})`;
-
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
@@ -114,22 +114,36 @@ export default function App() {
           {/* Left Side: Brand & Subtitle */}
           <div className="flex flex-col cursor-default">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-              Launch<span className="text-cyan-500">Ops</span>
+              Launch
+              <span className="text-cyan-500 tracking-[0.12em] ml-[0.12em]">Ops</span>
             </h1>
             <p className="text-[10px] md:text-xs font-mono text-cyan-400 uppercase tracking-[0.4em] mt-1 opacity-80">
-              Global Launch Tracking Network
+              Global Launch Tracker
             </p>
           </div>
 
           {/* Right Side: Local Time / System Status */}
-          <div className="hidden sm:flex items-center gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md">
-            <span className="relative flex h-2 w-2">
+          <div className="hidden sm:flex items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md">
+            <span className="relative mt-[3px] flex h-1.5 w-1.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
-            <p className="text-[10px] md:text-xs font-mono text-cyan-300 uppercase tracking-widest">
-              SYS TIME: {liveTime || "INITIALIZING..."}
-            </p>
+            <div className="flex flex-col font-mono uppercase leading-none">
+              <div className="flex items-center justify-between gap-4 mb-1">
+                <span className="text-[9px] tracking-[0.3em] text-cyan-500">Sys Time</span>
+                <span className="text-[9px] tracking-widest text-cyan-500">
+                  {sysClock?.offset ?? '—'}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-sm md:text-base tracking-[0.2em] text-cyan-100 tabular-nums">
+                  {sysClock?.time ?? 'INITIALIZING...'}
+                </span>
+                <span className="text-[10px] tracking-[0.2em] text-cyan-500 tabular-nums">
+                  {sysClock?.date ?? '—'}
+                </span>
+              </div>
+            </div>
           </div>
           
         </header>
@@ -137,17 +151,23 @@ export default function App() {
         {/* PANELS WRAPPER */}
         <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 w-full relative z-10">
           
-          {/* LEFT PANEL: The Manifest */}
+          {/* LEFT PANEL: Launch Queue */}
           <div className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden">
             
-            <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0">
-              <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3">
-                <span className="relative flex h-2 w-2">
+            <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-3">
+              <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3 min-w-0">
+                <span className="relative flex h-2 w-2 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
-                Telemetry Manifest
+                Launch Queue
               </h2>
+              <span
+                className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
+                title="Queue times shown in your local timezone"
+              >
+                {sysClock?.offset ?? getLocalUtcOffsetLabel()}
+              </span>
             </div>
             
             <div className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 
@@ -159,11 +179,17 @@ export default function App() {
   [&::-webkit-scrollbar-thumb]:rounded-sm 
   hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
   hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]">
-              {launches.map((launch, index) => (
+              {launches.map((launch, index) => {
+                const provider =
+                  launch.launch_service_provider?.abbrev ||
+                  launch.launch_service_provider?.name ||
+                  null;
+
+                return (
                 <button
                   key={launch.apiId || index}
                   onClick={() => setSelectedIndex(index)}
-                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-all duration-300 flex flex-col relative overflow-hidden group hover:translate-x-1 cursor-pointer ${
+                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-all duration-300 flex flex-col gap-1 relative overflow-hidden group hover:translate-x-1 cursor-pointer ${
                     selectedIndex === index 
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50'
@@ -171,34 +197,34 @@ export default function App() {
                 >
                   {selectedIndex === index && <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>}
                   
-                  <div className="flex justify-between items-center mb-1 w-full">
-                    
-                    <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-widest group-hover:text-cyan-300 transition-colors">
-                      {new Date(launch.net).toLocaleDateString()}
-                    </span>
-
-                    <span className="text-[8px] md:text-[9px] leading-tight font-mono text-cyan-700 tracking-widest group-hover:text-cyan-400 transition-colors">
-                      {new Date(launch.net).toLocaleTimeString([], { 
-                        hour: "2-digit", 
-                        minute: "2-digit",
-                        hour12: false
-                      })}
-                    </span>
-
-                  </div>
-
-                  <span className={`block w-full font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-400 group-hover:text-cyan-50'}`}>
-                    {launch.name}
+                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 transition-colors">
+                    {formatLocalDateTime(launch.net, { includeYear: false }).label}
                   </span>
+
+                  <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
+                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50'}`}>
+                      {getLaunchTitle(launch)}
+                    </span>
+                    {provider && (
+                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selectedIndex === index ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500'}`}>
+                        {provider}
+                      </span>
+                    )}
+                  </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* RIGHT PANEL: Main Display */}
           <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col">
             {activeLaunch ? (
-              <LaunchCard key={activeLaunch.apiId} launch={activeLaunch} />
+              <LaunchCard
+                key={activeLaunch.apiId}
+                launch={activeLaunch}
+                feedLive={feedLive}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] animate-pulse shadow-[0_0_35px_rgba(8,145,178,0.12)]">
                 Awaiting Telemetry Sync...
