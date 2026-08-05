@@ -86,6 +86,22 @@ export default function App() {
 
   const activeLaunch = launches[selectedIndex];
 
+  const formatQueueNet = (iso: string) => {
+    const d = new Date(iso);
+    const date = d
+      .toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+      })
+      .toUpperCase();
+    const time = d.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return `${date} · ${time}`;
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
       
@@ -161,7 +177,7 @@ export default function App() {
         {/* PANELS WRAPPER */}
         <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 w-full relative z-10">
           
-          {/* LEFT PANEL: The Manifest */}
+          {/* LEFT PANEL: Launch Queue */}
           <div className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden">
             
             <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0">
@@ -170,7 +186,7 @@ export default function App() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
-                Telemetry Manifest
+                Launch Queue
               </h2>
             </div>
             
@@ -183,11 +199,17 @@ export default function App() {
   [&::-webkit-scrollbar-thumb]:rounded-sm 
   hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
   hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]">
-              {launches.map((launch, index) => (
+              {launches.map((launch, index) => {
+                const provider =
+                  launch.launch_service_provider?.abbrev ||
+                  launch.launch_service_provider?.name ||
+                  null;
+
+                return (
                 <button
                   key={launch.apiId || index}
                   onClick={() => setSelectedIndex(index)}
-                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-all duration-300 flex flex-col relative overflow-hidden group hover:translate-x-1 cursor-pointer ${
+                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-all duration-300 flex flex-col gap-1 relative overflow-hidden group hover:translate-x-1 cursor-pointer ${
                     selectedIndex === index 
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50'
@@ -195,27 +217,23 @@ export default function App() {
                 >
                   {selectedIndex === index && <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>}
                   
-                  <div className="flex justify-between items-center mb-1 w-full">
-                    
-                    <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-widest group-hover:text-cyan-300 transition-colors">
-                      {new Date(launch.net).toLocaleDateString()}
-                    </span>
-
-                    <span className="text-[8px] md:text-[9px] leading-tight font-mono text-cyan-700 tracking-widest group-hover:text-cyan-400 transition-colors">
-                      {new Date(launch.net).toLocaleTimeString([], { 
-                        hour: "2-digit", 
-                        minute: "2-digit",
-                        hour12: false
-                      })}
-                    </span>
-
-                  </div>
-
-                  <span className={`block w-full font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-400 group-hover:text-cyan-50'}`}>
-                    {getLaunchTitle(launch)}
+                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 transition-colors">
+                    {formatQueueNet(launch.net)}
                   </span>
+
+                  <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
+                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50'}`}>
+                      {getLaunchTitle(launch)}
+                    </span>
+                    {provider && (
+                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selectedIndex === index ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500'}`}>
+                        {provider}
+                      </span>
+                    )}
+                  </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
 

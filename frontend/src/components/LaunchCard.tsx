@@ -274,12 +274,12 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                             {(missionType || missionOrbit) && (
                                 <div className="flex items-center gap-2 shrink-0 min-w-0">
                                     {missionType && (
-                                        <span className="text-[9px] font-mono text-cyan-600 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
                                             {missionType}
                                         </span>
                                     )}
                                     {missionOrbit && (
-                                        <span className="text-[9px] font-mono text-cyan-600 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
                                             {missionOrbit}
                                         </span>
                                     )}
@@ -361,12 +361,12 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     {feedLive ? 'Live Feed' : 'Feed Offline'}
                 </span>
                 <span
-                    className="flex items-baseline gap-2 text-cyan-600"
+                    className="flex items-baseline gap-2 text-cyan-500"
                     title="When the launch provider last updated this record"
                 >
                     <span className="tracking-[0.25em]">Last Updated</span>
                     {lastUpdated ? (
-                        <span className="flex items-baseline gap-1.5 text-cyan-500 tabular-nums tracking-[0.15em]">
+                        <span className="flex items-baseline gap-1.5 text-cyan-400 tabular-nums tracking-[0.15em]">
                             <span>{lastUpdated.date}</span>
                             <span className="text-cyan-700">·</span>
                             <span>{lastUpdated.time}</span>
