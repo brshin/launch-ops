@@ -114,10 +114,11 @@ export default function App() {
           {/* Left Side: Brand & Subtitle */}
           <div className="flex flex-col cursor-default">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-              Launch<span className="text-cyan-500">Ops</span>
+              Launch
+              <span className="text-cyan-500 tracking-[0.12em] ml-[0.12em]">Ops</span>
             </h1>
             <p className="text-[10px] md:text-xs font-mono text-cyan-400 uppercase tracking-[0.4em] mt-1 opacity-80">
-              Global Launch Tracking Network
+              Global Launch Tracker
             </p>
           </div>
 

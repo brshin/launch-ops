@@ -195,7 +195,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                             </div>
                         ) : status === 'In Flight' || status === 'Success' ? (
                             <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
+                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
                                     T-Plus
                                 </span>
                                 <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
@@ -208,7 +208,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                             </span>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-600 uppercase tracking-[0.3em]">
+                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
                                     T-Minus
                                 </span>
                                 <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
