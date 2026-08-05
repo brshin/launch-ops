@@ -174,7 +174,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
                         <span className={`text-[10px] font-mono uppercase tracking-widest ${statusColors.text}`}>
-                            SYS STAT: {status || 'UNK'}
+                            Status: {status || 'Unk'}
                         </span>
                     </div>
 
