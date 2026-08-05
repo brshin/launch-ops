@@ -116,7 +116,7 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
             <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3">
                 <div className="group cursor-default">
                     <p className="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
-                        OP-SYS // {launch.launch_service_provider?.name || 'UNKNOWN'}
+                        {launch.launch_service_provider?.name || 'UNKNOWN'}
                     </p>
                     <h2 className="text-xl sm:text-2xl font-mono font-bold text-slate-100 uppercase tracking-[0.2em] text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50">
                         {title}
