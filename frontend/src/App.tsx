@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
+import { transitions } from "./lib/motionTokens";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -219,17 +221,34 @@ export default function App() {
 
           {/* RIGHT PANEL: Main Display */}
           <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col">
-            {activeLaunch ? (
-              <LaunchCard
-                key={activeLaunch.apiId}
-                launch={activeLaunch}
-                feedLive={feedLive}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] animate-pulse shadow-[0_0_35px_rgba(8,145,178,0.12)]">
-                Awaiting Telemetry Sync...
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {activeLaunch ? (
+                <motion.div
+                  key={activeLaunch.apiId}
+                  className="h-full w-full min-h-0 flex flex-col"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={transitions.soft}
+                >
+                  <LaunchCard
+                    launch={activeLaunch}
+                    feedLive={feedLive}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="awaiting-telemetry"
+                  className="w-full h-full flex items-center justify-center border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] shadow-[0_0_35px_rgba(8,145,178,0.12)]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={transitions.soft}
+                >
+                  Awaiting Telemetry Sync...
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         
         </div>

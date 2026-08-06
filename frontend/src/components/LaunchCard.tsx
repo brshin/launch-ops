@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { motion, type Variants } from "framer-motion";
 import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
+import { transitions } from "../lib/motionTokens";
 import {
     formatLocalDateTime,
     formatLocalTime,
@@ -22,6 +24,27 @@ const customScrollbar = `
   hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
   hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
 `;
+
+/** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
+const cardVariants: Variants = {
+    hidden: {},
+    show: {
+        transition: {
+            staggerChildren: 0.05,
+            delayChildren: 0.04,
+        },
+    },
+};
+
+/** Each section fades/slides up when the parent hits "show". */
+const sectionVariants: Variants = {
+    hidden: { opacity: 0, y: 8 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: transitions.soft,
+    },
+};
 
 export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
     
@@ -142,11 +165,19 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
           : null;
 
     return (
-        <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative animate-[pulse_0.4s_ease-in-out_1] overflow-hidden min-h-0">
+        <motion.div
+            className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative overflow-hidden min-h-0"
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+        >
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3">
+            <motion.div
+                variants={sectionVariants}
+                className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3"
+            >
                 <div className="group cursor-default">
                     <p className="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
                         {launch.launch_service_provider?.name || 'UNKNOWN'}
@@ -219,13 +250,25 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     </div>
 
                 </div>
-            </div>
+            </motion.div>
 
-            <div className={`flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}>
+            {/*
+              Nested stagger: this region is a motion child of the card, and also
+              a stagger parent. Meta blocks must be direct motion children to cascade.
+            */}
+            <motion.div
+                variants={cardVariants}
+                className={`flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}
+            >
                 
-                <div className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink flex flex-col gap-4 min-h-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
-                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden">
+                <motion.div
+                    variants={cardVariants}
+                    className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink lg:h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-rows-[auto_1fr] gap-4 min-h-0 content-start"
+                >
+                        <motion.div
+                            variants={sectionVariants}
+                            className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden"
+                        >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
                             <div className="flex items-center justify-between gap-2 mb-1">
                                 <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 transition-colors">
@@ -251,8 +294,11 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                     {windowEnd ?? 'TBA'}
                                 </span>
                             </p>
-                        </div>
-                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center">
+                        </motion.div>
+                        <motion.div
+                            variants={sectionVariants}
+                            className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center"
+                        >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee]"></div>
                             <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
                                 Launch Coordinates
@@ -263,10 +309,12 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                             <p className="mt-1 text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 transition-colors">
                                 {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
                             </p>
-                        </div>
-                    </div>
+                        </motion.div>
 
-                    <div className="w-full flex-1 min-h-[180px] lg:min-h-0 flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative">
+                    <motion.div
+                        variants={sectionVariants}
+                        className="sm:col-span-2 w-full min-h-[180px] lg:min-h-0 lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative"
+                    >
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
                         
                         <div className="flex justify-between items-center mb-3 border-b border-cyan-900/50 pb-2.5 shrink-0 gap-3">
@@ -291,10 +339,13 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         <p className={`flex-1 min-h-0 text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
                             {launch.mission?.description || 'No mission details available at this time.'}
                         </p>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
 
-                <div className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] group cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]">
+                <motion.div
+                    variants={sectionVariants}
+                    className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] group cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+                >
                     
                 {imageUrl ? (
                     <img 
@@ -334,10 +385,13 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
                         <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
                     </div>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
 
-            <div className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0">
+            <motion.div
+                variants={sectionVariants}
+                className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0"
+            >
                 <span
                     className={`flex items-center gap-2 transition-colors duration-300 ${
                         feedLive ? 'text-cyan-400' : 'text-amber-500/90'
@@ -380,8 +434,8 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         <span className="text-cyan-700 tracking-[0.15em]">—</span>
                     )}
                 </span>
-            </div>
+            </motion.div>
             
-        </div>
+        </motion.div>
     );
 }
