@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { motion, type Variants } from "framer-motion";
 import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
+import { transitions } from "../lib/motionTokens";
+import {
+    AwaitingTelemetryLabel,
+    CountdownFailureLabel,
+    CountdownHoldLabel,
+    TickingCountdown,
+} from "./CountdownReadout";
+import { FeedStatus } from "./FeedStatus";
 import {
     formatLocalDateTime,
     formatLocalTime,
@@ -23,6 +32,48 @@ const customScrollbar = `
   hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
 `;
 
+/** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
+const cardVariants: Variants = {
+    hidden: {},
+    show: {
+        transition: {
+            staggerChildren: 0.05,
+            delayChildren: 0.04,
+        },
+    },
+};
+
+/** Each section fades/slides up when the parent hits "show". */
+const sectionVariants: Variants = {
+    hidden: { opacity: 0, y: 8 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: transitions.soft,
+    },
+};
+
+/** Visual feed: rest = always-on HUD; focus = hover or tap intensify. */
+const visualFrameVariants: Variants = {
+    rest: {},
+    focus: {},
+};
+
+const visualImageVariants: Variants = {
+    rest: { scale: 1, opacity: 0.82 },
+    focus: { scale: 1.04, opacity: 1 },
+};
+
+const visualCornerVariants: Variants = {
+    rest: { width: 18, height: 18, borderColor: "rgba(6,182,212,0.55)" },
+    focus: { width: 12, height: 12, borderColor: "rgba(103,232,249,0.95)" },
+};
+
+const visualCrosshairVariants: Variants = {
+    rest: { opacity: 0.18 },
+    focus: { opacity: 0.35 },
+};
+
 export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
     
     const imageUrl = launch.image?.image_url || null;
@@ -42,19 +93,6 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
             seconds: Math.floor((absDiff / 1000) % 60),
         };
     };
-
-    const formatCountdown = ({
-        days,
-        hours,
-        minutes,
-        seconds,
-    }: {
-        days: number;
-        hours: number;
-        minutes: number;
-        seconds: number;
-    }) =>
-        `${days}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
     const [time, setTime] = useState(calculateTimeLeft());
 
@@ -142,11 +180,19 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
           : null;
 
     return (
-        <div className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative animate-[pulse_0.4s_ease-in-out_1] overflow-hidden min-h-0">
+        <motion.div
+            className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative overflow-hidden min-h-0"
+            variants={cardVariants}
+            initial="hidden"
+            animate="show"
+        >
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3">
+            <motion.div
+                variants={sectionVariants}
+                className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3"
+            >
                 <div className="group cursor-default">
                     <p className="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
                         {launch.launch_service_provider?.name || 'UNKNOWN'}
@@ -165,7 +211,6 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     
                     <div className={`flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300`}>
                         <span className="relative flex h-2 w-2">
-                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusColors.dot} opacity-75`}></span>
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
                         <span className={`text-[10px] font-mono uppercase tracking-widest ${statusColors.text}`}>
@@ -175,13 +220,9 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
                     <div className="flex items-center gap-3 px-2">
                         {status === 'Hold' ? (
-                            <span className="text-lg md:text-xl font-mono font-bold text-amber-500 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
-                                COUNTDOWN HOLD
-                            </span>
+                            <CountdownHoldLabel />
                         ) : status === 'Failure' || status === 'Partial Failure' ? (
-                            <span className="text-lg md:text-xl font-mono font-bold text-red-500 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">
-                                MISSION FAILURE
-                            </span>
+                            <CountdownFailureLabel />
                         ) : status === 'TBD' || status === 'TBC' ? (
                             <div className="flex flex-col items-start sm:items-end gap-0.5">
                                 <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
@@ -194,38 +235,48 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                 </span>
                             </div>
                         ) : status === 'In Flight' || status === 'Success' ? (
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
-                                    T-Plus
-                                </span>
-                                <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {formatCountdown(time)}
-                                </span>
-                            </div>
+                            <TickingCountdown
+                                days={time.days}
+                                hours={time.hours}
+                                minutes={time.minutes}
+                                seconds={time.seconds}
+                                difference={time.difference}
+                                mode="plus"
+                            />
                         ) : time.difference <= 0 ? (
-                            <span className="text-lg md:text-xl font-mono font-bold text-cyan-600 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(8,145,178,0.4)]">
-                                AWAITING TELEMETRY
-                            </span>
+                            <AwaitingTelemetryLabel />
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
-                                    T-Minus
-                                </span>
-                                <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {formatCountdown(time)}
-                                </span>
-                            </div>
+                            <TickingCountdown
+                                days={time.days}
+                                hours={time.hours}
+                                minutes={time.minutes}
+                                seconds={time.seconds}
+                                difference={time.difference}
+                                mode="minus"
+                            />
                         )}
                     </div>
 
                 </div>
-            </div>
+            </motion.div>
 
-            <div className={`flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}>
+            {/*
+              Nested stagger: this region is a motion child of the card, and also
+              a stagger parent. Meta blocks must be direct motion children to cascade.
+            */}
+            <motion.div
+                variants={cardVariants}
+                className={`flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}
+            >
                 
-                <div className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink flex flex-col gap-4 min-h-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
-                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden">
+                <motion.div
+                    variants={cardVariants}
+                    className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink lg:h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-rows-[auto_1fr] gap-4 min-h-0 content-start"
+                >
+                        <motion.div
+                            variants={sectionVariants}
+                            className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden"
+                        >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
                             <div className="flex items-center justify-between gap-2 mb-1">
                                 <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 transition-colors">
@@ -251,8 +302,11 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                     {windowEnd ?? 'TBA'}
                                 </span>
                             </p>
-                        </div>
-                        <div className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center">
+                        </motion.div>
+                        <motion.div
+                            variants={sectionVariants}
+                            className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center"
+                        >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee]"></div>
                             <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
                                 Launch Coordinates
@@ -263,10 +317,12 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                             <p className="mt-1 text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 transition-colors">
                                 {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
                             </p>
-                        </div>
-                    </div>
+                        </motion.div>
 
-                    <div className="w-full flex-1 min-h-[180px] lg:min-h-0 flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative">
+                    <motion.div
+                        variants={sectionVariants}
+                        className="sm:col-span-2 w-full min-h-[180px] lg:min-h-0 lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative"
+                    >
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
                         
                         <div className="flex justify-between items-center mb-3 border-b border-cyan-900/50 pb-2.5 shrink-0 gap-3">
@@ -291,77 +347,95 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         <p className={`flex-1 min-h-0 text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
                             {launch.mission?.description || 'No mission details available at this time.'}
                         </p>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
 
-                <div className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] group cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]">
-                    
-                {imageUrl ? (
-                    <img 
-                        src={imageUrl}
-                        className="w-full h-full object-cover opacity-80 mix-blend-screen transition-all duration-[3000ms] group-hover:scale-105 group-hover:opacity-100"
-                        alt="Launch Visual"
-                        onError={(e) => { 
-                            e.currentTarget.style.display = 'none'; 
-                        }}
-                    />
-                ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-[#020617] mix-blend-screen opacity-80 transition-all duration-500 group-hover:opacity-100">
-                        <div className="relative flex items-center justify-center mb-6">
-                            <div className="absolute w-24 h-24 border border-cyan-900/40 rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
-                            <div className="absolute w-16 h-16 border border-cyan-800/50 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
-                            <div className="absolute w-8 h-8 border border-cyan-700/50 rounded-full"></div>
-                            <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#22d3ee]"></div>
-                        </div>
-                        <span className="text-cyan-700 font-mono text-[10px] tracking-[0.5em] uppercase z-10 group-hover:text-cyan-500 transition-colors">
-                            NO VISUAL FEED
-                        </span>
-                    </div>
-                )}
-                    
-                    <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
-                    
-                    <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
-                    
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-cyan-400/80 shadow-[0_0_10px_#22d3ee] pointer-events-none animate-[bounce_3s_infinite_linear]"></div>
-                    
-                    <div className="absolute top-4 left-4 w-6 h-6 border-t border-l border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    <div className="absolute top-4 right-4 w-6 h-6 border-t border-r border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    <div className="absolute bottom-4 left-4 w-6 h-6 border-b border-l border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b border-r border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none flex items-center justify-center">
-                        <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
-                        <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0">
-                <span
-                    className={`flex items-center gap-2 transition-colors duration-300 ${
-                        feedLive ? 'text-cyan-400' : 'text-amber-500/90'
-                    }`}
-                    title={
-                        feedLive
-                            ? 'Connected to the live launch feed'
-                            : 'Disconnected from the live launch feed'
-                    }
+                <motion.div
+                    variants={sectionVariants}
+                    className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
                 >
-                    <span className="relative flex h-1.5 w-1.5 shrink-0">
-                        {feedLive && (
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                    <motion.div
+                        className="absolute inset-0"
+                        variants={visualFrameVariants}
+                        initial="rest"
+                        animate="rest"
+                        whileHover="focus"
+                        whileTap="focus"
+                    >
+                        {imageUrl ? (
+                            <motion.img
+                                src={imageUrl}
+                                variants={visualImageVariants}
+                                transition={{ duration: 0.85, ease: "easeOut" }}
+                                className="w-full h-full object-cover mix-blend-screen"
+                                alt="Launch Visual"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                }}
+                            />
+                        ) : (
+                            <motion.div
+                                variants={visualImageVariants}
+                                transition={{ duration: 0.45, ease: "easeOut" }}
+                                className="w-full h-full flex flex-col items-center justify-center bg-[#020617] mix-blend-screen"
+                            >
+                                <div className="relative flex items-center justify-center mb-6">
+                                    <div className="absolute w-24 h-24 border border-cyan-900/40 rounded-full"></div>
+                                    <div className="absolute w-16 h-16 border border-cyan-800/50 rounded-full"></div>
+                                    <div className="absolute w-8 h-8 border border-cyan-700/50 rounded-full"></div>
+                                    <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#22d3ee]"></div>
+                                </div>
+                                <span className="text-cyan-600 font-mono text-[10px] tracking-[0.5em] uppercase z-10">
+                                    NO VISUAL FEED
+                                </span>
+                            </motion.div>
                         )}
-                        <span
-                            className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
-                                feedLive
-                                    ? 'bg-cyan-400 shadow-[0_0_5px_#22d3ee]'
-                                    : 'bg-amber-500 shadow-[0_0_5px_#f59e0b]'
-                            }`}
+
+                        <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
+
+                        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
+
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute top-4 left-4 border-t border-l pointer-events-none"
                         />
-                    </span>
-                    {feedLive ? 'Live Feed' : 'Feed Offline'}
-                </span>
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute top-4 right-4 border-t border-r pointer-events-none"
+                        />
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute bottom-4 left-4 border-b border-l pointer-events-none"
+                        />
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute bottom-4 right-4 border-b border-r pointer-events-none"
+                        />
+
+                        <motion.div
+                            variants={visualCrosshairVariants}
+                            transition={transitions.soft}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none flex items-center justify-center"
+                        >
+                            <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
+                            <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
+                        </motion.div>
+                    </motion.div>
+                </motion.div>
+            </motion.div>
+
+            <motion.div
+                variants={sectionVariants}
+                className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0"
+            >
+                <FeedStatus
+                    live={feedLive}
+                    className="tracking-[0.2em]"
+                />
                 <span
                     className="flex items-baseline gap-2 text-cyan-500"
                     title="When the launch provider last updated this record (local time)"
@@ -380,8 +454,8 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         <span className="text-cyan-700 tracking-[0.15em]">—</span>
                     )}
                 </span>
-            </div>
+            </motion.div>
             
-        </div>
+        </motion.div>
     );
 }

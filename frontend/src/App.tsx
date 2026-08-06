@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
+import { FeedStatus } from './components/FeedStatus';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
+import { transitions } from "./lib/motionTokens";
+import {
+  bootHeaderVariants,
+  bootPanelVariants,
+  bootQueueItemVariants,
+  bootQueueListVariants,
+  bootStageVariants,
+  bootSysClockVariants,
+} from "./lib/bootMotion";
+import { useConsoleBoot } from "./hooks/useConsoleBoot";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -12,7 +24,7 @@ const socket = io(API_URL);
 const starfield = Array.from({ length: 250 }).map(() => ({
   x: Math.random() * 100,
   y: Math.random() * 100,
-  size: Math.random() * 2.5 + 0.5, // Varying star sizes
+  size: Math.random() * 2.5 + 0.5,
   opacity: Math.random() * 0.8 + 0.2,
   animationDelay: `${Math.random() * 5}s`,
   animationDuration: `${Math.random() * 3 + 2}s`
@@ -27,6 +39,9 @@ export default function App() {
     date: string;
     offset: string;
   } | null>(null);
+  const [queueRevealed, setQueueRevealed] = useState(false);
+
+  const { bootComplete, isBooting } = useConsoleBoot(launches.length > 0);
 
   useEffect(() => {
     fetch(`${API_URL}/launches`)
@@ -36,10 +51,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (launches.length > 0) setQueueRevealed(true);
+  }, [launches]);
+
+  useEffect(() => {
     const onConnect = () => setFeedLive(true);
     const onDisconnect = () => setFeedLive(false);
 
-    // Sync in case the socket connected before this effect ran
     setFeedLive(socket.connected);
 
     socket.on('connect', onConnect);
@@ -74,12 +92,19 @@ export default function App() {
   }, []);
 
   const activeLaunch = launches[selectedIndex];
+  // Hold the detail card until boot settles so cold load feels staged
+  const showLaunchCard = Boolean(activeLaunch && bootComplete);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
       
-      {/* Space Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
+      {/* Space Background — boots in first */}
+      <motion.div
+        className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center"
+        variants={bootStageVariants}
+        initial="hidden"
+        animate="show"
+      >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/10 via-[#020617] to-[#020617]"></div>
         <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-full bg-cyan-600/5 blur-[150px] animate-[pulse_6s_ease-in-out_infinite]"></div>
         
@@ -87,7 +112,7 @@ export default function App() {
           {starfield.map((star, i) => (
             <div
               key={i}
-              className="absolute rounded-full bg-cyan-100 animate-pulse"
+              className="absolute rounded-full bg-cyan-100"
               style={{
                 left: `${star.x}%`,
                 top: `${star.y}%`,
@@ -103,15 +128,19 @@ export default function App() {
         </div>
 
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0891b215_1px,transparent_1px),linear-gradient(to_bottom,#0891b215_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_100%_100%_at_50%_50%,#000_40%,transparent_100%)] opacity-50"></div>
-      </div>
+      </motion.div>
 
       {/* MAIN CONTENT WRAPPER */}
       <div className="relative z-10 flex flex-col w-full h-full p-6 md:p-10 min-h-0">
 
         {/* TOP NAVIGATION / HEADER */}
-        <header className="w-full flex justify-between items-end mb-6 border-b border-cyan-900/60 pb-4 relative z-20 shrink-0">
+        <motion.header
+          className="w-full flex justify-between items-end mb-6 border-b border-cyan-900/60 pb-4 relative z-20 shrink-0"
+          variants={bootHeaderVariants}
+          initial="hidden"
+          animate="show"
+        >
           
-          {/* Left Side: Brand & Subtitle */}
           <div className="flex flex-col cursor-default">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
               Launch
@@ -122,10 +151,13 @@ export default function App() {
             </p>
           </div>
 
-          {/* Right Side: Local Time / System Status */}
-          <div className="hidden sm:flex items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md">
+          <motion.div
+            className="hidden sm:flex items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md"
+            variants={bootSysClockVariants}
+            initial="hidden"
+            animate="show"
+          >
             <span className="relative mt-[3px] flex h-1.5 w-1.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
             <div className="flex flex-col font-mono uppercase leading-none">
@@ -144,33 +176,48 @@ export default function App() {
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
           
-        </header>
+        </motion.header>
 
         {/* PANELS WRAPPER */}
         <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 w-full relative z-10">
           
           {/* LEFT PANEL: Launch Queue */}
-          <div className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden">
+          <motion.div
+            className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden"
+            variants={bootPanelVariants}
+            initial="hidden"
+            animate="show"
+          >
             
             <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-3">
               <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3 min-w-0">
                 <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
                 Launch Queue
               </h2>
-              <span
-                className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
-                title="Queue times shown in your local timezone"
-              >
-                {sysClock?.offset ?? getLocalUtcOffsetLabel()}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <FeedStatus
+                  live={feedLive}
+                  arming={isBooting && !feedLive}
+                  liveLabel="Feed Live"
+                  offlineLabel="Feed Offline"
+                  armingLabel="Arming Feed"
+                  className="text-[9px]"
+                />
+                <span
+                  className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider"
+                  title="Queue times shown in your local timezone"
+                >
+                  {sysClock?.offset ?? getLocalUtcOffsetLabel()}
+                </span>
+              </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 
+            <motion.div
+              className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 
   [&::-webkit-scrollbar]:w-1.5 
   [&::-webkit-scrollbar-track]:bg-black/20 
   [&::-webkit-scrollbar-track]:border-l 
@@ -178,7 +225,11 @@ export default function App() {
   [&::-webkit-scrollbar-thumb]:bg-cyan-800/80 
   [&::-webkit-scrollbar-thumb]:rounded-sm 
   hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
-  hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]">
+  hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]"
+              variants={bootQueueListVariants}
+              initial="hidden"
+              animate={queueRevealed ? 'show' : 'hidden'}
+            >
               {launches.map((launch, index) => {
                 const provider =
                   launch.launch_service_provider?.abbrev ||
@@ -186,16 +237,31 @@ export default function App() {
                   null;
 
                 return (
-                <button
+                <motion.button
                   key={launch.apiId || index}
+                  type="button"
+                  variants={bootQueueItemVariants}
+                  whileTap={{ scale: 0.985 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-all duration-300 flex flex-col gap-1 relative overflow-hidden group hover:translate-x-1 cursor-pointer ${
+                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-colors duration-300 flex flex-col gap-1 relative overflow-hidden group cursor-pointer ${
                     selectedIndex === index 
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50'
                   }`}
                 >
-                  {selectedIndex === index && <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>}
+                  <AnimatePresence>
+                    {selectedIndex === index && (
+                      <motion.div
+                        key="selected-bar"
+                        className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"
+                        initial={{ scaleY: 0, opacity: 0 }}
+                        animate={{ scaleY: 1, opacity: 1 }}
+                        exit={{ scaleY: 0, opacity: 0 }}
+                        transition={transitions.snappy}
+                        style={{ transformOrigin: 'center' }}
+                      />
+                    )}
+                  </AnimatePresence>
                   
                   <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 transition-colors">
                     {formatLocalDateTime(launch.net, { includeYear: false }).label}
@@ -211,25 +277,55 @@ export default function App() {
                       </span>
                     )}
                   </div>
-                </button>
+                </motion.button>
                 );
               })}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* RIGHT PANEL: Main Display */}
           <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col">
-            {activeLaunch ? (
-              <LaunchCard
-                key={activeLaunch.apiId}
-                launch={activeLaunch}
-                feedLive={feedLive}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] animate-pulse shadow-[0_0_35px_rgba(8,145,178,0.12)]">
-                Awaiting Telemetry Sync...
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {showLaunchCard && activeLaunch ? (
+                <motion.div
+                  key={activeLaunch.apiId}
+                  className="h-full w-full min-h-0 flex flex-col"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={transitions.soft}
+                >
+                  <LaunchCard
+                    launch={activeLaunch}
+                    feedLive={feedLive}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="awaiting-telemetry"
+                  className="w-full h-full flex flex-col items-center justify-center gap-4 border border-cyan-900/50 rounded-2xl bg-black/10 backdrop-blur-sm shadow-[0_0_35px_rgba(8,145,178,0.12)] px-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={transitions.soft}
+                >
+                  <motion.p
+                    className="text-cyan-600 font-mono text-sm uppercase tracking-[0.3em] text-center"
+                    animate={{ opacity: [0.55, 1, 0.55] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    Awaiting Telemetry Sync...
+                  </motion.p>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-cyan-700 text-center">
+                    {feedLive
+                      ? launches.length > 0
+                        ? 'Telemetry locked · bringing systems online'
+                        : 'Uplink live · hydrating queue'
+                      : 'Arming live feed'}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         
         </div>
