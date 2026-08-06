@@ -53,6 +53,27 @@ const sectionVariants: Variants = {
     },
 };
 
+/** Visual feed: rest = always-on HUD; focus = hover or tap intensify. */
+const visualFrameVariants: Variants = {
+    rest: {},
+    focus: {},
+};
+
+const visualImageVariants: Variants = {
+    rest: { scale: 1, opacity: 0.82 },
+    focus: { scale: 1.04, opacity: 1 },
+};
+
+const visualCornerVariants: Variants = {
+    rest: { width: 18, height: 18, borderColor: "rgba(6,182,212,0.55)" },
+    focus: { width: 12, height: 12, borderColor: "rgba(103,232,249,0.95)" },
+};
+
+const visualCrosshairVariants: Variants = {
+    rest: { opacity: 0.18 },
+    focus: { opacity: 0.35 },
+};
+
 export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
     
     const imageUrl = launch.image?.image_url || null;
@@ -190,7 +211,6 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     
                     <div className={`flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300`}>
                         <span className="relative flex h-2 w-2">
-                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusColors.dot} opacity-75`}></span>
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
                         <span className={`text-[10px] font-mono uppercase tracking-widest ${statusColors.text}`}>
@@ -332,47 +352,79 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
                 <motion.div
                     variants={sectionVariants}
-                    className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] group cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+                    className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
                 >
-                    
-                {imageUrl ? (
-                    <img 
-                        src={imageUrl}
-                        className="w-full h-full object-cover opacity-80 mix-blend-screen transition-all duration-[3000ms] group-hover:scale-105 group-hover:opacity-100"
-                        alt="Launch Visual"
-                        onError={(e) => { 
-                            e.currentTarget.style.display = 'none'; 
-                        }}
-                    />
-                ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-[#020617] mix-blend-screen opacity-80 transition-all duration-500 group-hover:opacity-100">
-                        <div className="relative flex items-center justify-center mb-6">
-                            <div className="absolute w-24 h-24 border border-cyan-900/40 rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
-                            <div className="absolute w-16 h-16 border border-cyan-800/50 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
-                            <div className="absolute w-8 h-8 border border-cyan-700/50 rounded-full"></div>
-                            <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#22d3ee]"></div>
-                        </div>
-                        <span className="text-cyan-700 font-mono text-[10px] tracking-[0.5em] uppercase z-10 group-hover:text-cyan-500 transition-colors">
-                            NO VISUAL FEED
-                        </span>
-                    </div>
-                )}
-                    
-                    <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
-                    
-                    <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
-                    
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-cyan-400/80 shadow-[0_0_10px_#22d3ee] pointer-events-none animate-[bounce_3s_infinite_linear]"></div>
-                    
-                    <div className="absolute top-4 left-4 w-6 h-6 border-t border-l border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    <div className="absolute top-4 right-4 w-6 h-6 border-t border-r border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    <div className="absolute bottom-4 left-4 w-6 h-6 border-b border-l border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b border-r border-cyan-500/60 transition-all duration-300 group-hover:w-3 group-hover:h-3 group-hover:border-cyan-300"></div>
-                    
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none flex items-center justify-center">
-                        <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
-                        <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
-                    </div>
+                    <motion.div
+                        className="absolute inset-0"
+                        variants={visualFrameVariants}
+                        initial="rest"
+                        animate="rest"
+                        whileHover="focus"
+                        whileTap="focus"
+                    >
+                        {imageUrl ? (
+                            <motion.img
+                                src={imageUrl}
+                                variants={visualImageVariants}
+                                transition={{ duration: 0.85, ease: "easeOut" }}
+                                className="w-full h-full object-cover mix-blend-screen"
+                                alt="Launch Visual"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                }}
+                            />
+                        ) : (
+                            <motion.div
+                                variants={visualImageVariants}
+                                transition={{ duration: 0.45, ease: "easeOut" }}
+                                className="w-full h-full flex flex-col items-center justify-center bg-[#020617] mix-blend-screen"
+                            >
+                                <div className="relative flex items-center justify-center mb-6">
+                                    <div className="absolute w-24 h-24 border border-cyan-900/40 rounded-full"></div>
+                                    <div className="absolute w-16 h-16 border border-cyan-800/50 rounded-full"></div>
+                                    <div className="absolute w-8 h-8 border border-cyan-700/50 rounded-full"></div>
+                                    <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#22d3ee]"></div>
+                                </div>
+                                <span className="text-cyan-600 font-mono text-[10px] tracking-[0.5em] uppercase z-10">
+                                    NO VISUAL FEED
+                                </span>
+                            </motion.div>
+                        )}
+
+                        <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
+
+                        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
+
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute top-4 left-4 border-t border-l pointer-events-none"
+                        />
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute top-4 right-4 border-t border-r pointer-events-none"
+                        />
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute bottom-4 left-4 border-b border-l pointer-events-none"
+                        />
+                        <motion.div
+                            variants={visualCornerVariants}
+                            transition={transitions.snappy}
+                            className="absolute bottom-4 right-4 border-b border-r pointer-events-none"
+                        />
+
+                        <motion.div
+                            variants={visualCrosshairVariants}
+                            transition={transitions.soft}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none flex items-center justify-center"
+                        >
+                            <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
+                            <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
+                        </motion.div>
+                    </motion.div>
                 </motion.div>
             </motion.div>
 

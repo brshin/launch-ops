@@ -112,7 +112,7 @@ export default function App() {
           {starfield.map((star, i) => (
             <div
               key={i}
-              className="absolute rounded-full bg-cyan-100 animate-pulse"
+              className="absolute rounded-full bg-cyan-100"
               style={{
                 left: `${star.x}%`,
                 top: `${star.y}%`,
@@ -158,7 +158,6 @@ export default function App() {
             animate="show"
           >
             <span className="relative mt-[3px] flex h-1.5 w-1.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
             <div className="flex flex-col font-mono uppercase leading-none">
@@ -195,7 +194,6 @@ export default function App() {
             <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-3">
               <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3 min-w-0">
                 <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
                 Launch Queue
