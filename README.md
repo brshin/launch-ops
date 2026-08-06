@@ -12,9 +12,10 @@ Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/),
 - **Mission detail panel** — provider, mission/rocket titles, Status chip, T-Minus / T-Plus countdown (`D:HH:MM:SS`), and provisional NET for TBD/TBC
 - **T-Zero and coordinates** — local launch time with explicit `UTC±X` offset, launch window, pad name, and location
 - **Mission Brief** — mission description with type/orbit chips (unknown metadata hidden)
-- **Live Feed indicator** — Socket.IO connect/disconnect status in the card footer
+- **Live Feed indicator** — Socket.IO connect/disconnect status in the queue header and card footer (event flash on link change)
 - **Last Updated** — provider `last_updated` timestamp in Sys Time–style local formatting
 - **Sys Time** — local clock with explicit timezone offset
+- **HUD motion** — Framer Motion cold-load boot, launch-selection crossfade, ticking countdown with urgency, and calmer ambient chrome
 - **Live UI updates** — when the worker refreshes the cache, Redis Pub/Sub notifies the server, which emits the new payload to connected Socket.IO clients
 - **Cached API** — `GET /launches` reads Redis first, then MongoDB on a cache miss
 - **Scheduled ingestion** — cron worker polls Launch Library every 5 minutes, upserts MongoDB, writes Redis, and publishes a cache-update message
@@ -49,7 +50,7 @@ Launch Library API
 3. A Redis Pub/Sub message on `launch-updates` notifies the API server.
 4. The server emits `live-launch-data` over Socket.IO to connected clients.
 5. On load, the frontend hydrates via `GET /launches` (Redis, then MongoDB on miss).
-6. The client tracks Socket.IO `connect` / `disconnect` to drive the Live Feed indicator.
+6. The client tracks Socket.IO `connect` / `disconnect` to drive the Live Feed indicator (including a one-shot flash when the uplink state changes).
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
 
@@ -59,16 +60,16 @@ The worker is required by `server.js`, so it runs in the same Node process as th
 
 | Layer           | Technology                                                        |
 | --------------- | ----------------------------------------------------------------- |
-| Frontend        | React 19, TypeScript (partial), Vite, Tailwind CSS v4             |
-| Realtime        | Socket.IO (client + server)                                       |
-| Backend         | Node.js, Express 5                                                |
-| Worker          | node-cron                                                         |
-| Database        | MongoDB via Mongoose                                              |
-| Cache / Pub-Sub | Redis                                                             |
-| External data   | [The Space Devs Launch Library 2.3](https://ll.thespacedevs.com/) |
-| Analytics       | Vercel Analytics                                                  |
-| Hosting         | Frontend on **Vercel**; backend on **Render**                     |
-| Source control  | [GitHub](https://github.com/brshin/launch-ops)                    |
+| Frontend        | React 19, TypeScript (partial), Vite, Tailwind CSS v4, Framer Motion |
+| Realtime        | Socket.IO (client + server)                                          |
+| Backend         | Node.js, Express 5                                                   |
+| Worker          | node-cron                                                            |
+| Database        | MongoDB via Mongoose                                                 |
+| Cache / Pub-Sub | Redis                                                                |
+| External data   | [The Space Devs Launch Library 2.3](https://ll.thespacedevs.com/)    |
+| Analytics       | Vercel Analytics                                                     |
+| Hosting         | Frontend on **Vercel**; backend on **Render**                        |
+| Source control  | [GitHub](https://github.com/brshin/launch-ops)                       |
 
 ---
 
@@ -87,16 +88,22 @@ launch-ops/
 │   ├── public/                # favicon.svg, icons.svg
 │   ├── src/
 │   │   ├── components/
-│   │   │   └── LaunchCard.tsx # Mission detail / countdown panel
+│   │   │   ├── LaunchCard.tsx        # Mission detail panel
+│   │   │   ├── CountdownReadout.tsx  # Ticking countdown + status labels
+│   │   │   └── FeedStatus.tsx        # Live/offline feed indicator
+│   │   ├── hooks/
+│   │   │   └── useConsoleBoot.ts     # Cold-load boot timing gate
+│   │   ├── lib/
+│   │   │   ├── motionTokens.ts       # Shared Framer transition presets
+│   │   │   └── bootMotion.ts         # Boot-sequence motion variants
 │   │   ├── types/
-│   │   │   └── launch.ts      # Frontend launch types
+│   │   │   └── launch.ts             # Frontend launch types
 │   │   ├── utils/
-│   │   │   ├── launchTitle.ts # Mission/rocket title helpers
-│   │   │   └── localTime.ts   # Shared local date/time + UTC offset labels
-│   │   ├── App.tsx            # Launch Queue, Socket.IO client, layout
-│   │   ├── main.jsx           # React root + Vercel Analytics
-│   │   ├── index.css
-│   │   └── App.css
+│   │   │   ├── launchTitle.ts        # Mission/rocket title helpers
+│   │   │   └── localTime.ts          # Shared local date/time + UTC offset labels
+│   │   ├── App.tsx                   # Queue, Socket.IO client, boot + layout
+│   │   ├── main.jsx                  # React root, MotionConfig, Analytics
+│   │   └── index.css
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
