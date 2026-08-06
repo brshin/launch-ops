@@ -4,6 +4,12 @@ import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
 import { transitions } from "../lib/motionTokens";
 import {
+    AwaitingTelemetryLabel,
+    CountdownFailureLabel,
+    CountdownHoldLabel,
+    TickingCountdown,
+} from "./CountdownReadout";
+import {
     formatLocalDateTime,
     formatLocalTime,
     getLocalUtcOffsetLabel,
@@ -65,19 +71,6 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
             seconds: Math.floor((absDiff / 1000) % 60),
         };
     };
-
-    const formatCountdown = ({
-        days,
-        hours,
-        minutes,
-        seconds,
-    }: {
-        days: number;
-        hours: number;
-        minutes: number;
-        seconds: number;
-    }) =>
-        `${days}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
     const [time, setTime] = useState(calculateTimeLeft());
 
@@ -206,13 +199,9 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
                     <div className="flex items-center gap-3 px-2">
                         {status === 'Hold' ? (
-                            <span className="text-lg md:text-xl font-mono font-bold text-amber-500 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
-                                COUNTDOWN HOLD
-                            </span>
+                            <CountdownHoldLabel />
                         ) : status === 'Failure' || status === 'Partial Failure' ? (
-                            <span className="text-lg md:text-xl font-mono font-bold text-red-500 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">
-                                MISSION FAILURE
-                            </span>
+                            <CountdownFailureLabel />
                         ) : status === 'TBD' || status === 'TBC' ? (
                             <div className="flex flex-col items-start sm:items-end gap-0.5">
                                 <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
@@ -225,27 +214,25 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                 </span>
                             </div>
                         ) : status === 'In Flight' || status === 'Success' ? (
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
-                                    T-Plus
-                                </span>
-                                <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {formatCountdown(time)}
-                                </span>
-                            </div>
+                            <TickingCountdown
+                                days={time.days}
+                                hours={time.hours}
+                                minutes={time.minutes}
+                                seconds={time.seconds}
+                                difference={time.difference}
+                                mode="plus"
+                            />
                         ) : time.difference <= 0 ? (
-                            <span className="text-lg md:text-xl font-mono font-bold text-cyan-600 tracking-widest animate-pulse drop-shadow-[0_0_8px_rgba(8,145,178,0.4)]">
-                                AWAITING TELEMETRY
-                            </span>
+                            <AwaitingTelemetryLabel />
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-cyan-500 uppercase tracking-[0.3em]">
-                                    T-Minus
-                                </span>
-                                <span className="text-lg md:text-xl font-mono font-bold text-cyan-400 tracking-widest tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                                    {formatCountdown(time)}
-                                </span>
-                            </div>
+                            <TickingCountdown
+                                days={time.days}
+                                hours={time.hours}
+                                minutes={time.minutes}
+                                seconds={time.seconds}
+                                difference={time.difference}
+                                mode="minus"
+                            />
                         )}
                     </div>
 
