@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
+import { FeedStatus } from './components/FeedStatus';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
@@ -200,20 +201,14 @@ export default function App() {
                 Launch Queue
               </h2>
               <div className="flex items-center gap-2 shrink-0">
-                <span
-                  className={`text-[9px] font-mono uppercase tracking-wider transition-colors duration-300 ${
-                    feedLive ? 'text-cyan-400' : isBooting ? 'text-amber-500/90' : 'text-amber-500/80'
-                  }`}
-                  title={
-                    feedLive
-                      ? 'Live launch feed connected'
-                      : isBooting
-                        ? 'Arming live feed…'
-                        : 'Live launch feed offline'
-                  }
-                >
-                  {feedLive ? 'Feed Live' : isBooting ? 'Arming Feed' : 'Feed Offline'}
-                </span>
+                <FeedStatus
+                  live={feedLive}
+                  arming={isBooting && !feedLive}
+                  liveLabel="Feed Live"
+                  offlineLabel="Feed Offline"
+                  armingLabel="Arming Feed"
+                  className="text-[9px]"
+                />
                 <span
                   className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider"
                   title="Queue times shown in your local timezone"
@@ -248,14 +243,27 @@ export default function App() {
                   key={launch.apiId || index}
                   type="button"
                   variants={bootQueueItemVariants}
+                  whileTap={{ scale: 0.985 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-all duration-300 flex flex-col gap-1 relative overflow-hidden group hover:translate-x-1 cursor-pointer ${
+                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-colors duration-300 flex flex-col gap-1 relative overflow-hidden group cursor-pointer ${
                     selectedIndex === index 
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50'
                   }`}
                 >
-                  {selectedIndex === index && <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>}
+                  <AnimatePresence>
+                    {selectedIndex === index && (
+                      <motion.div
+                        key="selected-bar"
+                        className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"
+                        initial={{ scaleY: 0, opacity: 0 }}
+                        animate={{ scaleY: 1, opacity: 1 }}
+                        exit={{ scaleY: 0, opacity: 0 }}
+                        transition={transitions.snappy}
+                        style={{ transformOrigin: 'center' }}
+                      />
+                    )}
+                  </AnimatePresence>
                   
                   <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 transition-colors">
                     {formatLocalDateTime(launch.net, { includeYear: false }).label}
