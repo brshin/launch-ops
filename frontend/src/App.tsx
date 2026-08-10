@@ -183,9 +183,9 @@ export default function App() {
         {/* PANELS WRAPPER */}
         <div className="flex-1 flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 lg:gap-8 min-h-0 w-full relative z-10">
           
-          {/* LEFT PANEL: Launch Queue */}
+          {/* LEFT PANEL: Launch Queue — fluid height below lg; full sidebar at lg+ */}
           <motion.div
-            className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden"
+            className="w-full lg:w-[320px] h-[min(32dvh,11.25rem)] min-h-32 md:h-[min(34dvh,15rem)] lg:h-full lg:min-h-0 shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden"
             variants={bootPanelVariants}
             initial="hidden"
             animate="show"

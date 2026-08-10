@@ -191,7 +191,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
             <motion.div
                 variants={sectionVariants}
-                className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3"
+                className="flex flex-col sm:flex-row justify-between items-start mb-3 sm:mb-4 lg:mb-8 shrink-0 gap-2 sm:gap-3"
             >
                 <div className="group cursor-default">
                     <p className="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
@@ -266,12 +266,12 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
             */}
             <motion.div
                 variants={cardVariants}
-                className={`flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}
+                className={`flex-1 flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}
             >
                 
                 <motion.div
                     variants={cardVariants}
-                    className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink lg:h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-rows-[auto_1fr] gap-4 min-h-0 content-start"
+                    className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink lg:h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-rows-[auto_1fr] gap-3 sm:gap-4 min-h-0 content-start"
                 >
                         <motion.div
                             variants={sectionVariants}
@@ -321,7 +321,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
                     <motion.div
                         variants={sectionVariants}
-                        className="sm:col-span-2 w-full min-h-[180px] lg:min-h-0 lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative"
+                        className="sm:col-span-2 w-full min-h-0 lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative"
                     >
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
                         
@@ -352,7 +352,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
                 <motion.div
                     variants={sectionVariants}
-                    className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+                    className="w-full aspect-[16/10] max-h-[min(36dvh,17.5rem)] shrink-0 lg:aspect-auto lg:max-h-none lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
                 >
                     <motion.div
                         className="absolute inset-0"
