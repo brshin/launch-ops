@@ -183,18 +183,18 @@ export default function App() {
         {/* PANELS WRAPPER */}
         <div className="flex-1 flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 lg:gap-8 min-h-0 w-full relative z-10">
           
-          {/* LEFT PANEL: Launch Queue — fluid height below lg; full sidebar at lg+ */}
+          {/* Launch Queue — horizontal strip below lg; vertical sidebar at lg+ */}
           <motion.div
-            className="w-full lg:w-[320px] h-[min(32dvh,11.25rem)] min-h-32 md:h-[min(34dvh,15rem)] lg:h-full lg:min-h-0 shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden"
+            className="w-full lg:w-[320px] h-auto shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden"
             variants={bootPanelVariants}
             initial="hidden"
             animate="show"
           >
             
-            <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-3">
-              <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3 min-w-0">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
+            <div className="px-3 py-2 lg:p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3">
+              <h2 className="text-cyan-400 font-mono tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs uppercase flex items-center gap-2 lg:gap-3 min-w-0">
+                <span className="relative flex h-1.5 w-1.5 lg:h-2 lg:w-2 shrink-0">
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 lg:h-2 lg:w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
                 Launch Queue
               </h2>
@@ -217,15 +217,20 @@ export default function App() {
             </div>
             
             <motion.div
-              className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 
-  [&::-webkit-scrollbar]:w-1.5 
-  [&::-webkit-scrollbar-track]:bg-black/20 
-  [&::-webkit-scrollbar-track]:border-l 
-  [&::-webkit-scrollbar-track]:border-cyan-900/30 
-  [&::-webkit-scrollbar-thumb]:bg-cyan-800/80 
-  [&::-webkit-scrollbar-thumb]:rounded-sm 
-  hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
-  hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]"
+              className={`
+                relative z-10 flex gap-2 p-2.5 lg:p-3
+                flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory
+                lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none
+                overscroll-x-contain lg:overscroll-y-contain
+                [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar]:w-full
+                lg:[&::-webkit-scrollbar]:h-auto lg:[&::-webkit-scrollbar]:w-1.5
+                [&::-webkit-scrollbar-track]:bg-black/20
+                lg:[&::-webkit-scrollbar-track]:border-l lg:[&::-webkit-scrollbar-track]:border-cyan-900/30
+                [&::-webkit-scrollbar-thumb]:bg-cyan-800/80
+                [&::-webkit-scrollbar-thumb]:rounded-sm
+                hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500
+                hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
+              `}
               variants={bootQueueListVariants}
               initial="hidden"
               animate={queueRevealed ? 'show' : 'hidden'}
@@ -235,6 +240,7 @@ export default function App() {
                   launch.launch_service_provider?.abbrev ||
                   launch.launch_service_provider?.name ||
                   null;
+                const selected = selectedIndex === index;
 
                 return (
                 <motion.button
@@ -243,22 +249,21 @@ export default function App() {
                   variants={bootQueueItemVariants}
                   whileTap={{ scale: 0.985 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-colors duration-300 flex flex-col gap-1 relative overflow-hidden group cursor-pointer ${
-                    selectedIndex === index 
+                  className={`shrink-0 snap-start w-[12rem] sm:w-[13.5rem] lg:w-full text-left py-2 px-2.5 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer ${
+                    selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50'
                   }`}
                 >
                   <AnimatePresence>
-                    {selectedIndex === index && (
+                    {selected && (
                       <motion.div
                         key="selected-bar"
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"
-                        initial={{ scaleY: 0, opacity: 0 }}
-                        animate={{ scaleY: 1, opacity: 1 }}
-                        exit={{ scaleY: 0, opacity: 0 }}
+                        className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-400 shadow-[0_0_10px_#22d3ee] lg:inset-x-auto lg:left-0 lg:top-0 lg:bottom-0 lg:h-auto lg:w-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         transition={transitions.snappy}
-                        style={{ transformOrigin: 'center' }}
                       />
                     )}
                   </AnimatePresence>
@@ -268,11 +273,11 @@ export default function App() {
                   </span>
 
                   <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
-                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50'}`}>
+                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selected ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50'}`}>
                       {getLaunchTitle(launch)}
                     </span>
                     {provider && (
-                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selectedIndex === index ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500'}`}>
+                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selected ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500'}`}>
                         {provider}
                       </span>
                     )}
