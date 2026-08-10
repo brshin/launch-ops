@@ -96,7 +96,7 @@ export default function App() {
   const showLaunchCard = Boolean(activeLaunch && bootComplete);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
+    <div className="relative w-screen h-dvh overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
       
       {/* Space Background — boots in first */}
       <motion.div
@@ -131,22 +131,22 @@ export default function App() {
       </motion.div>
 
       {/* MAIN CONTENT WRAPPER */}
-      <div className="relative z-10 flex flex-col w-full h-full p-6 md:p-10 min-h-0">
+      <div className="console-inset relative z-10 flex flex-col w-full h-full min-h-0">
 
         {/* TOP NAVIGATION / HEADER */}
         <motion.header
-          className="w-full flex justify-between items-end mb-6 border-b border-cyan-900/60 pb-4 relative z-20 shrink-0"
+          className="w-full flex justify-between items-end mb-3 sm:mb-4 md:mb-6 border-b border-cyan-900/60 pb-2.5 sm:pb-3 md:pb-4 relative z-20 shrink-0"
           variants={bootHeaderVariants}
           initial="hidden"
           animate="show"
         >
           
-          <div className="flex flex-col cursor-default">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+          <div className="flex flex-col cursor-default min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.12em] sm:tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
               Launch
-              <span className="text-cyan-500 tracking-[0.12em] ml-[0.12em]">Ops</span>
+              <span className="text-cyan-500 tracking-[0.08em] sm:tracking-[0.12em] ml-[0.12em]">Ops</span>
             </h1>
-            <p className="text-[10px] md:text-xs font-mono text-cyan-400 uppercase tracking-[0.4em] mt-1 opacity-80">
+            <p className="text-[10px] md:text-xs font-mono text-cyan-400 uppercase tracking-[0.25em] sm:tracking-[0.4em] mt-1 opacity-80">
               Global Launch Tracker
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function App() {
         </motion.header>
 
         {/* PANELS WRAPPER */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 w-full relative z-10">
+        <div className="flex-1 flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 lg:gap-8 min-h-0 w-full relative z-10">
           
           {/* LEFT PANEL: Launch Queue */}
           <motion.div
