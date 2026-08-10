@@ -50,7 +50,7 @@ export function FeedStatus({
 
   return (
     <motion.span
-      className={`inline-flex items-center gap-2 font-mono uppercase tracking-wider transition-colors duration-300 ${
+      className={`inline-flex items-center gap-2 font-mono uppercase tracking-wider transition-colors duration-300 select-none ${
         live
           ? "text-cyan-400"
           : arming

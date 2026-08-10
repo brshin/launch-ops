@@ -21,16 +21,7 @@ interface LaunchCardProps {
     feedLive: boolean;
 }
 
-const customScrollbar = `
-  [&::-webkit-scrollbar]:w-1.5 
-  [&::-webkit-scrollbar-track]:bg-black/20 
-  [&::-webkit-scrollbar-track]:border-l 
-  [&::-webkit-scrollbar-track]:border-cyan-900/30 
-  [&::-webkit-scrollbar-thumb]:bg-cyan-800/80 
-  [&::-webkit-scrollbar-thumb]:rounded-sm 
-  hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
-  hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
-`;
+const customScrollbar = "console-scrollbar console-scrollbar-y";
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
 const cardVariants: Variants = {
@@ -117,7 +108,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     dot: 'bg-cyan-400',
                     glow: 'shadow-[0_0_5px_#22d3ee]',
                     text: 'text-cyan-300',
-                    borderHover: 'hover:border-cyan-500/80',
+                    borderHover: 'hover:border-cyan-500/80 active:border-cyan-500/80',
                 };
             case 'Hold':
             case 'TBD':
@@ -126,7 +117,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     dot: 'bg-amber-400',
                     glow: 'shadow-[0_0_5px_#fbbf24]',
                     text: 'text-amber-300',
-                    borderHover: 'hover:border-amber-500/80',
+                    borderHover: 'hover:border-amber-500/80 active:border-amber-500/80',
                 };
             case 'Failure':
             case 'Partial Failure':
@@ -134,14 +125,14 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     dot: 'bg-red-500',
                     glow: 'shadow-[0_0_5px_#ef4444]',
                     text: 'text-red-400',
-                    borderHover: 'hover:border-red-500/80',
+                    borderHover: 'hover:border-red-500/80 active:border-red-500/80',
                 };
             default:
                 return {
                     dot: 'bg-slate-400',
                     glow: 'shadow-[0_0_5px_#94a3b8]',
                     text: 'text-slate-300',
-                    borderHover: 'hover:border-slate-500/80',
+                    borderHover: 'hover:border-slate-500/80 active:border-slate-500/80',
                 };
         }
     };
@@ -210,11 +201,11 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                 
                 <div className="flex flex-col items-start sm:items-end gap-1.5 sm:gap-3 w-full sm:w-auto shrink-0">
                     
-                    <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300`}>
+                    <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 px-3 py-2 sm:px-5 sm:py-2.5 min-h-9 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300`}>
                         <span className="relative flex h-2 w-2">
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
-                        <span className={`text-[10px] font-mono uppercase tracking-widest ${statusColors.text}`}>
+                        <span className={`text-[10px] font-mono uppercase tracking-wider sm:tracking-widest ${statusColors.text}`}>
                             Status: {status || 'Unk'}
                         </span>
                     </div>
@@ -356,11 +347,11 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                 >
                         <motion.div
                             variants={sectionVariants}
-                            className="bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden"
+                            className="bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden"
                         >
-                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
+                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
                             <div className="flex items-center justify-between gap-2 mb-1">
-                                <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 transition-colors">
+                                <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                                     T-Zero Target
                                 </h3>
                                 <span
@@ -375,7 +366,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                 <span className="mx-1.5 text-cyan-700">·</span>
                                 <span>{tZero.time}</span>
                             </p>
-                            <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
+                            <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
                                 <span className="mr-1.5">Window</span>
                                 <span className="tabular-nums tracking-normal">
                                     {windowStart ?? 'TBA'}
@@ -386,28 +377,28 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         </motion.div>
                         <motion.div
                             variants={sectionVariants}
-                            className="bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center"
+                            className="bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center"
                         >
-                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee]"></div>
-                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
+                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
+                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                                 Launch Coordinates
                             </h3>
-                            <p className="text-xs sm:text-sm text-cyan-50 font-mono tracking-wider break-words leading-tight group-hover:text-white transition-colors line-clamp-2">
+                            <p className="text-xs sm:text-sm text-cyan-50 font-mono tracking-wider break-words leading-tight group-hover:text-white group-active:text-white transition-colors line-clamp-2">
                                 {launch.pad?.name || 'TBA'}
                             </p>
-                            <p className="mt-1 text-[10px] sm:text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 transition-colors line-clamp-2">
+                            <p className="mt-1 text-[10px] sm:text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors line-clamp-2">
                                 {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
                             </p>
                         </motion.div>
 
                     <motion.div
                         variants={sectionVariants}
-                        className="col-span-2 w-full min-h-0 max-h-[7.5rem] lg:max-h-none lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative"
+                        className="col-span-2 w-full min-h-0 max-h-[7.5rem] lg:max-h-none lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative"
                     >
-                        <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 group-active:border-cyan-400 transition-colors pointer-events-none"></div>
                         
                         <div className="flex justify-between items-center mb-2 lg:mb-3 border-b border-cyan-900/50 pb-2 shrink-0 gap-2 sm:gap-3">
-                            <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 transition-colors">
+                            <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                                 Mission Brief
                             </h3>
                             {(missionType || missionOrbit) && (
@@ -425,7 +416,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                 </div>
                             )}
                         </div>
-                        <p className={`flex-1 min-h-0 text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
+                        <p className={`flex-1 min-h-0 text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
                             {launch.mission?.description || 'No mission details available at this time.'}
                         </p>
                     </motion.div>

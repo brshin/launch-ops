@@ -49,3 +49,34 @@ body,
     padding-left: max(2.5rem, env(safe-area-inset-left, 0px));
   }
 }
+
+/* Thin scrollbars visible without hover (touch-friendly) */
+.console-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.45) rgba(0, 0, 0, 0.2);
+}
+
+.console-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 4px;
+}
+
+.console-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.console-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(8, 145, 178, 0.75);
+  border-radius: 2px;
+}
+
+.console-scrollbar::-webkit-scrollbar-thumb:hover,
+.console-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgb(6, 182, 212);
+  box-shadow: 0 0 10px #22d3ee;
+}
+
+.console-scrollbar-y::-webkit-scrollbar-track {
+  border-left: 1px solid rgba(22, 78, 99, 0.3);
+}
+

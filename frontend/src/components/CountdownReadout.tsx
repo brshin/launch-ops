@@ -113,7 +113,7 @@ function TickingDigits({
 export function CountdownHoldLabel() {
   return (
     <motion.span
-      className="text-base sm:text-lg md:text-xl font-mono font-bold text-amber-500 tracking-wider sm:tracking-widest"
+      className="max-w-full text-sm sm:text-base md:text-xl font-mono font-bold text-amber-500 tracking-wide sm:tracking-wider md:tracking-widest leading-tight break-words"
       style={{ textShadow: "0 0 8px rgba(245,158,11,0.35)" }}
       animate={{ opacity: [0.82, 1, 0.82] }}
       transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
@@ -126,7 +126,7 @@ export function CountdownHoldLabel() {
 export function CountdownFailureLabel() {
   return (
     <motion.span
-      className="text-base sm:text-lg md:text-xl font-mono font-bold text-red-500 tracking-wider sm:tracking-widest"
+      className="max-w-full text-sm sm:text-base md:text-xl font-mono font-bold text-red-500 tracking-wide sm:tracking-wider md:tracking-widest leading-tight break-words"
       style={{ textShadow: "0 0 10px rgba(239,68,68,0.55)" }}
       animate={{
         x: [0, -1.5, 1.5, -1, 1, 0],
@@ -147,7 +147,7 @@ export function CountdownFailureLabel() {
 export function AwaitingTelemetryLabel() {
   return (
     <motion.span
-      className="text-base sm:text-lg md:text-xl font-mono font-bold text-cyan-600 tracking-wider sm:tracking-widest"
+      className="max-w-full text-sm sm:text-base md:text-xl font-mono font-bold text-cyan-600 tracking-wide sm:tracking-wider md:tracking-widest leading-tight break-words"
       animate={{
         opacity: [0.55, 1, 0.55],
         textShadow: [
@@ -186,7 +186,7 @@ export function TickingCountdown({
   const label = mode === "minus" ? "T-Minus" : "T-Plus";
 
   return (
-    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
       <span className="text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] shrink-0">
         {label}
       </span>

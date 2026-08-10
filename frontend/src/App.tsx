@@ -217,20 +217,7 @@ export default function App() {
             </div>
             
             <motion.div
-              className={`
-                relative z-10 flex gap-2 p-2.5 lg:p-3
-                flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory
-                lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none
-                overscroll-x-contain lg:overscroll-y-contain
-                [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar]:w-full
-                lg:[&::-webkit-scrollbar]:h-auto lg:[&::-webkit-scrollbar]:w-1.5
-                [&::-webkit-scrollbar-track]:bg-black/20
-                lg:[&::-webkit-scrollbar-track]:border-l lg:[&::-webkit-scrollbar-track]:border-cyan-900/30
-                [&::-webkit-scrollbar-thumb]:bg-cyan-800/80
-                [&::-webkit-scrollbar-thumb]:rounded-sm
-                hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500
-                hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
-              `}
+              className="console-scrollbar console-scrollbar-y relative z-10 flex gap-2 p-2.5 lg:p-3 flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain"
               variants={bootQueueListVariants}
               initial="hidden"
               animate={queueRevealed ? 'show' : 'hidden'}
@@ -247,12 +234,12 @@ export default function App() {
                   key={launch.apiId || index}
                   type="button"
                   variants={bootQueueItemVariants}
-                  whileTap={{ scale: 0.985 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`shrink-0 snap-start w-[12rem] sm:w-[13.5rem] lg:w-full text-left py-2 px-2.5 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer ${
+                  className={`shrink-0 snap-start w-[12rem] sm:w-[13.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer touch-manipulation ${
                     selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
-                      : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50'
+                      : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
                   }`}
                 >
                   <AnimatePresence>
@@ -268,16 +255,16 @@ export default function App() {
                     )}
                   </AnimatePresence>
                   
-                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 transition-colors">
+                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                     {formatLocalDateTime(launch.net, { includeYear: false }).label}
                   </span>
 
                   <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
-                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selected ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50'}`}>
+                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide sm:tracking-wider lg:tracking-widest truncate transition-colors ${selected ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50 group-active:text-cyan-50'}`}>
                       {getLaunchTitle(launch)}
                     </span>
                     {provider && (
-                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selected ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500'}`}>
+                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selected ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500 group-active:text-cyan-500'}`}>
                         {provider}
                       </span>
                     )}
