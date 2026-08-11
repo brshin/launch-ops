@@ -170,7 +170,7 @@ export default function App() {
         <motion.header
           className={`w-full flex justify-between items-end border-b border-cyan-900/60 relative z-20 shrink-0 ${
             shortViewport
-              ? "mb-1.5 pb-1.5"
+              ? "mb-1.5 pb-1.5 lg:mb-6 lg:pb-4"
               : "mb-3 sm:mb-4 md:mb-6 pb-2.5 sm:pb-3 md:pb-4"
           }`}
           variants={bootHeaderVariants}
@@ -182,14 +182,16 @@ export default function App() {
             <h1
               className={`font-bold text-slate-100 uppercase drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] ${
                 shortViewport
-                  ? "text-xl tracking-[0.1em]"
+                  ? "text-xl tracking-[0.1em] lg:text-4xl lg:tracking-[0.2em]"
                   : "text-2xl sm:text-3xl md:text-4xl tracking-[0.12em] sm:tracking-[0.2em]"
               }`}
             >
               Launch
               <span
                 className={`text-cyan-500 ml-[0.12em] ${
-                  shortViewport ? "tracking-[0.08em]" : "tracking-[0.08em] sm:tracking-[0.12em]"
+                  shortViewport
+                    ? "tracking-[0.08em] lg:tracking-[0.12em]"
+                    : "tracking-[0.08em] sm:tracking-[0.12em]"
                 }`}
               >
                 Ops
@@ -198,7 +200,7 @@ export default function App() {
             <p
               className={`font-mono text-cyan-400 uppercase opacity-80 ${
                 shortViewport
-                  ? "hidden"
+                  ? "hidden lg:block text-[10px] md:text-xs tracking-[0.25em] sm:tracking-[0.4em] mt-1"
                   : "text-[10px] md:text-xs tracking-[0.25em] sm:tracking-[0.4em] mt-1"
               }`}
             >
@@ -207,7 +209,7 @@ export default function App() {
           </div>
 
           <motion.div
-            className={`${shortViewport ? "hidden" : "hidden sm:flex"} items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md`}
+            className={`${shortViewport ? "hidden lg:flex" : "hidden sm:flex"} items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md`}
             variants={bootSysClockVariants}
             initial="hidden"
             animate="show"
@@ -238,7 +240,7 @@ export default function App() {
         {/* PANELS WRAPPER */}
         <div
           className={`flex-1 flex flex-col lg:flex-row min-h-0 w-full relative z-10 ${
-            shortViewport ? "gap-1.5" : "gap-3 sm:gap-4 md:gap-6 lg:gap-8"
+            shortViewport ? "gap-1.5 lg:gap-8" : "gap-3 sm:gap-4 md:gap-6 lg:gap-8"
           }`}
         >
           
@@ -252,13 +254,13 @@ export default function App() {
             
             <div
               className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3 ${
-                shortViewport ? "px-2 py-1 lg:px-3 lg:py-1.5" : "px-3 py-2 lg:p-4"
+                shortViewport ? "px-2 py-1 lg:p-4" : "px-3 py-2 lg:p-4"
               }`}
             >
               <h2
                 className={`text-cyan-400 font-mono uppercase flex items-center gap-2 lg:gap-3 min-w-0 ${
                   shortViewport
-                    ? "tracking-[0.15em] text-[9px]"
+                    ? "tracking-[0.15em] text-[9px] lg:tracking-[0.25em] lg:text-xs"
                     : "tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs"
                 }`}
               >
@@ -287,7 +289,7 @@ export default function App() {
             
             <motion.div
               className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain ${
-                shortViewport ? "gap-1.5 p-1.5 lg:p-2" : "gap-2 p-2.5 lg:p-3"
+                shortViewport ? "gap-1.5 p-1.5 lg:gap-2 lg:p-3" : "gap-2 p-2.5 lg:p-3"
               }`}
               variants={bootQueueListVariants}
               initial="hidden"
@@ -307,11 +309,7 @@ export default function App() {
                   variants={bootQueueItemVariants}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`shrink-0 snap-start w-[11rem] sm:w-[13.5rem] lg:w-full text-left rounded-lg border transition-colors duration-300 flex flex-col justify-center relative overflow-hidden group cursor-pointer touch-manipulation ${
-                    shortViewport
-                      ? "min-h-9 py-1.5 px-2.5 gap-0 lg:min-h-10 lg:py-2 lg:px-3"
-                      : "min-h-11 py-2.5 px-3 lg:py-3 lg:px-4 gap-0.5 lg:gap-1"
-                  } ${
+                  className={`shrink-0 snap-start w-[12rem] sm:w-[13.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer touch-manipulation ${
                     selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'

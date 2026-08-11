@@ -51,14 +51,23 @@ body,
 }
 
 /*
-  Short viewport (max-height ~700px): keep padding tight even if width
-  breakpoints would otherwise inflate it (wide-but-short desktop windows).
+  Short viewport (max-height ~700px): tighten padding on stacked / narrow shells.
+  At lg+ keep the roomy desktop inset so the starfield stays visible.
 */
 .console-inset.console-short {
   padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
   padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
   padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+}
+
+@media (min-width: 1024px) {
+  .console-inset.console-short {
+    padding-top: max(2.5rem, env(safe-area-inset-top, 0px));
+    padding-right: max(2.5rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(2.5rem, env(safe-area-inset-left, 0px));
+  }
 }
 
 /* Thin scrollbars visible without hover (touch-friendly) */

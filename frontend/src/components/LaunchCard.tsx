@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
@@ -11,6 +11,7 @@ import {
 } from "./CountdownReadout";
 import { FeedStatus } from "./FeedStatus";
 import { useCompactMotion } from "../hooks/useCompactMotion";
+import { useCardCompact } from "../hooks/useCardCompact";
 import {
     formatLocalDateTime,
     formatLocalTime,
@@ -20,7 +21,7 @@ import {
 interface LaunchCardProps {
     launch: Launch;
     feedLive: boolean;
-    /** Short viewport — compress chrome and keep a single nested scroller. */
+    /** Short viewport — compress shell-facing card chrome. */
     shortViewport?: boolean;
 }
 
@@ -58,12 +59,18 @@ export default function LaunchCard({
     feedLive,
     shortViewport = false,
 }: LaunchCardProps) {
+    const rootRef = useRef<HTMLDivElement>(null);
     const compactMotion = useCompactMotion();
-    /** Narrow or short: one card-body scroller — no nested brief scrollbar. */
-    const singleScroll = shortViewport || compactMotion;
+    const cardCompact = useCardCompact(rootRef);
+    /**
+     * Dense chrome only below lg. Desktop width always keeps full type size;
+     * mid/short stacked layouts keep the capped feed + tighter spacing.
+     */
+    const dense = compactMotion && (shortViewport || cardCompact);
+    const compactTravel = dense || compactMotion;
 
     const sectionVariants: Variants = useMemo(() => {
-        const y = compactMotion || shortViewport ? travel.compact.sectionY : travel.desktop.sectionY;
+        const y = compactTravel ? travel.compact.sectionY : travel.desktop.sectionY;
         return {
             hidden: { opacity: 0, y },
             show: {
@@ -72,14 +79,14 @@ export default function LaunchCard({
                 transition: transitions.soft,
             },
         };
-    }, [compactMotion, shortViewport]);
+    }, [compactTravel]);
 
     const visualImageVariants: Variants = useMemo(
         () => ({
             rest: { scale: 1, opacity: 0.82 },
-            focus: { scale: compactMotion || shortViewport ? 1.02 : 1.04, opacity: 1 },
+            focus: { scale: compactTravel ? 1.02 : 1.04, opacity: 1 },
         }),
-        [compactMotion, shortViewport],
+        [compactTravel],
     );
     const imageUrl = launch.image?.image_url || null;
 
@@ -186,8 +193,9 @@ export default function LaunchCard({
 
     return (
         <motion.div
+            ref={rootRef}
             className={`h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-hidden min-h-0 ${
-                shortViewport ? "p-2 sm:p-2.5 lg:p-3" : "p-3 sm:p-4 lg:p-8"
+                dense ? "p-2 sm:p-2.5" : "p-3 sm:p-4 lg:p-5"
             }`}
             variants={cardVariants}
             initial="hidden"
@@ -196,41 +204,41 @@ export default function LaunchCard({
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 
-            {/* Identity + status/countdown — denser when short */}
+            {/* Identity + status/countdown — denser only on stacked short/mid cards */}
             <motion.div
                 variants={sectionVariants}
                 className={`flex flex-col sm:flex-row justify-between items-start shrink-0 ${
-                    shortViewport ? "mb-1.5 gap-1.5" : "mb-2.5 sm:mb-3 lg:mb-8 gap-2 sm:gap-3"
+                    dense ? "mb-1.5 gap-1.5" : "mb-2.5 sm:mb-3 lg:mb-5 gap-2 sm:gap-3"
                 }`}
             >
                 <div className="group cursor-default min-w-0 flex-1">
-                    <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 line-clamp-1 ${
-                        shortViewport
+                    <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words ${
+                        dense
                             ? "text-[8px] tracking-[0.15em] mb-0.5"
-                            : "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.4em] mb-1 sm:mb-2"
+                            : "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] lg:tracking-[0.35em] xl:tracking-[0.4em] mb-1 sm:mb-2"
                     }`}>
                         {launch.launch_service_provider?.name || 'UNKNOWN'}
                     </p>
-                    <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 line-clamp-2 ${
-                        shortViewport
+                    <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words ${
+                        dense
                             ? "text-base tracking-[0.08em]"
-                            : "text-lg sm:text-xl lg:text-2xl tracking-[0.1em] sm:tracking-[0.15em] lg:tracking-[0.2em]"
+                            : "text-lg sm:text-xl lg:text-xl xl:text-2xl tracking-[0.1em] sm:tracking-[0.12em] lg:tracking-[0.15em] xl:tracking-[0.2em]"
                     }`}>
                         {title}
                     </h2>
-                    {showRocketSubtitle && !shortViewport && (
-                        <p className="mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-colors group-hover:text-cyan-300 truncate">
+                    {showRocketSubtitle && !dense && (
+                        <p className="mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-300 break-words">
                             {rocketName}
                         </p>
                     )}
                 </div>
                 
                 <div className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 ${
-                    shortViewport ? "gap-1" : "gap-1.5 sm:gap-3"
+                    dense ? "gap-1" : "gap-1.5 sm:gap-3"
                 }`}>
                     
                     <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 ${
-                        shortViewport ? "px-2.5 py-1 min-h-8" : "px-3 py-2 sm:px-5 sm:py-2.5 min-h-9"
+                        dense ? "px-2.5 py-1 min-h-8" : "px-3 py-2 sm:px-5 sm:py-2.5 min-h-9"
                     }`}>
                         <span className="relative flex h-2 w-2">
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
@@ -283,25 +291,19 @@ export default function LaunchCard({
             </motion.div>
 
             {/*
-              Nested stagger: this region is a motion child of the card, and also
-              a stagger parent. Meta blocks must be direct motion children to cascade.
-              Below lg / short height: visual feed first, single body scroller.
-              Tall desktop: meta left, feed right.
+              Below lg: capped feed + one body scroller (brief fully readable).
+              At lg: feed fills the right column (no void); meta column scrolls.
             */}
             <motion.div
                 variants={cardVariants}
-                className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto pr-1 ${customScrollbar} ${
-                    singleScroll ? "" : "lg:overflow-hidden lg:pr-0"
-                } ${shortViewport ? "gap-2" : "gap-3 sm:gap-4 lg:gap-8"}`}
+                className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto overscroll-contain pr-1 lg:overflow-hidden lg:pr-0 ${customScrollbar} ${
+                    dense ? "gap-2" : "gap-3 sm:gap-4 lg:gap-5"
+                }`}
             >
-                {/* Visual feed — fills leftover height when short */}
+                {/* Visual feed — capped on stacked layouts; fills column on desktop */}
                 <motion.div
                     variants={sectionVariants}
-                    className={`order-1 lg:order-2 relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)] ${
-                        shortViewport
-                            ? "w-full min-h-[5.5rem] flex-1 basis-[42%] shrink lg:w-[45%] lg:min-h-0 lg:flex-1 lg:basis-auto"
-                            : "w-full aspect-[16/10] max-h-[min(32dvh,14rem)] sm:max-h-[min(36dvh,17.5rem)] shrink-0 lg:aspect-auto lg:max-h-none lg:w-[45%] lg:h-full lg:shrink"
-                    }`}
+                    className="order-1 lg:order-2 relative w-full aspect-[16/10] max-h-[min(40%,13.5rem)] sm:max-h-[min(42%,15rem)] shrink-0 lg:w-[45%] lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
                 >
                     <motion.div
                         className="absolute inset-0"
@@ -379,14 +381,14 @@ export default function LaunchCard({
                 {/* Meta + brief — below feed on phone; left column on desktop */}
                 <motion.div
                     variants={cardVariants}
-                    className={`order-2 lg:order-1 w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink grid grid-cols-2 lg:grid-rows-[auto_1fr] min-h-0 content-start ${
-                        shortViewport ? "gap-1.5" : "gap-2 sm:gap-3 lg:gap-4"
-                    } ${singleScroll ? "" : "lg:h-full"}`}
+                    className={`order-2 lg:order-1 w-full shrink-0 lg:w-auto lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 lg:grid-rows-[auto_1fr] content-start ${
+                        dense ? "gap-1.5" : "gap-2 sm:gap-3 lg:gap-3"
+                    }`}
                 >
                         <motion.div
                             variants={sectionVariants}
                             className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden ${
-                                shortViewport ? "p-2" : "p-2.5 sm:p-3 lg:p-4"
+                                dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
                             }`}
                         >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
@@ -417,45 +419,45 @@ export default function LaunchCard({
                         </motion.div>
                         <motion.div
                             variants={sectionVariants}
-                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center ${
-                                shortViewport ? "p-2" : "p-2.5 sm:p-3 lg:p-4"
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 flex flex-col justify-center ${
+                                dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
                             }`}
                         >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
                             <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                                 Launch Coordinates
                             </h3>
-                            <p className="text-xs sm:text-sm text-cyan-50 font-mono tracking-wider break-words leading-tight group-hover:text-white group-active:text-white transition-colors line-clamp-2">
+                            <p className="text-[11px] sm:text-xs lg:text-[13px] text-cyan-50 font-mono tracking-wide lg:tracking-wider break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
                                 {launch.pad?.name || 'TBA'}
                             </p>
-                            <p className="mt-1 text-[10px] sm:text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors line-clamp-2">
+                            <p className="mt-1 text-[9px] sm:text-[10px] lg:text-[11px] text-cyan-500 font-mono uppercase tracking-[0.12em] lg:tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
                                 {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
                             </p>
                         </motion.div>
 
                     <motion.div
                         variants={sectionVariants}
-                        className={`col-span-2 w-full min-h-0 flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative ${
-                            shortViewport ? "p-2" : "p-2.5 sm:p-3 lg:p-4"
-                        } ${singleScroll ? "" : "max-h-[7.5rem] lg:max-h-none lg:h-full"}`}
+                        className={`col-span-2 w-full min-h-0 flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative lg:h-full ${
+                            dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
+                        }`}
                     >
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 group-active:border-cyan-400 transition-colors pointer-events-none"></div>
                         
                         <div className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 ${
-                            shortViewport ? "mb-1.5 pb-1.5" : "mb-2 lg:mb-3 pb-2"
+                            dense ? "mb-1.5 pb-1.5" : "mb-2 lg:mb-2.5 pb-2"
                         }`}>
                             <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                                 Mission Brief
                             </h3>
                             {(missionType || missionOrbit) && (
-                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0 flex-wrap justify-end">
                                     {missionType && (
-                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider max-w-[9rem] sm:max-w-none break-words px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
                                             {missionType}
                                         </span>
                                     )}
                                     {missionOrbit && (
-                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider max-w-[9rem] sm:max-w-none break-words px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
                                             {missionOrbit}
                                         </span>
                                     )}
@@ -463,10 +465,10 @@ export default function LaunchCard({
                             )}
                         </div>
                         <p
-                            className={`text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors ${
-                                singleScroll
+                            className={`text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors break-words ${
+                                dense
                                     ? ""
-                                    : `flex-1 min-h-0 overflow-y-auto pr-1 ${customScrollbar}`
+                                    : `lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1 ${customScrollbar}`
                             }`}
                         >
                             {launch.mission?.description || 'No mission details available at this time.'}
@@ -478,7 +480,7 @@ export default function LaunchCard({
             <motion.div
                 variants={sectionVariants}
                 className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0 ${
-                    shortViewport ? "mt-1.5 pt-1.5" : "mt-2.5 sm:mt-4 lg:mt-6 pt-2.5 sm:pt-4"
+                    dense ? "mt-1.5 pt-1.5" : "mt-2.5 sm:mt-3 lg:mt-4 pt-2.5 sm:pt-3"
                 }`}
             >
                 <FeedStatus

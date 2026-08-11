@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-/** Tall enough for the full console chrome; below this, compress layout. */
+/** True short / landscape heights only — not typical laptop desktops (~900px). */
 const SHORT_QUERY = "(max-height: 700px)";
 
 function readShort(): boolean {
@@ -9,8 +9,8 @@ function readShort(): boolean {
 }
 
 /**
- * True when the viewport is short (phone landscape, short desktop window).
- * Used to compress chrome, thin the queue strip, and keep one nested scroller.
+ * True when the viewport is short (phone landscape, very short window).
+ * Shell compression applies mainly below lg; desktop width keeps roomy chrome.
  */
 export function useShortViewport(): boolean {
   const [short, setShort] = useState(readShort);
