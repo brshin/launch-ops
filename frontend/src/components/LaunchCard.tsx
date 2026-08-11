@@ -194,7 +194,7 @@ export default function LaunchCard({
     return (
         <motion.div
             ref={rootRef}
-            className={`h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-hidden min-h-0 ${
+            className={`w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-clip max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0 ${
                 dense ? "p-2 sm:p-2.5" : "p-3 sm:p-4 lg:p-5"
             }`}
             variants={cardVariants}
@@ -291,22 +291,23 @@ export default function LaunchCard({
             </motion.div>
 
             {/*
-              Stacked: feed stays capped; Mission Brief stretches into leftover
-              height (text top-aligned, scrolls if long). Desktop: side columns.
+              Stacked: hug content; scroll only on the App panel (no nested trap).
+              Desktop: shell fills; brief / meta column scroll.
+              overflow-clip (not hidden) on chrome so wheel/touch reach the scroller.
             */}
             <div
-                className={`flex-1 flex flex-col min-h-0 overflow-y-auto overscroll-contain pr-1 lg:overflow-hidden lg:pr-0 ${customScrollbar}`}
+                className="flex flex-col min-h-0 max-lg:flex-none max-lg:overflow-visible lg:flex-1 lg:overflow-hidden"
             >
             <motion.div
                 variants={cardVariants}
-                className={`flex flex-col lg:flex-row min-h-0 flex-1 lg:min-h-0 lg:overflow-hidden ${
+                className={`flex flex-col lg:flex-row min-h-0 max-lg:flex-none lg:flex-1 lg:min-h-0 lg:overflow-hidden ${
                     dense ? "gap-2" : "gap-3 sm:gap-4 lg:gap-5"
                 }`}
             >
                 {/* Visual feed — capped when stacked; fills column on desktop */}
                 <motion.div
                     variants={sectionVariants}
-                    className="order-1 lg:order-2 relative w-full aspect-[16/10] max-h-[min(40%,13.5rem)] sm:max-h-[min(42%,15rem)] shrink-0 lg:w-[45%] lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+                    className="order-1 lg:order-2 relative w-full aspect-[16/10] max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] shrink-0 lg:w-[45%] lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
                 >
                     <motion.div
                         className="absolute inset-0"
@@ -381,16 +382,16 @@ export default function LaunchCard({
                     </motion.div>
                 </motion.div>
 
-                {/* Meta + brief — brief row grows to fill leftover height when stacked */}
+                {/* Meta + brief — stack: natural height; desktop: fill column */}
                 <motion.div
                     variants={cardVariants}
-                    className={`order-2 lg:order-1 w-full flex-1 min-h-0 self-stretch lg:w-auto lg:flex-1 lg:min-w-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 grid-rows-[auto_1fr] content-stretch items-stretch ${
+                    className={`order-2 lg:order-1 w-full shrink-0 h-auto self-start lg:self-stretch lg:w-auto lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 content-start items-start lg:grid-rows-[auto_1fr] lg:content-stretch lg:items-stretch ${
                         dense ? "gap-1.5" : "gap-2 sm:gap-3 lg:gap-3"
                     }`}
                 >
                         <motion.div
                             variants={sectionVariants}
-                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden ${
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip ${
                                 dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
                             }`}
                         >
@@ -440,7 +441,7 @@ export default function LaunchCard({
 
                     <motion.div
                         variants={sectionVariants}
-                        className={`col-span-2 w-full min-h-0 h-full flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative ${
+                        className={`col-span-2 w-full h-auto min-h-0 self-start flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative lg:self-stretch lg:h-full ${
                             dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
                         }`}
                     >
@@ -468,7 +469,7 @@ export default function LaunchCard({
                             )}
                         </div>
                         <p
-                            className={`flex-1 min-h-0 overflow-y-auto pr-1 text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors break-words ${customScrollbar}`}
+                            className={`text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors break-words lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1 ${customScrollbar}`}
                         >
                             {launch.mission?.description || 'No mission details available at this time.'}
                         </p>

@@ -42,7 +42,7 @@ const urgencyGlow: Record<
 /** Single glyph — remounts via key when the digit changes so exit/enter can tick. */
 function TickDigit({ char }: { char: string }) {
   return (
-    <span className="relative inline-flex h-[1.2em] w-[1ch] shrink-0 items-center justify-center overflow-hidden tabular-nums">
+    <span className="relative inline-flex h-[1.2em] w-[1ch] shrink-0 items-center justify-center overflow-clip tabular-nums">
       <AnimatePresence mode="sync" initial={false}>
         <motion.span
           key={char}

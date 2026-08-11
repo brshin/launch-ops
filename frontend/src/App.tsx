@@ -17,6 +17,7 @@ import {
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
 import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewport } from "./hooks/useShortViewport";
+import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -68,6 +69,7 @@ export default function App() {
 
   const compactMotion = useCompactMotion();
   const shortViewport = useShortViewport();
+  useConsoleScrollbarActivity();
   const starfield = compactMotion
     ? starfieldPool.slice(0, STARFIELD_COUNT.compact)
     : starfieldPool;
@@ -295,7 +297,7 @@ export default function App() {
           
           {/* Launch Queue — horizontal strip below lg; vertical sidebar at lg+ */}
           <motion.div
-            className="w-full lg:w-[320px] h-auto shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden"
+            className="w-full lg:w-[320px] h-auto shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-clip"
             variants={bootPanelVariants}
             initial="hidden"
             animate="show"
@@ -362,7 +364,7 @@ export default function App() {
                   variants={bootQueueItemVariants}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer touch-manipulation ${
+                  className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
                     selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
@@ -417,12 +419,12 @@ export default function App() {
           </motion.div>
 
           {/* RIGHT PANEL: Main Display */}
-          <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col">
+          <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col max-lg:min-h-0 max-lg:overflow-y-auto max-lg:overscroll-y-contain console-scrollbar console-scrollbar-y">
             <AnimatePresence mode="wait">
               {showLaunchCard && activeLaunch ? (
                 <motion.div
                   key={activeLaunch.apiId}
-                  className="h-full w-full min-h-0 flex flex-col"
+                  className="w-full flex flex-col max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0"
                   initial={{ opacity: 0, y: cardEnterY }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -cardEnterY }}
