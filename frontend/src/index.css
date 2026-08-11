@@ -70,6 +70,43 @@ body,
   }
 }
 
+/* Horizontal queue strip — edge fades hint more missions off-screen */
+.queue-strip-fade {
+  width: 1.75rem;
+}
+
+.queue-strip-fade-left {
+  background: linear-gradient(
+    to right,
+    rgba(2, 6, 23, 0.92) 0%,
+    rgba(2, 6, 23, 0.45) 55%,
+    transparent 100%
+  );
+}
+
+.queue-strip-fade-right {
+  width: 2.25rem;
+  background: linear-gradient(
+    to left,
+    rgba(2, 6, 23, 0.95) 0%,
+    rgba(2, 6, 23, 0.5) 50%,
+    transparent 100%
+  );
+}
+
+.queue-strip-fade-right::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-right: 1px solid rgba(34, 211, 238, 0.55);
+  border-top: 1px solid rgba(34, 211, 238, 0.55);
+  transform: translateY(-50%) rotate(45deg);
+  opacity: 0.85;
+}
+
 /* Thin scrollbars visible without hover (touch-friendly) */
 .console-scrollbar {
   scrollbar-width: thin;

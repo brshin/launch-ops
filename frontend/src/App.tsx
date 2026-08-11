@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
 import { FeedStatus } from './components/FeedStatus';
@@ -47,6 +47,24 @@ export default function App() {
     offset: string;
   } | null>(null);
   const [queueRevealed, setQueueRevealed] = useState(false);
+  const queueScrollRef = useRef<HTMLDivElement>(null);
+  const [queueEdges, setQueueEdges] = useState({ left: false, right: false });
+
+  const syncQueueEdges = useCallback(() => {
+    const el = queueScrollRef.current;
+    if (!el) return;
+    // Vertical sidebar at lg — no horizontal edge cues needed.
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      setQueueEdges({ left: false, right: false });
+      return;
+    }
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const left = el.scrollLeft > 14;
+    const right = maxScroll > 14 && el.scrollLeft < maxScroll - 14;
+    setQueueEdges((prev) =>
+      prev.left === left && prev.right === right ? prev : { left, right },
+    );
+  }, []);
 
   const compactMotion = useCompactMotion();
   const shortViewport = useShortViewport();
@@ -121,6 +139,23 @@ export default function App() {
 
     return () => clearInterval(timer); 
   }, []);
+
+  useEffect(() => {
+    const el = queueScrollRef.current;
+    if (!el) return;
+
+    syncQueueEdges();
+    el.addEventListener('scroll', syncQueueEdges, { passive: true });
+    const ro = new ResizeObserver(() => syncQueueEdges());
+    ro.observe(el);
+    window.addEventListener('resize', syncQueueEdges);
+
+    return () => {
+      el.removeEventListener('scroll', syncQueueEdges);
+      ro.disconnect();
+      window.removeEventListener('resize', syncQueueEdges);
+    };
+  }, [launches, queueRevealed, syncQueueEdges]);
 
   const activeLaunch = launches[selectedIndex];
   // Hold the detail card until boot settles so cold load feels staged
@@ -301,9 +336,13 @@ export default function App() {
               </div>
             </div>
             
+            <div className="relative min-h-0 lg:flex-1 lg:min-h-0 flex flex-col">
             <motion.div
+              ref={queueScrollRef}
               className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain ${
-                shortViewport ? "gap-1.5 p-1.5 lg:gap-2 lg:p-3" : "gap-2 p-2.5 lg:p-3"
+                shortViewport
+                  ? "gap-1.5 p-1.5 max-lg:pr-7 lg:gap-2 lg:p-3"
+                  : "gap-2 p-2.5 max-lg:pr-8 lg:p-3"
               }`}
               variants={bootQueueListVariants}
               initial="hidden"
@@ -323,7 +362,7 @@ export default function App() {
                   variants={bootQueueItemVariants}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`shrink-0 snap-start w-[12rem] sm:w-[13.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer touch-manipulation ${
+                  className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer touch-manipulation ${
                     selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
@@ -360,6 +399,21 @@ export default function App() {
                 );
               })}
             </motion.div>
+
+            {/* Horizontal scroll affordance — stacked strip only */}
+            <div
+              aria-hidden
+              className={`queue-strip-fade queue-strip-fade-left pointer-events-none absolute inset-y-0 left-0 z-20 lg:hidden transition-opacity duration-200 ${
+                queueEdges.left ? "opacity-100" : "opacity-0"
+              }`}
+            />
+            <div
+              aria-hidden
+              className={`queue-strip-fade queue-strip-fade-right pointer-events-none absolute inset-y-0 right-0 z-20 lg:hidden transition-opacity duration-200 ${
+                queueEdges.right ? "opacity-100" : "opacity-0"
+              }`}
+            />
+            </div>
           </motion.div>
 
           {/* RIGHT PANEL: Main Display */}
