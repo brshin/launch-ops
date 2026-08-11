@@ -276,28 +276,46 @@ export default function LaunchCard({
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 
-            {/* Identity + status/countdown — soft density bands below lg */}
+            {/* Identity + status/countdown
+                Narrow stack (<sm): status top-right beside title; countdown below.
+                Wider stack (sm+) + desktop: status + countdown right column (unchanged). */}
             <motion.div
                 variants={sectionVariants}
-                className={`flex flex-col sm:flex-row justify-between items-start shrink-0 density-ease ${chrome.identity}`}
+                className={`flex flex-col gap-1.5 sm:gap-0 sm:flex-row sm:justify-between sm:items-start shrink-0 density-ease ${chrome.identity}`}
             >
-                <div className="group cursor-default min-w-0 flex-1">
-                    <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}>
-                        {launch.launch_service_provider?.name || 'UNKNOWN'}
-                    </p>
-                    <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words density-ease ${chrome.title}`}>
-                        {title}
-                    </h2>
-                    {showRocketSubtitle && showRocket && (
-                        <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-300 break-words">
-                            {rocketName}
+                <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full sm:contents">
+                    <div className="group cursor-default min-w-0 flex-1">
+                        <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}>
+                            {launch.launch_service_provider?.name || 'UNKNOWN'}
                         </p>
-                    )}
+                        <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words density-ease ${chrome.title}`}>
+                            {title}
+                        </h2>
+                        {showRocketSubtitle && showRocket && (
+                            <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-300 break-words">
+                                {rocketName}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Narrow stack only: status beside title */}
+                    <div
+                        className={`flex sm:hidden items-center gap-2 shrink-0 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
+                    >
+                        <span className="relative flex h-2 w-2">
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
+                        </span>
+                        <span className={`text-[10px] font-mono uppercase tracking-wider ${statusColors.text}`}>
+                            Status: {status || 'Unk'}
+                        </span>
+                    </div>
                 </div>
                 
                 <div className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 density-ease ${chrome.statusCol}`}>
                     
-                    <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}>
+                    <div
+                        className={`hidden sm:flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
+                    >
                         <span className="relative flex h-2 w-2">
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
