@@ -51,9 +51,16 @@ body,
 }
 
 /*
-  Short viewport (max-height ~700px): tighten padding on stacked / narrow shells.
+  Short viewport bands (stacked / narrow). Soft mid step before full short.
   At lg+ keep the roomy desktop inset so the starfield stays visible.
 */
+.console-inset.console-short-mid {
+  padding-top: max(0.625rem, env(safe-area-inset-top, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+}
+
 .console-inset.console-short {
   padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
   padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
@@ -62,11 +69,25 @@ body,
 }
 
 @media (min-width: 1024px) {
+  .console-inset.console-short-mid,
   .console-inset.console-short {
     padding-top: max(2.5rem, env(safe-area-inset-top, 0px));
     padding-right: max(2.5rem, env(safe-area-inset-right, 0px));
     padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
     padding-left: max(2.5rem, env(safe-area-inset-left, 0px));
+  }
+}
+
+/* Soften band crossings — padding/gap/type ease instead of hard pops */
+.density-ease {
+  transition-property: padding, margin, gap, font-size, letter-spacing, row-gap, column-gap;
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .density-ease {
+    transition: none;
   }
 }
 

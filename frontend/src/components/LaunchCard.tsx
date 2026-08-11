@@ -11,7 +11,11 @@ import {
 } from "./CountdownReadout";
 import { FeedStatus } from "./FeedStatus";
 import { useCompactMotion } from "../hooks/useCompactMotion";
-import { useCardCompact } from "../hooks/useCardCompact";
+import {
+    useCardDensityBand,
+    type CardDensity,
+} from "../hooks/useCardDensityBand";
+import { useShortViewportBand } from "../hooks/useShortViewportBand";
 import {
     formatLocalDateTime,
     formatLocalTime,
@@ -21,11 +25,72 @@ import {
 interface LaunchCardProps {
     launch: Launch;
     feedLive: boolean;
-    /** Short viewport — compress shell-facing card chrome. */
-    shortViewport?: boolean;
 }
 
 const customScrollbar = "console-scrollbar console-scrollbar-y";
+
+/** Soft chrome tokens — roomy matches prior non-dense; dense matches prior dense.
+ *  Bands only apply below lg (`useCardDensityBand` forces roomy on desktop width).
+ */
+const densityChrome: Record<
+    CardDensity,
+    {
+        rootPad: string;
+        identity: string;
+        provider: string;
+        title: string;
+        statusCol: string;
+        statusPill: string;
+        panelsGap: string;
+        metaGap: string;
+        metaPad: string;
+        briefHead: string;
+        footer: string;
+    }
+> = {
+    roomy: {
+        rootPad: "p-3 sm:p-4 lg:p-5",
+        identity: "mb-2.5 sm:mb-3 lg:mb-5 gap-2 sm:gap-3",
+        provider:
+            "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] lg:tracking-[0.35em] xl:tracking-[0.4em] mb-1 sm:mb-2",
+        title:
+            "text-lg sm:text-xl lg:text-xl xl:text-2xl tracking-[0.1em] sm:tracking-[0.12em] lg:tracking-[0.15em] xl:tracking-[0.2em]",
+        statusCol: "gap-1.5 sm:gap-3",
+        statusPill: "px-3 py-2 sm:px-5 sm:py-2.5 min-h-9",
+        panelsGap: "gap-3 sm:gap-4 lg:gap-5",
+        metaGap: "gap-2 sm:gap-3 lg:gap-3",
+        metaPad: "p-2.5 sm:p-3 lg:p-3.5",
+        briefHead: "mb-2 lg:mb-2.5 pb-2",
+        footer: "mt-1.5 pt-1.5 sm:mt-2 sm:pt-2 lg:mt-4 lg:pt-3",
+    },
+    mid: {
+        rootPad: "p-2.5 sm:p-3",
+        identity: "mb-2 gap-1.5 sm:gap-2",
+        provider:
+            "text-[9px] tracking-[0.17em] sm:tracking-[0.22em] mb-0.5 sm:mb-1",
+        title: "text-[17px] sm:text-lg tracking-[0.09em] sm:tracking-[0.11em]",
+        statusCol: "gap-1 sm:gap-2",
+        statusPill: "px-2.5 py-1.5 sm:px-4 sm:py-2 min-h-8 sm:min-h-9",
+        panelsGap: "gap-2.5 sm:gap-3.5",
+        metaGap: "gap-1.5 sm:gap-2.5",
+        metaPad: "p-2 sm:p-2.5",
+        briefHead: "mb-1.5 pb-1.5",
+        footer: "mt-1.5 pt-1.5 sm:mt-2 sm:pt-2",
+    },
+    dense: {
+        rootPad: "p-2 sm:p-2.5",
+        identity: "mb-1.5 gap-1.5",
+        provider: "text-[8px] tracking-[0.15em] mb-0.5",
+        title: "text-base tracking-[0.08em]",
+        statusCol: "gap-1",
+        statusPill: "px-2.5 py-1 min-h-8",
+        panelsGap: "gap-2",
+        metaGap: "gap-1.5",
+        metaPad: "p-2",
+        briefHead: "mb-1.5 pb-1.5",
+        footer: "mt-1.5 pt-1.5",
+    },
+};
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
 const cardVariants: Variants = {
@@ -57,17 +122,25 @@ const visualCrosshairVariants: Variants = {
 export default function LaunchCard({
     launch,
     feedLive,
-    shortViewport = false,
 }: LaunchCardProps) {
     const rootRef = useRef<HTMLDivElement>(null);
     const compactMotion = useCompactMotion();
-    const cardCompact = useCardCompact(rootRef);
+    const shortBand = useShortViewportBand();
+    const cardBand = useCardDensityBand(rootRef, compactMotion);
     /**
-     * Dense chrome only below lg. Desktop width always keeps full type size;
-     * mid/short stacked layouts keep the capped feed + tighter spacing.
+     * Soft density: card-height bands + short-viewport bands (whichever is tighter).
+     * Desktop width always stays roomy type.
      */
-    const dense = compactMotion && (shortViewport || cardCompact);
-    const compactTravel = dense || compactMotion;
+    const density: CardDensity = useMemo(() => {
+        if (!compactMotion) return "roomy";
+        const rank: Record<CardDensity, number> = { roomy: 0, mid: 1, dense: 2 };
+        const fromShort: CardDensity =
+            shortBand === "short" ? "dense" : shortBand === "mid" ? "mid" : "roomy";
+        return rank[cardBand] >= rank[fromShort] ? cardBand : fromShort;
+    }, [compactMotion, cardBand, shortBand]);
+    const chrome = densityChrome[density];
+    const showRocket = density !== "dense";
+    const compactTravel = density !== "roomy" || compactMotion;
 
     const sectionVariants: Variants = useMemo(() => {
         const y = compactTravel ? travel.compact.sectionY : travel.desktop.sectionY;
@@ -194,9 +267,8 @@ export default function LaunchCard({
     return (
         <motion.div
             ref={rootRef}
-            className={`w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-clip max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0 ${
-                dense ? "p-2 sm:p-2.5" : "p-3 sm:p-4 lg:p-5"
-            }`}
+            data-density={density}
+            className={`launch-card w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-clip max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0 density-ease ${chrome.rootPad}`}
             variants={cardVariants}
             initial="hidden"
             animate="show"
@@ -204,42 +276,28 @@ export default function LaunchCard({
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 
-            {/* Identity + status/countdown — denser only on stacked short/mid cards */}
+            {/* Identity + status/countdown — soft density bands below lg */}
             <motion.div
                 variants={sectionVariants}
-                className={`flex flex-col sm:flex-row justify-between items-start shrink-0 ${
-                    dense ? "mb-1.5 gap-1.5" : "mb-2.5 sm:mb-3 lg:mb-5 gap-2 sm:gap-3"
-                }`}
+                className={`flex flex-col sm:flex-row justify-between items-start shrink-0 density-ease ${chrome.identity}`}
             >
                 <div className="group cursor-default min-w-0 flex-1">
-                    <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words ${
-                        dense
-                            ? "text-[8px] tracking-[0.15em] mb-0.5"
-                            : "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] lg:tracking-[0.35em] xl:tracking-[0.4em] mb-1 sm:mb-2"
-                    }`}>
+                    <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}>
                         {launch.launch_service_provider?.name || 'UNKNOWN'}
                     </p>
-                    <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words ${
-                        dense
-                            ? "text-base tracking-[0.08em]"
-                            : "text-lg sm:text-xl lg:text-xl xl:text-2xl tracking-[0.1em] sm:tracking-[0.12em] lg:tracking-[0.15em] xl:tracking-[0.2em]"
-                    }`}>
+                    <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words density-ease ${chrome.title}`}>
                         {title}
                     </h2>
-                    {showRocketSubtitle && !dense && (
-                        <p className="mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-300 break-words">
+                    {showRocketSubtitle && showRocket && (
+                        <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-300 break-words">
                             {rocketName}
                         </p>
                     )}
                 </div>
                 
-                <div className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 ${
-                    dense ? "gap-1" : "gap-1.5 sm:gap-3"
-                }`}>
+                <div className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 density-ease ${chrome.statusCol}`}>
                     
-                    <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 ${
-                        dense ? "px-2.5 py-1 min-h-8" : "px-3 py-2 sm:px-5 sm:py-2.5 min-h-9"
-                    }`}>
+                    <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}>
                         <span className="relative flex h-2 w-2">
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
@@ -300,9 +358,7 @@ export default function LaunchCard({
             >
             <motion.div
                 variants={cardVariants}
-                className={`flex flex-col lg:flex-row min-h-0 max-lg:flex-none lg:flex-1 lg:min-h-0 lg:overflow-hidden ${
-                    dense ? "gap-2" : "gap-3 sm:gap-4 lg:gap-5"
-                }`}
+                className={`flex flex-col lg:flex-row min-h-0 max-lg:flex-none lg:flex-1 lg:min-h-0 lg:overflow-hidden density-ease ${chrome.panelsGap}`}
             >
                 {/* Visual feed — capped when stacked; fills column on desktop */}
                 <motion.div
@@ -385,15 +441,11 @@ export default function LaunchCard({
                 {/* Meta + brief — stack: natural height; desktop: fill column */}
                 <motion.div
                     variants={cardVariants}
-                    className={`order-2 lg:order-1 w-full shrink-0 h-auto self-start lg:self-stretch lg:w-auto lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 content-start items-start lg:grid-rows-[auto_1fr] lg:content-stretch lg:items-stretch ${
-                        dense ? "gap-1.5" : "gap-2 sm:gap-3 lg:gap-3"
-                    }`}
+                    className={`order-2 lg:order-1 w-full shrink-0 h-auto self-start lg:self-stretch lg:w-auto lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 content-start items-start lg:grid-rows-[auto_1fr] lg:content-stretch lg:items-stretch density-ease ${chrome.metaGap}`}
                 >
                         <motion.div
                             variants={sectionVariants}
-                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip ${
-                                dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
-                            }`}
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
                         >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
                             <div className="flex items-center justify-between gap-2 mb-1">
@@ -423,9 +475,7 @@ export default function LaunchCard({
                         </motion.div>
                         <motion.div
                             variants={sectionVariants}
-                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 flex flex-col justify-center ${
-                                dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
-                            }`}
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 flex flex-col justify-center density-ease ${chrome.metaPad}`}
                         >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
                             <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
@@ -441,15 +491,11 @@ export default function LaunchCard({
 
                     <motion.div
                         variants={sectionVariants}
-                        className={`col-span-2 w-full h-auto min-h-0 self-start flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative lg:self-stretch lg:h-full ${
-                            dense ? "p-2" : "p-2.5 sm:p-3 lg:p-3.5"
-                        }`}
+                        className={`col-span-2 w-full h-auto min-h-0 self-start flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative lg:self-stretch lg:h-full density-ease ${chrome.metaPad}`}
                     >
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 group-active:border-cyan-400 transition-colors pointer-events-none"></div>
                         
-                        <div className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 ${
-                            dense ? "mb-1.5 pb-1.5" : "mb-2 lg:mb-2.5 pb-2"
-                        }`}>
+                        <div className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 density-ease ${chrome.briefHead}`}>
                             <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                                 Mission Brief
                             </h3>
@@ -479,9 +525,7 @@ export default function LaunchCard({
 
             <motion.div
                 variants={sectionVariants}
-                className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[9px] font-mono uppercase tracking-[0.2em] ${
-                    dense ? "mt-1.5 pt-1.5" : "mt-1.5 pt-1.5 sm:mt-2 sm:pt-2 lg:mt-4 lg:pt-3"
-                }`}
+                className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[9px] font-mono uppercase tracking-[0.2em] density-ease ${chrome.footer}`}
             >
                 <FeedStatus
                     live={feedLive}

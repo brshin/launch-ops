@@ -16,7 +16,7 @@ import {
 } from "./lib/bootMotion";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
 import { useCompactMotion } from "./hooks/useCompactMotion";
-import { useShortViewport } from "./hooks/useShortViewport";
+import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
@@ -68,7 +68,7 @@ export default function App() {
   }, []);
 
   const compactMotion = useCompactMotion();
-  const shortViewport = useShortViewport();
+  const shortBand = useShortViewportBand();
   useConsoleScrollbarActivity();
   const starfield = compactMotion
     ? starfieldPool.slice(0, STARFIELD_COUNT.compact)
@@ -198,17 +198,22 @@ export default function App() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0891b215_1px,transparent_1px),linear-gradient(to_bottom,#0891b215_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_100%_100%_at_50%_50%,#000_40%,transparent_100%)] opacity-50"></div>
       </motion.div>
 
-      {/* MAIN CONTENT WRAPPER */}
+      {/* MAIN CONTENT WRAPPER — soft short bands via data-short + CSS / class maps */}
       <div
-        className={`console-inset relative z-10 flex flex-col w-full h-full min-h-0${shortViewport ? " console-short" : ""}`}
+        data-short={shortBand}
+        className={`console-inset relative z-10 flex flex-col w-full h-full min-h-0 density-ease${
+          shortBand === "short" ? " console-short" : shortBand === "mid" ? " console-short-mid" : ""
+        }`}
       >
 
         {/* TOP NAVIGATION / HEADER — compact vertically; sys clock stays one-line when stacked */}
         <motion.header
-          className={`w-full flex justify-between items-center gap-3 border-b border-cyan-900/60 relative z-20 shrink-0 ${
-            shortViewport
+          className={`w-full flex justify-between items-center gap-3 border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
+            shortBand === "short"
               ? "mb-1.5 pb-1.5 lg:mb-3 lg:pb-2.5"
-              : "mb-2 sm:mb-2.5 lg:mb-3 pb-2 sm:pb-2.5"
+              : shortBand === "mid"
+                ? "mb-1.5 pb-2 sm:mb-2 lg:mb-3 lg:pb-2.5"
+                : "mb-2 sm:mb-2.5 lg:mb-3 pb-2 sm:pb-2.5"
           }`}
           variants={bootHeaderVariants}
           initial="hidden"
@@ -217,16 +222,18 @@ export default function App() {
           
           <div className="flex flex-col justify-center cursor-default min-w-0">
             <h1
-              className={`font-bold text-slate-100 uppercase leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] ${
-                shortViewport
+              className={`font-bold text-slate-100 uppercase leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] density-ease ${
+                shortBand === "short"
                   ? "text-xl tracking-[0.1em] lg:text-3xl lg:tracking-[0.16em]"
-                  : "text-2xl sm:text-3xl tracking-[0.12em] sm:tracking-[0.16em]"
+                  : shortBand === "mid"
+                    ? "text-[1.35rem] sm:text-[1.65rem] tracking-[0.11em] sm:tracking-[0.14em] lg:text-3xl lg:tracking-[0.16em]"
+                    : "text-2xl sm:text-3xl tracking-[0.12em] sm:tracking-[0.16em]"
               }`}
             >
               Launch
               <span
-                className={`text-cyan-500 ml-[0.12em] ${
-                  shortViewport
+                className={`text-cyan-500 ml-[0.12em] density-ease ${
+                  shortBand === "short"
                     ? "tracking-[0.08em] lg:tracking-[0.1em]"
                     : "tracking-[0.08em] sm:tracking-[0.1em]"
                 }`}
@@ -236,9 +243,11 @@ export default function App() {
             </h1>
             <p
               className={`font-mono text-cyan-400 uppercase opacity-80 leading-none ${
-                shortViewport
+                shortBand === "short"
                   ? "hidden lg:block text-[10px] tracking-[0.3em] mt-1"
-                  : "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.32em] mt-1"
+                  : shortBand === "mid"
+                    ? "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.3em] mt-1"
+                    : "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.32em] mt-1"
               }`}
             >
               Global Launch Tracker
@@ -290,8 +299,12 @@ export default function App() {
 
         {/* PANELS WRAPPER */}
         <div
-          className={`flex-1 flex flex-col lg:flex-row min-h-0 w-full relative z-10 ${
-            shortViewport ? "gap-1.5 lg:gap-8" : "gap-3 sm:gap-4 md:gap-6 lg:gap-8"
+          className={`flex-1 flex flex-col lg:flex-row min-h-0 w-full relative z-10 density-ease ${
+            shortBand === "short"
+              ? "gap-1.5 lg:gap-8"
+              : shortBand === "mid"
+                ? "gap-2 sm:gap-3 md:gap-4 lg:gap-8"
+                : "gap-3 sm:gap-4 md:gap-6 lg:gap-8"
           }`}
         >
           
@@ -304,15 +317,21 @@ export default function App() {
           >
             
             <div
-              className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3 ${
-                shortViewport ? "px-2 py-1 lg:p-4" : "px-3 py-2 lg:p-4"
+              className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3 density-ease ${
+                shortBand === "short"
+                  ? "px-2 py-1 lg:p-4"
+                  : shortBand === "mid"
+                    ? "px-2.5 py-1.5 lg:p-4"
+                    : "px-3 py-2 lg:p-4"
               }`}
             >
               <h2
-                className={`text-cyan-400 font-mono uppercase flex items-center gap-2 lg:gap-3 min-w-0 ${
-                  shortViewport
+                className={`text-cyan-400 font-mono uppercase flex items-center gap-2 lg:gap-3 min-w-0 density-ease ${
+                  shortBand === "short"
                     ? "tracking-[0.15em] text-[9px] lg:tracking-[0.25em] lg:text-xs"
-                    : "tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs"
+                    : shortBand === "mid"
+                      ? "tracking-[0.17em] text-[9px] sm:text-[10px] lg:tracking-[0.25em] lg:text-xs"
+                      : "tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs"
                 }`}
               >
                 <span className="relative flex h-1.5 w-1.5 lg:h-2 lg:w-2 shrink-0">
@@ -341,10 +360,12 @@ export default function App() {
             <div className="relative min-h-0 lg:flex-1 lg:min-h-0 flex flex-col">
             <motion.div
               ref={queueScrollRef}
-              className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain ${
-                shortViewport
+              className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain density-ease ${
+                shortBand === "short"
                   ? "gap-1.5 p-1.5 max-lg:pr-7 lg:gap-2 lg:p-3"
-                  : "gap-2 p-2.5 max-lg:pr-8 lg:p-3"
+                  : shortBand === "mid"
+                    ? "gap-1.5 p-2 max-lg:pr-7 lg:gap-2 lg:p-3"
+                    : "gap-2 p-2.5 max-lg:pr-8 lg:p-3"
               }`}
               variants={bootQueueListVariants}
               initial="hidden"
@@ -433,7 +454,6 @@ export default function App() {
                   <LaunchCard
                     launch={activeLaunch}
                     feedLive={feedLive}
-                    shortViewport={shortViewport}
                   />
                 </motion.div>
               ) : (
