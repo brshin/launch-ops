@@ -1,34 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
 import { FeedStatus } from './components/FeedStatus';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
-import { transitions } from "./lib/motionTokens";
+import { STARFIELD_COUNT, transitions, travel } from "./lib/motionTokens";
 import {
-  bootHeaderVariants,
-  bootPanelVariants,
-  bootQueueItemVariants,
   bootQueueListVariants,
   bootStageVariants,
-  bootSysClockVariants,
+  createBootHeaderVariants,
+  createBootPanelVariants,
+  createBootQueueItemVariants,
+  createBootSysClockVariants,
 } from "./lib/bootMotion";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
+import { useCompactMotion } from "./hooks/useCompactMotion";
+import { useShortViewportBand } from "./hooks/useShortViewportBand";
+import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const socket = io(API_URL);
 
-const starfield = Array.from({ length: 250 }).map(() => ({
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  size: Math.random() * 2.5 + 0.5,
-  opacity: Math.random() * 0.8 + 0.2,
-  animationDelay: `${Math.random() * 5}s`,
-  animationDuration: `${Math.random() * 3 + 2}s`
-})); 
+function createStarfield(count: number) {
+  return Array.from({ length: count }).map(() => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 2.5 + 0.5,
+    opacity: Math.random() * 0.8 + 0.2,
+    animationDelay: `${Math.random() * 5}s`,
+    animationDuration: `${Math.random() * 3 + 2}s`,
+  }));
+}
+
+/** Pre-generate full field once; slice for compact viewports to avoid regen jitter. */
+const starfieldPool = createStarfield(STARFIELD_COUNT.desktop);
 
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
@@ -40,6 +48,49 @@ export default function App() {
     offset: string;
   } | null>(null);
   const [queueRevealed, setQueueRevealed] = useState(false);
+  const queueScrollRef = useRef<HTMLDivElement>(null);
+  const [queueEdges, setQueueEdges] = useState({ left: false, right: false });
+
+  const syncQueueEdges = useCallback(() => {
+    const el = queueScrollRef.current;
+    if (!el) return;
+    // Vertical sidebar at lg — no horizontal edge cues needed.
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      setQueueEdges({ left: false, right: false });
+      return;
+    }
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const left = el.scrollLeft > 14;
+    const right = maxScroll > 14 && el.scrollLeft < maxScroll - 14;
+    setQueueEdges((prev) =>
+      prev.left === left && prev.right === right ? prev : { left, right },
+    );
+  }, []);
+
+  const compactMotion = useCompactMotion();
+  const shortBand = useShortViewportBand();
+  useConsoleScrollbarActivity();
+  const starfield = compactMotion
+    ? starfieldPool.slice(0, STARFIELD_COUNT.compact)
+    : starfieldPool;
+
+  const bootHeaderVariants = useMemo(
+    () => createBootHeaderVariants(compactMotion),
+    [compactMotion],
+  );
+  const bootSysClockVariants = useMemo(
+    () => createBootSysClockVariants(compactMotion),
+    [compactMotion],
+  );
+  const bootPanelVariants = useMemo(
+    () => createBootPanelVariants(compactMotion),
+    [compactMotion],
+  );
+  const bootQueueItemVariants = useMemo(
+    () => createBootQueueItemVariants(compactMotion),
+    [compactMotion],
+  );
+  const cardEnterY = compactMotion ? travel.compact.cardY : travel.desktop.cardY;
 
   const { bootComplete, isBooting } = useConsoleBoot(launches.length > 0);
 
@@ -91,12 +142,29 @@ export default function App() {
     return () => clearInterval(timer); 
   }, []);
 
+  useEffect(() => {
+    const el = queueScrollRef.current;
+    if (!el) return;
+
+    syncQueueEdges();
+    el.addEventListener('scroll', syncQueueEdges, { passive: true });
+    const ro = new ResizeObserver(() => syncQueueEdges());
+    ro.observe(el);
+    window.addEventListener('resize', syncQueueEdges);
+
+    return () => {
+      el.removeEventListener('scroll', syncQueueEdges);
+      ro.disconnect();
+      window.removeEventListener('resize', syncQueueEdges);
+    };
+  }, [launches, queueRevealed, syncQueueEdges]);
+
   const activeLaunch = launches[selectedIndex];
   // Hold the detail card until boot settles so cold load feels staged
   const showLaunchCard = Boolean(activeLaunch && bootComplete);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
+    <div className="relative w-screen h-dvh overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
       
       {/* Space Background — boots in first */}
       <motion.div
@@ -130,48 +198,97 @@ export default function App() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0891b215_1px,transparent_1px),linear-gradient(to_bottom,#0891b215_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_100%_100%_at_50%_50%,#000_40%,transparent_100%)] opacity-50"></div>
       </motion.div>
 
-      {/* MAIN CONTENT WRAPPER */}
-      <div className="relative z-10 flex flex-col w-full h-full p-6 md:p-10 min-h-0">
+      {/* MAIN CONTENT WRAPPER — soft short bands via data-short + CSS / class maps */}
+      <div
+        data-short={shortBand}
+        className={`console-inset relative z-10 flex flex-col w-full h-full min-h-0 density-ease${
+          shortBand === "short" ? " console-short" : shortBand === "mid" ? " console-short-mid" : ""
+        }`}
+      >
 
-        {/* TOP NAVIGATION / HEADER */}
+        {/* TOP NAVIGATION / HEADER — compact vertically; sys clock stays one-line when stacked */}
         <motion.header
-          className="w-full flex justify-between items-end mb-6 border-b border-cyan-900/60 pb-4 relative z-20 shrink-0"
+          className={`w-full flex justify-between items-center gap-3 border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
+            shortBand === "short"
+              ? "mb-1.5 pb-1.5 lg:mb-3 lg:pb-2.5"
+              : shortBand === "mid"
+                ? "mb-1.5 pb-2 sm:mb-2 lg:mb-3 lg:pb-2.5"
+                : "mb-2 sm:mb-2.5 lg:mb-3 pb-2 sm:pb-2.5"
+          }`}
           variants={bootHeaderVariants}
           initial="hidden"
           animate="show"
         >
           
-          <div className="flex flex-col cursor-default">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+          <div className="flex flex-col justify-center cursor-default min-w-0">
+            <h1
+              className={`font-bold text-slate-100 uppercase leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] density-ease ${
+                shortBand === "short"
+                  ? "text-xl tracking-[0.1em] lg:text-3xl lg:tracking-[0.16em]"
+                  : shortBand === "mid"
+                    ? "text-[1.35rem] sm:text-[1.65rem] tracking-[0.11em] sm:tracking-[0.14em] lg:text-3xl lg:tracking-[0.16em]"
+                    : "text-2xl sm:text-3xl tracking-[0.12em] sm:tracking-[0.16em]"
+              }`}
+            >
               Launch
-              <span className="text-cyan-500 tracking-[0.12em] ml-[0.12em]">Ops</span>
+              <span
+                className={`text-cyan-500 ml-[0.12em] density-ease ${
+                  shortBand === "short"
+                    ? "tracking-[0.08em] lg:tracking-[0.1em]"
+                    : "tracking-[0.08em] sm:tracking-[0.1em]"
+                }`}
+              >
+                Ops
+              </span>
             </h1>
-            <p className="text-[10px] md:text-xs font-mono text-cyan-400 uppercase tracking-[0.4em] mt-1 opacity-80">
+            <p
+              className={`font-mono text-cyan-400 uppercase opacity-80 leading-none ${
+                shortBand === "short"
+                  ? "hidden lg:block text-[10px] tracking-[0.3em] mt-1"
+                  : shortBand === "mid"
+                    ? "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.3em] mt-1"
+                    : "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.32em] mt-1"
+              }`}
+            >
               Global Launch Tracker
             </p>
           </div>
 
           <motion.div
-            className="hidden sm:flex items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md"
+            className="flex items-center gap-2 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-sm backdrop-blur-md shrink-0"
             variants={bootSysClockVariants}
             initial="hidden"
             animate="show"
           >
-            <span className="relative mt-[3px] flex h-1.5 w-1.5 shrink-0">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
-            <div className="flex flex-col font-mono uppercase leading-none">
-              <div className="flex items-center justify-between gap-4 mb-1">
+            {/* Stacked / mid: single horizontal readout — no extra header height */}
+            <div className="flex lg:hidden items-baseline gap-x-2 font-mono uppercase leading-none min-w-0">
+              <span className="text-[9px] tracking-[0.2em] text-cyan-500 shrink-0">Sys</span>
+              <span className="text-[11px] sm:text-xs tracking-[0.14em] text-cyan-100 tabular-nums whitespace-nowrap">
+                {sysClock?.time ?? '—:—:—'}
+              </span>
+              <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-500 tabular-nums whitespace-nowrap">
+                {sysClock?.date ?? '—'}
+              </span>
+              <span className="text-[9px] tracking-widest text-cyan-600 shrink-0">
+                {sysClock?.offset ?? '—'}
+              </span>
+            </div>
+            {/* Desktop: compact two-line block, still short */}
+            <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-[9px] tracking-[0.3em] text-cyan-500">Sys Time</span>
                 <span className="text-[9px] tracking-widest text-cyan-500">
                   {sysClock?.offset ?? '—'}
                 </span>
               </div>
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-sm md:text-base tracking-[0.2em] text-cyan-100 tabular-nums">
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm tracking-[0.18em] text-cyan-100 tabular-nums">
                   {sysClock?.time ?? 'INITIALIZING...'}
                 </span>
-                <span className="text-[10px] tracking-[0.2em] text-cyan-500 tabular-nums">
+                <span className="text-[10px] tracking-[0.18em] text-cyan-500 tabular-nums">
                   {sysClock?.date ?? '—'}
                 </span>
               </div>
@@ -181,20 +298,44 @@ export default function App() {
         </motion.header>
 
         {/* PANELS WRAPPER */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 w-full relative z-10">
+        <div
+          className={`flex-1 flex flex-col lg:flex-row min-h-0 w-full relative z-10 density-ease ${
+            shortBand === "short"
+              ? "gap-1.5 lg:gap-8"
+              : shortBand === "mid"
+                ? "gap-2 sm:gap-3 md:gap-4 lg:gap-8"
+                : "gap-3 sm:gap-4 md:gap-6 lg:gap-8"
+          }`}
+        >
           
-          {/* LEFT PANEL: Launch Queue */}
+          {/* Launch Queue — horizontal strip below lg; vertical sidebar at lg+ */}
           <motion.div
-            className="w-full lg:w-[320px] h-[180px] md:h-[200px] lg:h-full shrink-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-hidden"
+            className="w-full lg:w-[320px] h-auto shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-clip"
             variants={bootPanelVariants}
             initial="hidden"
             animate="show"
           >
             
-            <div className="p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-3">
-              <h2 className="text-cyan-400 font-mono tracking-[0.25em] text-xs uppercase flex items-center gap-3 min-w-0">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
+            <div
+              className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3 density-ease ${
+                shortBand === "short"
+                  ? "px-2 py-1 lg:p-4"
+                  : shortBand === "mid"
+                    ? "px-2.5 py-1.5 lg:p-4"
+                    : "px-3 py-2 lg:p-4"
+              }`}
+            >
+              <h2
+                className={`text-cyan-400 font-mono uppercase flex items-center gap-2 lg:gap-3 min-w-0 density-ease ${
+                  shortBand === "short"
+                    ? "tracking-[0.15em] text-[9px] lg:tracking-[0.25em] lg:text-xs"
+                    : shortBand === "mid"
+                      ? "tracking-[0.17em] text-[9px] sm:text-[10px] lg:tracking-[0.25em] lg:text-xs"
+                      : "tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs"
+                }`}
+              >
+                <span className="relative flex h-1.5 w-1.5 lg:h-2 lg:w-2 shrink-0">
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 lg:h-2 lg:w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
                 Launch Queue
               </h2>
@@ -216,16 +357,16 @@ export default function App() {
               </div>
             </div>
             
+            <div className="relative min-h-0 lg:flex-1 lg:min-h-0 flex flex-col">
             <motion.div
-              className="flex-1 overflow-y-auto p-3 gap-2 flex flex-col relative z-10 
-  [&::-webkit-scrollbar]:w-1.5 
-  [&::-webkit-scrollbar-track]:bg-black/20 
-  [&::-webkit-scrollbar-track]:border-l 
-  [&::-webkit-scrollbar-track]:border-cyan-900/30 
-  [&::-webkit-scrollbar-thumb]:bg-cyan-800/80 
-  [&::-webkit-scrollbar-thumb]:rounded-sm 
-  hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
-  hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]"
+              ref={queueScrollRef}
+              className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain density-ease ${
+                shortBand === "short"
+                  ? "gap-1.5 p-1.5 max-lg:pr-7 lg:gap-2 lg:p-3"
+                  : shortBand === "mid"
+                    ? "gap-1.5 p-2 max-lg:pr-7 lg:gap-2 lg:p-3"
+                    : "gap-2 p-2.5 max-lg:pr-8 lg:p-3"
+              }`}
               variants={bootQueueListVariants}
               initial="hidden"
               animate={queueRevealed ? 'show' : 'hidden'}
@@ -235,44 +376,44 @@ export default function App() {
                   launch.launch_service_provider?.abbrev ||
                   launch.launch_service_provider?.name ||
                   null;
+                const selected = selectedIndex === index;
 
                 return (
                 <motion.button
                   key={launch.apiId || index}
                   type="button"
                   variants={bootQueueItemVariants}
-                  whileTap={{ scale: 0.985 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`w-full shrink-0 text-left py-2.5 px-3 md:py-3 md:px-4 rounded-lg border transition-colors duration-300 flex flex-col gap-1 relative overflow-hidden group cursor-pointer ${
-                    selectedIndex === index 
+                  className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
+                    selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
-                      : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50'
+                      : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
                   }`}
                 >
                   <AnimatePresence>
-                    {selectedIndex === index && (
+                    {selected && (
                       <motion.div
                         key="selected-bar"
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee]"
-                        initial={{ scaleY: 0, opacity: 0 }}
-                        animate={{ scaleY: 1, opacity: 1 }}
-                        exit={{ scaleY: 0, opacity: 0 }}
+                        className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-400 shadow-[0_0_10px_#22d3ee] lg:inset-x-auto lg:left-0 lg:top-0 lg:bottom-0 lg:h-auto lg:w-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         transition={transitions.snappy}
-                        style={{ transformOrigin: 'center' }}
                       />
                     )}
                   </AnimatePresence>
                   
-                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 transition-colors">
+                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                     {formatLocalDateTime(launch.net, { includeYear: false }).label}
                   </span>
 
                   <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
-                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-widest truncate transition-colors ${selectedIndex === index ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50'}`}>
+                    <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide sm:tracking-wider lg:tracking-widest truncate transition-colors ${selected ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50 group-active:text-cyan-50'}`}>
                       {getLaunchTitle(launch)}
                     </span>
                     {provider && (
-                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selectedIndex === index ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500'}`}>
+                      <span className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selected ? 'text-cyan-500' : 'text-cyan-600 group-hover:text-cyan-500 group-active:text-cyan-500'}`}>
                         {provider}
                       </span>
                     )}
@@ -281,18 +422,33 @@ export default function App() {
                 );
               })}
             </motion.div>
+
+            {/* Horizontal scroll affordance — stacked strip only */}
+            <div
+              aria-hidden
+              className={`queue-strip-fade queue-strip-fade-left pointer-events-none absolute inset-y-0 left-0 z-20 lg:hidden transition-opacity duration-200 ${
+                queueEdges.left ? "opacity-100" : "opacity-0"
+              }`}
+            />
+            <div
+              aria-hidden
+              className={`queue-strip-fade queue-strip-fade-right pointer-events-none absolute inset-y-0 right-0 z-20 lg:hidden transition-opacity duration-200 ${
+                queueEdges.right ? "opacity-100" : "opacity-0"
+              }`}
+            />
+            </div>
           </motion.div>
 
           {/* RIGHT PANEL: Main Display */}
-          <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col">
+          <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col max-lg:min-h-0 max-lg:overflow-y-auto max-lg:overscroll-y-contain console-scrollbar console-scrollbar-y">
             <AnimatePresence mode="wait">
               {showLaunchCard && activeLaunch ? (
                 <motion.div
                   key={activeLaunch.apiId}
-                  className="h-full w-full min-h-0 flex flex-col"
-                  initial={{ opacity: 0, y: 10 }}
+                  className="w-full flex flex-col max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0"
+                  initial={{ opacity: 0, y: cardEnterY }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  exit={{ opacity: 0, y: -cardEnterY }}
                   transition={transitions.soft}
                 >
                   <LaunchCard

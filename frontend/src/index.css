@@ -1,1 +1,178 @@
 @import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+/* Console chrome: responsive padding floored by notch / home-indicator insets */
+.console-inset {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+}
+
+@media (min-width: 640px) {
+  .console-inset {
+    padding-top: max(1rem, env(safe-area-inset-top, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  }
+}
+
+@media (min-width: 768px) {
+  .console-inset {
+    padding-top: max(2rem, env(safe-area-inset-top, 0px));
+    padding-right: max(2rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(2rem, env(safe-area-inset-left, 0px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .console-inset {
+    padding-top: max(2.5rem, env(safe-area-inset-top, 0px));
+    padding-right: max(2.5rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(2.5rem, env(safe-area-inset-left, 0px));
+  }
+}
+
+/*
+  Short viewport bands (stacked / narrow). Soft mid step before full short.
+  At lg+ keep the roomy desktop inset so the starfield stays visible.
+*/
+.console-inset.console-short-mid {
+  padding-top: max(0.625rem, env(safe-area-inset-top, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+}
+
+.console-inset.console-short {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+}
+
+@media (min-width: 1024px) {
+  .console-inset.console-short-mid,
+  .console-inset.console-short {
+    padding-top: max(2.5rem, env(safe-area-inset-top, 0px));
+    padding-right: max(2.5rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(2.5rem, env(safe-area-inset-left, 0px));
+  }
+}
+
+/* Soften band crossings — padding/gap/type ease instead of hard pops */
+.density-ease {
+  transition-property: padding, margin, gap, font-size, letter-spacing, row-gap, column-gap;
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .density-ease {
+    transition: none;
+  }
+}
+
+/* Horizontal queue strip — edge fades hint more missions off-screen */
+.queue-strip-fade {
+  width: 1.75rem;
+}
+
+.queue-strip-fade-left {
+  background: linear-gradient(
+    to right,
+    rgba(2, 6, 23, 0.92) 0%,
+    rgba(2, 6, 23, 0.45) 55%,
+    transparent 100%
+  );
+}
+
+.queue-strip-fade-right {
+  width: 2.25rem;
+  background: linear-gradient(
+    to left,
+    rgba(2, 6, 23, 0.95) 0%,
+    rgba(2, 6, 23, 0.5) 50%,
+    transparent 100%
+  );
+}
+
+.queue-strip-fade-right::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-right: 1px solid rgba(34, 211, 238, 0.55);
+  border-top: 1px solid rgba(34, 211, 238, 0.55);
+  transform: translateY(-50%) rotate(45deg);
+  opacity: 0.85;
+}
+
+/*
+  Console scrollbars — cyan HUD thumb matching the queue strip.
+  Idle: invisible. Visible on hover or while `.scrollbar-active` (scroll in use).
+*/
+.console-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.console-scrollbar:hover,
+.console-scrollbar.scrollbar-active {
+  scrollbar-color: rgba(8, 145, 178, 0.8) rgba(0, 0, 0, 0.2);
+}
+
+.console-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 4px;
+}
+
+.console-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.console-scrollbar:hover::-webkit-scrollbar-track,
+.console-scrollbar.scrollbar-active::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.console-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.console-scrollbar:hover::-webkit-scrollbar-thumb,
+.console-scrollbar.scrollbar-active::-webkit-scrollbar-thumb {
+  background: rgba(8, 145, 178, 0.8);
+}
+
+.console-scrollbar::-webkit-scrollbar-thumb:hover,
+.console-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgb(6, 182, 212);
+  box-shadow: 0 0 10px #22d3ee;
+}
+
+.console-scrollbar-y:hover::-webkit-scrollbar-track,
+.console-scrollbar-y.scrollbar-active::-webkit-scrollbar-track {
+  border-left: 1px solid rgba(22, 78, 99, 0.3);
+}

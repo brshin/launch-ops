@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
-import { transitions } from "../lib/motionTokens";
+import { transitions, travel } from "../lib/motionTokens";
 import {
     AwaitingTelemetryLabel,
     CountdownFailureLabel,
@@ -10,6 +10,12 @@ import {
     TickingCountdown,
 } from "./CountdownReadout";
 import { FeedStatus } from "./FeedStatus";
+import { useCompactMotion } from "../hooks/useCompactMotion";
+import {
+    useCardDensityBand,
+    type CardDensity,
+} from "../hooks/useCardDensityBand";
+import { useShortViewportBand } from "../hooks/useShortViewportBand";
 import {
     formatLocalDateTime,
     formatLocalTime,
@@ -21,16 +27,70 @@ interface LaunchCardProps {
     feedLive: boolean;
 }
 
-const customScrollbar = `
-  [&::-webkit-scrollbar]:w-1.5 
-  [&::-webkit-scrollbar-track]:bg-black/20 
-  [&::-webkit-scrollbar-track]:border-l 
-  [&::-webkit-scrollbar-track]:border-cyan-900/30 
-  [&::-webkit-scrollbar-thumb]:bg-cyan-800/80 
-  [&::-webkit-scrollbar-thumb]:rounded-sm 
-  hover:[&::-webkit-scrollbar-thumb]:bg-cyan-500 
-  hover:[&::-webkit-scrollbar-thumb]:shadow-[0_0_10px_#22d3ee]
-`;
+const customScrollbar = "console-scrollbar console-scrollbar-y";
+
+/** Soft chrome tokens — roomy matches prior non-dense; dense matches prior dense.
+ *  Bands only apply below lg (`useCardDensityBand` forces roomy on desktop width).
+ */
+const densityChrome: Record<
+    CardDensity,
+    {
+        rootPad: string;
+        identity: string;
+        provider: string;
+        title: string;
+        statusCol: string;
+        statusPill: string;
+        panelsGap: string;
+        metaGap: string;
+        metaPad: string;
+        briefHead: string;
+        footer: string;
+    }
+> = {
+    roomy: {
+        rootPad: "p-3 sm:p-4 lg:p-5",
+        identity: "mb-2.5 sm:mb-3 lg:mb-5 gap-2 sm:gap-3",
+        provider:
+            "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] lg:tracking-[0.35em] xl:tracking-[0.4em] mb-1 sm:mb-2",
+        title:
+            "text-lg sm:text-xl lg:text-xl xl:text-2xl tracking-[0.1em] sm:tracking-[0.12em] lg:tracking-[0.15em] xl:tracking-[0.2em]",
+        statusCol: "gap-1.5 sm:gap-3",
+        statusPill: "px-3 py-2 sm:px-5 sm:py-2.5 min-h-9",
+        panelsGap: "gap-3 sm:gap-4 lg:gap-5",
+        metaGap: "gap-2 sm:gap-3 lg:gap-3",
+        metaPad: "p-2.5 sm:p-3 lg:p-3.5",
+        briefHead: "mb-2 lg:mb-2.5 pb-2",
+        footer: "mt-1.5 pt-1.5 sm:mt-2 sm:pt-2 lg:mt-4 lg:pt-3",
+    },
+    mid: {
+        rootPad: "p-2.5 sm:p-3",
+        identity: "mb-2 gap-1.5 sm:gap-2",
+        provider:
+            "text-[9px] tracking-[0.17em] sm:tracking-[0.22em] mb-0.5 sm:mb-1",
+        title: "text-[17px] sm:text-lg tracking-[0.09em] sm:tracking-[0.11em]",
+        statusCol: "gap-1 sm:gap-2",
+        statusPill: "px-2.5 py-1.5 sm:px-4 sm:py-2 min-h-8 sm:min-h-9",
+        panelsGap: "gap-2.5 sm:gap-3.5",
+        metaGap: "gap-1.5 sm:gap-2.5",
+        metaPad: "p-2 sm:p-2.5",
+        briefHead: "mb-1.5 pb-1.5",
+        footer: "mt-1.5 pt-1.5 sm:mt-2 sm:pt-2",
+    },
+    dense: {
+        rootPad: "p-2 sm:p-2.5",
+        identity: "mb-1.5 gap-1.5",
+        provider: "text-[8px] tracking-[0.15em] mb-0.5",
+        title: "text-base tracking-[0.08em]",
+        statusCol: "gap-1",
+        statusPill: "px-2.5 py-1 min-h-8",
+        panelsGap: "gap-2",
+        metaGap: "gap-1.5",
+        metaPad: "p-2",
+        briefHead: "mb-1.5 pb-1.5",
+        footer: "mt-1.5 pt-1.5",
+    },
+};
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
 const cardVariants: Variants = {
@@ -43,25 +103,10 @@ const cardVariants: Variants = {
     },
 };
 
-/** Each section fades/slides up when the parent hits "show". */
-const sectionVariants: Variants = {
-    hidden: { opacity: 0, y: 8 },
-    show: {
-        opacity: 1,
-        y: 0,
-        transition: transitions.soft,
-    },
-};
-
 /** Visual feed: rest = always-on HUD; focus = hover or tap intensify. */
 const visualFrameVariants: Variants = {
     rest: {},
     focus: {},
-};
-
-const visualImageVariants: Variants = {
-    rest: { scale: 1, opacity: 0.82 },
-    focus: { scale: 1.04, opacity: 1 },
 };
 
 const visualCornerVariants: Variants = {
@@ -74,8 +119,48 @@ const visualCrosshairVariants: Variants = {
     focus: { opacity: 0.35 },
 };
 
-export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
-    
+export default function LaunchCard({
+    launch,
+    feedLive,
+}: LaunchCardProps) {
+    const rootRef = useRef<HTMLDivElement>(null);
+    const compactMotion = useCompactMotion();
+    const shortBand = useShortViewportBand();
+    const cardBand = useCardDensityBand(rootRef, compactMotion);
+    /**
+     * Soft density: card-height bands + short-viewport bands (whichever is tighter).
+     * Desktop width always stays roomy type.
+     */
+    const density: CardDensity = useMemo(() => {
+        if (!compactMotion) return "roomy";
+        const rank: Record<CardDensity, number> = { roomy: 0, mid: 1, dense: 2 };
+        const fromShort: CardDensity =
+            shortBand === "short" ? "dense" : shortBand === "mid" ? "mid" : "roomy";
+        return rank[cardBand] >= rank[fromShort] ? cardBand : fromShort;
+    }, [compactMotion, cardBand, shortBand]);
+    const chrome = densityChrome[density];
+    const showRocket = density !== "dense";
+    const compactTravel = density !== "roomy" || compactMotion;
+
+    const sectionVariants: Variants = useMemo(() => {
+        const y = compactTravel ? travel.compact.sectionY : travel.desktop.sectionY;
+        return {
+            hidden: { opacity: 0, y },
+            show: {
+                opacity: 1,
+                y: 0,
+                transition: transitions.soft,
+            },
+        };
+    }, [compactTravel]);
+
+    const visualImageVariants: Variants = useMemo(
+        () => ({
+            rest: { scale: 1, opacity: 0.82 },
+            focus: { scale: compactTravel ? 1.02 : 1.04, opacity: 1 },
+        }),
+        [compactTravel],
+    );
     const imageUrl = launch.image?.image_url || null;
 
     const calculateTimeLeft = () => {
@@ -117,7 +202,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     dot: 'bg-cyan-400',
                     glow: 'shadow-[0_0_5px_#22d3ee]',
                     text: 'text-cyan-300',
-                    borderHover: 'hover:border-cyan-500/80',
+                    borderHover: 'hover:border-cyan-500/80 active:border-cyan-500/80',
                 };
             case 'Hold':
             case 'TBD':
@@ -126,7 +211,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     dot: 'bg-amber-400',
                     glow: 'shadow-[0_0_5px_#fbbf24]',
                     text: 'text-amber-300',
-                    borderHover: 'hover:border-amber-500/80',
+                    borderHover: 'hover:border-amber-500/80 active:border-amber-500/80',
                 };
             case 'Failure':
             case 'Partial Failure':
@@ -134,14 +219,14 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     dot: 'bg-red-500',
                     glow: 'shadow-[0_0_5px_#ef4444]',
                     text: 'text-red-400',
-                    borderHover: 'hover:border-red-500/80',
+                    borderHover: 'hover:border-red-500/80 active:border-red-500/80',
                 };
             default:
                 return {
                     dot: 'bg-slate-400',
                     glow: 'shadow-[0_0_5px_#94a3b8]',
                     text: 'text-slate-300',
-                    borderHover: 'hover:border-slate-500/80',
+                    borderHover: 'hover:border-slate-500/80 active:border-slate-500/80',
                 };
         }
     };
@@ -181,7 +266,9 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
     return (
         <motion.div
-            className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-4 sm:p-6 lg:p-8 relative overflow-hidden min-h-0"
+            ref={rootRef}
+            data-density={density}
+            className={`launch-card w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-clip max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0 density-ease ${chrome.rootPad}`}
             variants={cardVariants}
             initial="hidden"
             animate="show"
@@ -189,36 +276,55 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 
+            {/* Identity + status/countdown
+                Narrow stack (<sm): status top-right beside title; countdown below.
+                Wider stack (sm+) + desktop: status + countdown right column (unchanged). */}
             <motion.div
                 variants={sectionVariants}
-                className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 lg:mb-8 shrink-0 gap-3"
+                className={`flex flex-col gap-1.5 sm:gap-0 sm:flex-row sm:justify-between sm:items-start shrink-0 density-ease ${chrome.identity}`}
             >
-                <div className="group cursor-default">
-                    <p className="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.4em] mb-2 transition-all group-hover:text-cyan-400">
-                        {launch.launch_service_provider?.name || 'UNKNOWN'}
-                    </p>
-                    <h2 className="text-xl sm:text-2xl font-mono font-bold text-slate-100 uppercase tracking-[0.2em] text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50">
-                        {title}
-                    </h2>
-                    {showRocketSubtitle && (
-                        <p className="mt-1.5 text-[11px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.25em] transition-colors group-hover:text-cyan-300">
-                            {rocketName}
+                <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full sm:contents">
+                    <div className="group cursor-default min-w-0 flex-1">
+                        <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}>
+                            {launch.launch_service_provider?.name || 'UNKNOWN'}
                         </p>
-                    )}
-                </div>
-                
-                <div className="flex flex-col items-start sm:items-end gap-3 w-full sm:w-auto">
-                    
-                    <div className={`flex items-center gap-3 bg-[#020617]/80 border border-cyan-800/60 px-5 py-2.5 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300`}>
+                        <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words density-ease ${chrome.title}`}>
+                            {title}
+                        </h2>
+                        {showRocketSubtitle && showRocket && (
+                            <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-300 break-words">
+                                {rocketName}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Narrow stack only: status beside title */}
+                    <div
+                        className={`flex sm:hidden items-center gap-2 shrink-0 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
+                    >
                         <span className="relative flex h-2 w-2">
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
-                        <span className={`text-[10px] font-mono uppercase tracking-widest ${statusColors.text}`}>
+                        <span className={`text-[10px] font-mono uppercase tracking-wider ${statusColors.text}`}>
+                            Status: {status || 'Unk'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 density-ease ${chrome.statusCol}`}>
+                    
+                    <div
+                        className={`hidden sm:flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
+                    >
+                        <span className="relative flex h-2 w-2">
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
+                        </span>
+                        <span className={`text-[10px] font-mono uppercase tracking-wider sm:tracking-widest ${statusColors.text}`}>
                             Status: {status || 'Unk'}
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-3 px-2">
+                    <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 min-w-0">
                         {status === 'Hold' ? (
                             <CountdownHoldLabel />
                         ) : status === 'Failure' || status === 'Partial Failure' ? (
@@ -228,7 +334,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                 <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
                                     Net · Provisional
                                 </span>
-                                <span className="text-lg md:text-xl font-mono font-bold text-slate-300 tracking-widest tabular-nums">
+                                <span className="text-base sm:text-lg md:text-xl font-mono font-bold text-slate-300 tracking-wider sm:tracking-widest tabular-nums">
                                     <span>{tZero.date}</span>
                                     <span className="mx-1.5 text-slate-600">·</span>
                                     <span>{tZero.time}</span>
@@ -261,98 +367,21 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
             </motion.div>
 
             {/*
-              Nested stagger: this region is a motion child of the card, and also
-              a stagger parent. Meta blocks must be direct motion children to cascade.
+              Stacked: hug content; scroll only on the App panel (no nested trap).
+              Desktop: shell fills; brief / meta column scroll.
+              overflow-clip (not hidden) on chrome so wheel/touch reach the scroller.
             */}
+            <div
+                className="flex flex-col min-h-0 max-lg:flex-none max-lg:overflow-visible lg:flex-1 lg:overflow-hidden"
+            >
             <motion.div
                 variants={cardVariants}
-                className={`flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}
+                className={`flex flex-col lg:flex-row min-h-0 max-lg:flex-none lg:flex-1 lg:min-h-0 lg:overflow-hidden density-ease ${chrome.panelsGap}`}
             >
-                
-                <motion.div
-                    variants={cardVariants}
-                    className="w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink lg:h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-rows-[auto_1fr] gap-4 min-h-0 content-start"
-                >
-                        <motion.div
-                            variants={sectionVariants}
-                            className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden"
-                        >
-                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors"></div>
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                                <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 transition-colors">
-                                    T-Zero Target
-                                </h3>
-                                <span
-                                    className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
-                                    title="Times shown in your local timezone"
-                                >
-                                    {localOffsetLabel}
-                                </span>
-                            </div>
-                            <p className="text-sm text-cyan-50 font-mono tracking-wider tabular-nums">
-                                <span>{tZero.date}</span>
-                                <span className="mx-1.5 text-cyan-700">·</span>
-                                <span>{tZero.time}</span>
-                            </p>
-                            <p className="mt-1.5 text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 transition-colors">
-                                <span className="mr-1.5">Window</span>
-                                <span className="tabular-nums tracking-normal">
-                                    {windowStart ?? 'TBA'}
-                                    {' – '}
-                                    {windowEnd ?? 'TBA'}
-                                </span>
-                            </p>
-                        </motion.div>
-                        <motion.div
-                            variants={sectionVariants}
-                            className="bg-black/40 border border-cyan-900/50 p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center"
-                        >
-                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee]"></div>
-                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
-                                Launch Coordinates
-                            </h3>
-                            <p className="text-sm text-cyan-50 font-mono tracking-wider break-words leading-tight group-hover:text-white transition-colors">
-                                {launch.pad?.name || 'TBA'}
-                            </p>
-                            <p className="mt-1 text-[11px] text-cyan-500 font-mono uppercase tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 transition-colors">
-                                {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
-                            </p>
-                        </motion.div>
-
-                    <motion.div
-                        variants={sectionVariants}
-                        className="sm:col-span-2 w-full min-h-[180px] lg:min-h-0 lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 transition-all duration-300 group relative"
-                    >
-                        <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 transition-colors pointer-events-none"></div>
-                        
-                        <div className="flex justify-between items-center mb-3 border-b border-cyan-900/50 pb-2.5 shrink-0 gap-3">
-                            <h3 className="text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 transition-colors">
-                                Mission Brief
-                            </h3>
-                            {(missionType || missionOrbit) && (
-                                <div className="flex items-center gap-2 shrink-0 min-w-0">
-                                    {missionType && (
-                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
-                                            {missionType}
-                                        </span>
-                                    )}
-                                    {missionOrbit && (
-                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider truncate px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
-                                            {missionOrbit}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        <p className={`flex-1 min-h-0 text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
-                            {launch.mission?.description || 'No mission details available at this time.'}
-                        </p>
-                    </motion.div>
-                </motion.div>
-
+                {/* Visual feed — capped when stacked; fills column on desktop */}
                 <motion.div
                     variants={sectionVariants}
-                    className="w-full h-[220px] sm:h-[280px] shrink-0 lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+                    className="order-1 lg:order-2 relative w-full aspect-[16/10] max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] shrink-0 lg:w-[45%] lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
                 >
                     <motion.div
                         className="absolute inset-0"
@@ -426,18 +455,102 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         </motion.div>
                     </motion.div>
                 </motion.div>
+
+                {/* Meta + brief — stack: natural height; desktop: fill column */}
+                <motion.div
+                    variants={cardVariants}
+                    className={`order-2 lg:order-1 w-full shrink-0 h-auto self-start lg:self-stretch lg:w-auto lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 content-start items-start lg:grid-rows-[auto_1fr] lg:content-stretch lg:items-stretch density-ease ${chrome.metaGap}`}
+                >
+                        <motion.div
+                            variants={sectionVariants}
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
+                        >
+                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                                <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+                                    T-Zero Target
+                                </h3>
+                                <span
+                                    className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
+                                    title="Times shown in your local timezone"
+                                >
+                                    {localOffsetLabel}
+                                </span>
+                            </div>
+                            <p className="text-xs sm:text-sm text-cyan-50 font-mono tracking-wider tabular-nums">
+                                <span>{tZero.date}</span>
+                                <span className="mx-1.5 text-cyan-700">·</span>
+                                <span>{tZero.time}</span>
+                            </p>
+                            <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+                                <span className="mr-1.5">Window</span>
+                                <span className="tabular-nums tracking-normal">
+                                    {windowStart ?? 'TBA'}
+                                    {' – '}
+                                    {windowEnd ?? 'TBA'}
+                                </span>
+                            </p>
+                        </motion.div>
+                        <motion.div
+                            variants={sectionVariants}
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 flex flex-col justify-center density-ease ${chrome.metaPad}`}
+                        >
+                            <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
+                            <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+                                Launch Coordinates
+                            </h3>
+                            <p className="text-[11px] sm:text-xs lg:text-[13px] text-cyan-50 font-mono tracking-wide lg:tracking-wider break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
+                                {launch.pad?.name || 'TBA'}
+                            </p>
+                            <p className="mt-1 text-[9px] sm:text-[10px] lg:text-[11px] text-cyan-500 font-mono uppercase tracking-[0.12em] lg:tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+                                {launch.pad?.location?.name || 'LOCATION DATA UNAVAILABLE'}
+                            </p>
+                        </motion.div>
+
+                    <motion.div
+                        variants={sectionVariants}
+                        className={`col-span-2 w-full h-auto min-h-0 self-start flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative lg:self-stretch lg:h-full density-ease ${chrome.metaPad}`}
+                    >
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 group-active:border-cyan-400 transition-colors pointer-events-none"></div>
+                        
+                        <div className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 density-ease ${chrome.briefHead}`}>
+                            <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+                                Mission Brief
+                            </h3>
+                            {(missionType || missionOrbit) && (
+                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0 flex-wrap justify-end">
+                                    {missionType && (
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider max-w-[9rem] sm:max-w-none break-words px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                            {missionType}
+                                        </span>
+                                    )}
+                                    {missionOrbit && (
+                                        <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider max-w-[9rem] sm:max-w-none break-words px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+                                            {missionOrbit}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <p
+                            className={`text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors break-words lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1 ${customScrollbar}`}
+                        >
+                            {launch.mission?.description || 'No mission details available at this time.'}
+                        </p>
+                    </motion.div>
+                </motion.div>
             </motion.div>
 
             <motion.div
                 variants={sectionVariants}
-                className="mt-4 sm:mt-6 pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0"
+                className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[9px] font-mono uppercase tracking-[0.2em] density-ease ${chrome.footer}`}
             >
                 <FeedStatus
                     live={feedLive}
                     className="tracking-[0.2em]"
                 />
                 <span
-                    className="flex items-baseline gap-2 text-cyan-500"
+                    className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-cyan-500"
                     title="When the launch provider last updated this record (local time)"
                 >
                     <span className="tracking-[0.25em]">Last Updated</span>
@@ -455,6 +568,7 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                     )}
                 </span>
             </motion.div>
+            </div>
             
         </motion.div>
     );
