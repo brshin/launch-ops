@@ -16,6 +16,7 @@ import {
 } from "./lib/bootMotion";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
 import { useCompactMotion } from "./hooks/useCompactMotion";
+import { useShortViewport } from "./hooks/useShortViewport";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -48,6 +49,7 @@ export default function App() {
   const [queueRevealed, setQueueRevealed] = useState(false);
 
   const compactMotion = useCompactMotion();
+  const shortViewport = useShortViewport();
   const starfield = compactMotion
     ? starfieldPool.slice(0, STARFIELD_COUNT.compact)
     : starfieldPool;
@@ -160,28 +162,52 @@ export default function App() {
       </motion.div>
 
       {/* MAIN CONTENT WRAPPER */}
-      <div className="console-inset relative z-10 flex flex-col w-full h-full min-h-0">
+      <div
+        className={`console-inset relative z-10 flex flex-col w-full h-full min-h-0${shortViewport ? " console-short" : ""}`}
+      >
 
         {/* TOP NAVIGATION / HEADER */}
         <motion.header
-          className="w-full flex justify-between items-end mb-3 sm:mb-4 md:mb-6 border-b border-cyan-900/60 pb-2.5 sm:pb-3 md:pb-4 relative z-20 shrink-0"
+          className={`w-full flex justify-between items-end border-b border-cyan-900/60 relative z-20 shrink-0 ${
+            shortViewport
+              ? "mb-1.5 pb-1.5"
+              : "mb-3 sm:mb-4 md:mb-6 pb-2.5 sm:pb-3 md:pb-4"
+          }`}
           variants={bootHeaderVariants}
           initial="hidden"
           animate="show"
         >
           
           <div className="flex flex-col cursor-default min-w-0">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-100 uppercase tracking-[0.12em] sm:tracking-[0.2em] drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+            <h1
+              className={`font-bold text-slate-100 uppercase drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] ${
+                shortViewport
+                  ? "text-xl tracking-[0.1em]"
+                  : "text-2xl sm:text-3xl md:text-4xl tracking-[0.12em] sm:tracking-[0.2em]"
+              }`}
+            >
               Launch
-              <span className="text-cyan-500 tracking-[0.08em] sm:tracking-[0.12em] ml-[0.12em]">Ops</span>
+              <span
+                className={`text-cyan-500 ml-[0.12em] ${
+                  shortViewport ? "tracking-[0.08em]" : "tracking-[0.08em] sm:tracking-[0.12em]"
+                }`}
+              >
+                Ops
+              </span>
             </h1>
-            <p className="text-[10px] md:text-xs font-mono text-cyan-400 uppercase tracking-[0.25em] sm:tracking-[0.4em] mt-1 opacity-80">
+            <p
+              className={`font-mono text-cyan-400 uppercase opacity-80 ${
+                shortViewport
+                  ? "hidden"
+                  : "text-[10px] md:text-xs tracking-[0.25em] sm:tracking-[0.4em] mt-1"
+              }`}
+            >
               Global Launch Tracker
             </p>
           </div>
 
           <motion.div
-            className="hidden sm:flex items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md"
+            className={`${shortViewport ? "hidden" : "hidden sm:flex"} items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md`}
             variants={bootSysClockVariants}
             initial="hidden"
             animate="show"
@@ -210,7 +236,11 @@ export default function App() {
         </motion.header>
 
         {/* PANELS WRAPPER */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 lg:gap-8 min-h-0 w-full relative z-10">
+        <div
+          className={`flex-1 flex flex-col lg:flex-row min-h-0 w-full relative z-10 ${
+            shortViewport ? "gap-1.5" : "gap-3 sm:gap-4 md:gap-6 lg:gap-8"
+          }`}
+        >
           
           {/* Launch Queue — horizontal strip below lg; vertical sidebar at lg+ */}
           <motion.div
@@ -220,8 +250,18 @@ export default function App() {
             animate="show"
           >
             
-            <div className="px-3 py-2 lg:p-4 border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3">
-              <h2 className="text-cyan-400 font-mono tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs uppercase flex items-center gap-2 lg:gap-3 min-w-0">
+            <div
+              className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3 ${
+                shortViewport ? "px-2 py-1 lg:px-3 lg:py-1.5" : "px-3 py-2 lg:p-4"
+              }`}
+            >
+              <h2
+                className={`text-cyan-400 font-mono uppercase flex items-center gap-2 lg:gap-3 min-w-0 ${
+                  shortViewport
+                    ? "tracking-[0.15em] text-[9px]"
+                    : "tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs"
+                }`}
+              >
                 <span className="relative flex h-1.5 w-1.5 lg:h-2 lg:w-2 shrink-0">
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 lg:h-2 lg:w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
                 </span>
@@ -246,7 +286,9 @@ export default function App() {
             </div>
             
             <motion.div
-              className="console-scrollbar console-scrollbar-y relative z-10 flex gap-2 p-2.5 lg:p-3 flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain"
+              className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain ${
+                shortViewport ? "gap-1.5 p-1.5 lg:p-2" : "gap-2 p-2.5 lg:p-3"
+              }`}
               variants={bootQueueListVariants}
               initial="hidden"
               animate={queueRevealed ? 'show' : 'hidden'}
@@ -265,7 +307,11 @@ export default function App() {
                   variants={bootQueueItemVariants}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedIndex(index)}
-                  className={`shrink-0 snap-start w-[12rem] sm:w-[13.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-hidden group cursor-pointer touch-manipulation ${
+                  className={`shrink-0 snap-start w-[11rem] sm:w-[13.5rem] lg:w-full text-left rounded-lg border transition-colors duration-300 flex flex-col justify-center relative overflow-hidden group cursor-pointer touch-manipulation ${
+                    shortViewport
+                      ? "min-h-9 py-1.5 px-2.5 gap-0 lg:min-h-10 lg:py-2 lg:px-3"
+                      : "min-h-11 py-2.5 px-3 lg:py-3 lg:px-4 gap-0.5 lg:gap-1"
+                  } ${
                     selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
                       : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
@@ -319,6 +365,7 @@ export default function App() {
                   <LaunchCard
                     launch={activeLaunch}
                     feedLive={feedLive}
+                    shortViewport={shortViewport}
                   />
                 </motion.div>
               ) : (

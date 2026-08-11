@@ -20,6 +20,8 @@ import {
 interface LaunchCardProps {
     launch: Launch;
     feedLive: boolean;
+    /** Short viewport — compress chrome and keep a single nested scroller. */
+    shortViewport?: boolean;
 }
 
 const customScrollbar = "console-scrollbar console-scrollbar-y";
@@ -51,11 +53,17 @@ const visualCrosshairVariants: Variants = {
     focus: { opacity: 0.35 },
 };
 
-export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
+export default function LaunchCard({
+    launch,
+    feedLive,
+    shortViewport = false,
+}: LaunchCardProps) {
     const compactMotion = useCompactMotion();
+    /** Narrow or short: one card-body scroller — no nested brief scrollbar. */
+    const singleScroll = shortViewport || compactMotion;
 
     const sectionVariants: Variants = useMemo(() => {
-        const y = compactMotion ? travel.compact.sectionY : travel.desktop.sectionY;
+        const y = compactMotion || shortViewport ? travel.compact.sectionY : travel.desktop.sectionY;
         return {
             hidden: { opacity: 0, y },
             show: {
@@ -64,14 +72,14 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                 transition: transitions.soft,
             },
         };
-    }, [compactMotion]);
+    }, [compactMotion, shortViewport]);
 
     const visualImageVariants: Variants = useMemo(
         () => ({
             rest: { scale: 1, opacity: 0.82 },
-            focus: { scale: compactMotion ? 1.02 : 1.04, opacity: 1 },
+            focus: { scale: compactMotion || shortViewport ? 1.02 : 1.04, opacity: 1 },
         }),
-        [compactMotion],
+        [compactMotion, shortViewport],
     );
     const imageUrl = launch.image?.image_url || null;
 
@@ -178,7 +186,9 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
     return (
         <motion.div
-            className="h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] p-3 sm:p-4 lg:p-8 relative overflow-hidden min-h-0"
+            className={`h-full w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-hidden min-h-0 ${
+                shortViewport ? "p-2 sm:p-2.5 lg:p-3" : "p-3 sm:p-4 lg:p-8"
+            }`}
             variants={cardVariants}
             initial="hidden"
             animate="show"
@@ -186,28 +196,42 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
             
             <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
 
-            {/* Identity + status/countdown — stays above the fold on phone */}
+            {/* Identity + status/countdown — denser when short */}
             <motion.div
                 variants={sectionVariants}
-                className="flex flex-col sm:flex-row justify-between items-start mb-2.5 sm:mb-3 lg:mb-8 shrink-0 gap-2 sm:gap-3"
+                className={`flex flex-col sm:flex-row justify-between items-start shrink-0 ${
+                    shortViewport ? "mb-1.5 gap-1.5" : "mb-2.5 sm:mb-3 lg:mb-8 gap-2 sm:gap-3"
+                }`}
             >
                 <div className="group cursor-default min-w-0 flex-1">
-                    <p className="text-[9px] sm:text-[10px] font-mono text-cyan-500 uppercase tracking-[0.2em] sm:tracking-[0.4em] mb-1 sm:mb-2 transition-all group-hover:text-cyan-400 line-clamp-1">
+                    <p className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 line-clamp-1 ${
+                        shortViewport
+                            ? "text-[8px] tracking-[0.15em] mb-0.5"
+                            : "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.4em] mb-1 sm:mb-2"
+                    }`}>
                         {launch.launch_service_provider?.name || 'UNKNOWN'}
                     </p>
-                    <h2 className="text-lg sm:text-xl lg:text-2xl font-mono font-bold text-slate-100 uppercase tracking-[0.1em] sm:tracking-[0.15em] lg:tracking-[0.2em] text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 line-clamp-2">
+                    <h2 className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 line-clamp-2 ${
+                        shortViewport
+                            ? "text-base tracking-[0.08em]"
+                            : "text-lg sm:text-xl lg:text-2xl tracking-[0.1em] sm:tracking-[0.15em] lg:tracking-[0.2em]"
+                    }`}>
                         {title}
                     </h2>
-                    {showRocketSubtitle && (
+                    {showRocketSubtitle && !shortViewport && (
                         <p className="mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-colors group-hover:text-cyan-300 truncate">
                             {rocketName}
                         </p>
                     )}
                 </div>
                 
-                <div className="flex flex-col items-start sm:items-end gap-1.5 sm:gap-3 w-full sm:w-auto shrink-0">
+                <div className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 ${
+                    shortViewport ? "gap-1" : "gap-1.5 sm:gap-3"
+                }`}>
                     
-                    <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 px-3 py-2 sm:px-5 sm:py-2.5 min-h-9 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300`}>
+                    <div className={`flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 ${
+                        shortViewport ? "px-2.5 py-1 min-h-8" : "px-3 py-2 sm:px-5 sm:py-2.5 min-h-9"
+                    }`}>
                         <span className="relative flex h-2 w-2">
                             <span className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}></span>
                         </span>
@@ -261,17 +285,23 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
             {/*
               Nested stagger: this region is a motion child of the card, and also
               a stagger parent. Meta blocks must be direct motion children to cascade.
-              Below lg: visual feed first (order), meta/brief after.
-              At lg+: meta left, feed right (desktop HUD).
+              Below lg / short height: visual feed first, single body scroller.
+              Tall desktop: meta left, feed right.
             */}
             <motion.div
                 variants={cardVariants}
-                className={`flex-1 flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0 ${customScrollbar}`}
+                className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto pr-1 ${customScrollbar} ${
+                    singleScroll ? "" : "lg:overflow-hidden lg:pr-0"
+                } ${shortViewport ? "gap-2" : "gap-3 sm:gap-4 lg:gap-8"}`}
             >
-                {/* Visual feed — first on phone, right column on desktop */}
+                {/* Visual feed — fills leftover height when short */}
                 <motion.div
                     variants={sectionVariants}
-                    className="order-1 lg:order-2 w-full aspect-[16/10] max-h-[min(32dvh,14rem)] sm:max-h-[min(36dvh,17.5rem)] shrink-0 lg:aspect-auto lg:max-h-none lg:w-[45%] lg:h-full lg:shrink relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+                    className={`order-1 lg:order-2 relative rounded-lg border border-cyan-900/60 overflow-hidden bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)] ${
+                        shortViewport
+                            ? "w-full min-h-[5.5rem] flex-1 basis-[42%] shrink lg:w-[45%] lg:min-h-0 lg:flex-1 lg:basis-auto"
+                            : "w-full aspect-[16/10] max-h-[min(32dvh,14rem)] sm:max-h-[min(36dvh,17.5rem)] shrink-0 lg:aspect-auto lg:max-h-none lg:w-[45%] lg:h-full lg:shrink"
+                    }`}
                 >
                     <motion.div
                         className="absolute inset-0"
@@ -349,11 +379,15 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                 {/* Meta + brief — below feed on phone; left column on desktop */}
                 <motion.div
                     variants={cardVariants}
-                    className="order-2 lg:order-1 w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink lg:h-full grid grid-cols-2 lg:grid-rows-[auto_1fr] gap-2 sm:gap-3 lg:gap-4 min-h-0 content-start"
+                    className={`order-2 lg:order-1 w-full shrink-0 lg:w-auto lg:flex-1 lg:shrink grid grid-cols-2 lg:grid-rows-[auto_1fr] min-h-0 content-start ${
+                        shortViewport ? "gap-1.5" : "gap-2 sm:gap-3 lg:gap-4"
+                    } ${singleScroll ? "" : "lg:h-full"}`}
                 >
                         <motion.div
                             variants={sectionVariants}
-                            className="bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden"
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden ${
+                                shortViewport ? "p-2" : "p-2.5 sm:p-3 lg:p-4"
+                            }`}
                         >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
                             <div className="flex items-center justify-between gap-2 mb-1">
@@ -383,7 +417,9 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                         </motion.div>
                         <motion.div
                             variants={sectionVariants}
-                            className="bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center"
+                            className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-hidden min-w-0 flex flex-col justify-center ${
+                                shortViewport ? "p-2" : "p-2.5 sm:p-3 lg:p-4"
+                            }`}
                         >
                             <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
                             <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
@@ -399,11 +435,15 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
                     <motion.div
                         variants={sectionVariants}
-                        className="col-span-2 w-full min-h-0 max-h-[7.5rem] lg:max-h-none lg:h-full flex flex-col bg-black/40 border border-cyan-900/50 p-2.5 sm:p-3 lg:p-4 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative"
+                        className={`col-span-2 w-full min-h-0 flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-hidden hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative ${
+                            shortViewport ? "p-2" : "p-2.5 sm:p-3 lg:p-4"
+                        } ${singleScroll ? "" : "max-h-[7.5rem] lg:max-h-none lg:h-full"}`}
                     >
                         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 group-active:border-cyan-400 transition-colors pointer-events-none"></div>
                         
-                        <div className="flex justify-between items-center mb-2 lg:mb-3 border-b border-cyan-900/50 pb-2 shrink-0 gap-2 sm:gap-3">
+                        <div className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 ${
+                            shortViewport ? "mb-1.5 pb-1.5" : "mb-2 lg:mb-3 pb-2"
+                        }`}>
                             <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
                                 Mission Brief
                             </h3>
@@ -422,7 +462,13 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
                                 </div>
                             )}
                         </div>
-                        <p className={`flex-1 min-h-0 text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors overflow-y-auto pr-1 ${customScrollbar}`}>
+                        <p
+                            className={`text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors ${
+                                singleScroll
+                                    ? ""
+                                    : `flex-1 min-h-0 overflow-y-auto pr-1 ${customScrollbar}`
+                            }`}
+                        >
                             {launch.mission?.description || 'No mission details available at this time.'}
                         </p>
                     </motion.div>
@@ -431,7 +477,9 @@ export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
 
             <motion.div
                 variants={sectionVariants}
-                className="mt-2.5 sm:mt-4 lg:mt-6 pt-2.5 sm:pt-4 border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0"
+                className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 text-[9px] font-mono uppercase tracking-[0.2em] shrink-0 ${
+                    shortViewport ? "mt-1.5 pt-1.5" : "mt-2.5 sm:mt-4 lg:mt-6 pt-2.5 sm:pt-4"
+                }`}
             >
                 <FeedStatus
                     live={feedLive}
