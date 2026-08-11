@@ -166,42 +166,42 @@ export default function App() {
         className={`console-inset relative z-10 flex flex-col w-full h-full min-h-0${shortViewport ? " console-short" : ""}`}
       >
 
-        {/* TOP NAVIGATION / HEADER */}
+        {/* TOP NAVIGATION / HEADER — compact vertically; sys clock stays one-line when stacked */}
         <motion.header
-          className={`w-full flex justify-between items-end border-b border-cyan-900/60 relative z-20 shrink-0 ${
+          className={`w-full flex justify-between items-center gap-3 border-b border-cyan-900/60 relative z-20 shrink-0 ${
             shortViewport
-              ? "mb-1.5 pb-1.5 lg:mb-6 lg:pb-4"
-              : "mb-3 sm:mb-4 md:mb-6 pb-2.5 sm:pb-3 md:pb-4"
+              ? "mb-1.5 pb-1.5 lg:mb-3 lg:pb-2.5"
+              : "mb-2 sm:mb-2.5 lg:mb-3 pb-2 sm:pb-2.5"
           }`}
           variants={bootHeaderVariants}
           initial="hidden"
           animate="show"
         >
           
-          <div className="flex flex-col cursor-default min-w-0">
+          <div className="flex flex-col justify-center cursor-default min-w-0">
             <h1
-              className={`font-bold text-slate-100 uppercase drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] ${
+              className={`font-bold text-slate-100 uppercase leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] ${
                 shortViewport
-                  ? "text-xl tracking-[0.1em] lg:text-4xl lg:tracking-[0.2em]"
-                  : "text-2xl sm:text-3xl md:text-4xl tracking-[0.12em] sm:tracking-[0.2em]"
+                  ? "text-xl tracking-[0.1em] lg:text-3xl lg:tracking-[0.16em]"
+                  : "text-2xl sm:text-3xl tracking-[0.12em] sm:tracking-[0.16em]"
               }`}
             >
               Launch
               <span
                 className={`text-cyan-500 ml-[0.12em] ${
                   shortViewport
-                    ? "tracking-[0.08em] lg:tracking-[0.12em]"
-                    : "tracking-[0.08em] sm:tracking-[0.12em]"
+                    ? "tracking-[0.08em] lg:tracking-[0.1em]"
+                    : "tracking-[0.08em] sm:tracking-[0.1em]"
                 }`}
               >
                 Ops
               </span>
             </h1>
             <p
-              className={`font-mono text-cyan-400 uppercase opacity-80 ${
+              className={`font-mono text-cyan-400 uppercase opacity-80 leading-none ${
                 shortViewport
-                  ? "hidden lg:block text-[10px] md:text-xs tracking-[0.25em] sm:tracking-[0.4em] mt-1"
-                  : "text-[10px] md:text-xs tracking-[0.25em] sm:tracking-[0.4em] mt-1"
+                  ? "hidden lg:block text-[10px] tracking-[0.3em] mt-1"
+                  : "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.32em] mt-1"
               }`}
             >
               Global Launch Tracker
@@ -209,26 +209,40 @@ export default function App() {
           </div>
 
           <motion.div
-            className={`${shortViewport ? "hidden lg:flex" : "hidden sm:flex"} items-start gap-3 bg-black/20 border border-cyan-800/50 px-4 py-2 rounded-sm backdrop-blur-md`}
+            className="flex items-center gap-2 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-sm backdrop-blur-md shrink-0"
             variants={bootSysClockVariants}
             initial="hidden"
             animate="show"
           >
-            <span className="relative mt-[3px] flex h-1.5 w-1.5 shrink-0">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
             </span>
-            <div className="flex flex-col font-mono uppercase leading-none">
-              <div className="flex items-center justify-between gap-4 mb-1">
+            {/* Stacked / mid: single horizontal readout — no extra header height */}
+            <div className="flex lg:hidden items-baseline gap-x-2 font-mono uppercase leading-none min-w-0">
+              <span className="text-[9px] tracking-[0.2em] text-cyan-500 shrink-0">Sys</span>
+              <span className="text-[11px] sm:text-xs tracking-[0.14em] text-cyan-100 tabular-nums whitespace-nowrap">
+                {sysClock?.time ?? '—:—:—'}
+              </span>
+              <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-500 tabular-nums whitespace-nowrap">
+                {sysClock?.date ?? '—'}
+              </span>
+              <span className="text-[9px] tracking-widest text-cyan-600 shrink-0">
+                {sysClock?.offset ?? '—'}
+              </span>
+            </div>
+            {/* Desktop: compact two-line block, still short */}
+            <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-[9px] tracking-[0.3em] text-cyan-500">Sys Time</span>
                 <span className="text-[9px] tracking-widest text-cyan-500">
                   {sysClock?.offset ?? '—'}
                 </span>
               </div>
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-sm md:text-base tracking-[0.2em] text-cyan-100 tabular-nums">
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm tracking-[0.18em] text-cyan-100 tabular-nums">
                   {sysClock?.time ?? 'INITIALIZING...'}
                 </span>
-                <span className="text-[10px] tracking-[0.2em] text-cyan-500 tabular-nums">
+                <span className="text-[10px] tracking-[0.18em] text-cyan-500 tabular-nums">
                   {sysClock?.date ?? '—'}
                 </span>
               </div>
