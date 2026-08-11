@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
-import { transitions } from "../lib/motionTokens";
+import { transitions, travel } from "../lib/motionTokens";
 import {
     AwaitingTelemetryLabel,
     CountdownFailureLabel,
@@ -10,6 +10,7 @@ import {
     TickingCountdown,
 } from "./CountdownReadout";
 import { FeedStatus } from "./FeedStatus";
+import { useCompactMotion } from "../hooks/useCompactMotion";
 import {
     formatLocalDateTime,
     formatLocalTime,
@@ -34,25 +35,10 @@ const cardVariants: Variants = {
     },
 };
 
-/** Each section fades/slides up when the parent hits "show". */
-const sectionVariants: Variants = {
-    hidden: { opacity: 0, y: 8 },
-    show: {
-        opacity: 1,
-        y: 0,
-        transition: transitions.soft,
-    },
-};
-
 /** Visual feed: rest = always-on HUD; focus = hover or tap intensify. */
 const visualFrameVariants: Variants = {
     rest: {},
     focus: {},
-};
-
-const visualImageVariants: Variants = {
-    rest: { scale: 1, opacity: 0.82 },
-    focus: { scale: 1.04, opacity: 1 },
 };
 
 const visualCornerVariants: Variants = {
@@ -66,7 +52,27 @@ const visualCrosshairVariants: Variants = {
 };
 
 export default function LaunchCard({ launch, feedLive }: LaunchCardProps) {
-    
+    const compactMotion = useCompactMotion();
+
+    const sectionVariants: Variants = useMemo(() => {
+        const y = compactMotion ? travel.compact.sectionY : travel.desktop.sectionY;
+        return {
+            hidden: { opacity: 0, y },
+            show: {
+                opacity: 1,
+                y: 0,
+                transition: transitions.soft,
+            },
+        };
+    }, [compactMotion]);
+
+    const visualImageVariants: Variants = useMemo(
+        () => ({
+            rest: { scale: 1, opacity: 0.82 },
+            focus: { scale: compactMotion ? 1.02 : 1.04, opacity: 1 },
+        }),
+        [compactMotion],
+    );
     const imageUrl = launch.image?.image_url || null;
 
     const calculateTimeLeft = () => {

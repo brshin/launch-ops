@@ -2,7 +2,13 @@
  * Framer Motion variants for the cold-load console boot sequence.
  */
 import type { Variants } from "framer-motion";
-import { transitions } from "./motionTokens";
+import { transitions, travel } from "./motionTokens";
+
+type TravelSet = (typeof travel)["desktop"] | (typeof travel)["compact"];
+
+function pickTravel(compact: boolean): TravelSet {
+  return compact ? travel.compact : travel.desktop;
+}
 
 /** Stage lights: starfield + grid */
 export const bootStageVariants: Variants = {
@@ -14,34 +20,43 @@ export const bootStageVariants: Variants = {
 };
 
 /** Brand + chrome */
-export const bootHeaderVariants: Variants = {
-  hidden: { opacity: 0, y: -10 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { ...transitions.soft, delay: 0.28 },
-  },
-};
+export function createBootHeaderVariants(compact = false): Variants {
+  const { headerY } = pickTravel(compact);
+  return {
+    hidden: { opacity: 0, y: -headerY },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { ...transitions.soft, delay: 0.28 },
+    },
+  };
+}
 
 /** Sys Time lock-in (slightly after brand) */
-export const bootSysClockVariants: Variants = {
-  hidden: { opacity: 0, y: -6 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { ...transitions.soft, delay: 0.48 },
-  },
-};
+export function createBootSysClockVariants(compact = false): Variants {
+  const { clockY } = pickTravel(compact);
+  return {
+    hidden: { opacity: 0, y: -clockY },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { ...transitions.soft, delay: 0.48 },
+    },
+  };
+}
 
 /** Queue panel shell */
-export const bootPanelVariants: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { ...transitions.soft, delay: 0.42 },
-  },
-};
+export function createBootPanelVariants(compact = false): Variants {
+  const { panelY } = pickTravel(compact);
+  return {
+    hidden: { opacity: 0, y: panelY },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { ...transitions.soft, delay: 0.42 },
+    },
+  };
+}
 
 /** Stagger parent for queue rows (first populate) */
 export const bootQueueListVariants: Variants = {
@@ -54,11 +69,14 @@ export const bootQueueListVariants: Variants = {
   },
 };
 
-export const bootQueueItemVariants: Variants = {
-  hidden: { opacity: 0, x: -12 },
-  show: {
-    opacity: 1,
-    x: 0,
-    transition: transitions.soft,
-  },
-};
+export function createBootQueueItemVariants(compact = false): Variants {
+  const { queueX } = pickTravel(compact);
+  return {
+    hidden: { opacity: 0, x: -queueX },
+    show: {
+      opacity: 1,
+      x: 0,
+      transition: transitions.soft,
+    },
+  };
+}

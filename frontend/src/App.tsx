@@ -1,34 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
 import { FeedStatus } from './components/FeedStatus';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
-import { transitions } from "./lib/motionTokens";
+import { STARFIELD_COUNT, transitions, travel } from "./lib/motionTokens";
 import {
-  bootHeaderVariants,
-  bootPanelVariants,
-  bootQueueItemVariants,
   bootQueueListVariants,
   bootStageVariants,
-  bootSysClockVariants,
+  createBootHeaderVariants,
+  createBootPanelVariants,
+  createBootQueueItemVariants,
+  createBootSysClockVariants,
 } from "./lib/bootMotion";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
+import { useCompactMotion } from "./hooks/useCompactMotion";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const socket = io(API_URL);
 
-const starfield = Array.from({ length: 250 }).map(() => ({
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  size: Math.random() * 2.5 + 0.5,
-  opacity: Math.random() * 0.8 + 0.2,
-  animationDelay: `${Math.random() * 5}s`,
-  animationDuration: `${Math.random() * 3 + 2}s`
-})); 
+function createStarfield(count: number) {
+  return Array.from({ length: count }).map(() => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 2.5 + 0.5,
+    opacity: Math.random() * 0.8 + 0.2,
+    animationDelay: `${Math.random() * 5}s`,
+    animationDuration: `${Math.random() * 3 + 2}s`,
+  }));
+}
+
+/** Pre-generate full field once; slice for compact viewports to avoid regen jitter. */
+const starfieldPool = createStarfield(STARFIELD_COUNT.desktop);
 
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
@@ -40,6 +46,29 @@ export default function App() {
     offset: string;
   } | null>(null);
   const [queueRevealed, setQueueRevealed] = useState(false);
+
+  const compactMotion = useCompactMotion();
+  const starfield = compactMotion
+    ? starfieldPool.slice(0, STARFIELD_COUNT.compact)
+    : starfieldPool;
+
+  const bootHeaderVariants = useMemo(
+    () => createBootHeaderVariants(compactMotion),
+    [compactMotion],
+  );
+  const bootSysClockVariants = useMemo(
+    () => createBootSysClockVariants(compactMotion),
+    [compactMotion],
+  );
+  const bootPanelVariants = useMemo(
+    () => createBootPanelVariants(compactMotion),
+    [compactMotion],
+  );
+  const bootQueueItemVariants = useMemo(
+    () => createBootQueueItemVariants(compactMotion),
+    [compactMotion],
+  );
+  const cardEnterY = compactMotion ? travel.compact.cardY : travel.desktop.cardY;
 
   const { bootComplete, isBooting } = useConsoleBoot(launches.length > 0);
 
@@ -282,9 +311,9 @@ export default function App() {
                 <motion.div
                   key={activeLaunch.apiId}
                   className="h-full w-full min-h-0 flex flex-col"
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: cardEnterY }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  exit={{ opacity: 0, y: -cardEnterY }}
                   transition={transitions.soft}
                 >
                   <LaunchCard
