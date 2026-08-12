@@ -19,7 +19,7 @@ Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/),
 - **Live UI updates** — when the worker refreshes the cache, Redis Pub/Sub notifies the server, which emits the new payload to connected Socket.IO clients
 - **Cached API** — `GET /launches` reads Redis first, then MongoDB on a cache miss
 - **Scheduled ingestion** — cron worker polls Launch Library every 5 minutes, upserts MongoDB, writes Redis, and publishes a cache-update message
-- **Responsive UI** — status-based color coding and layout that adapts across viewports
+- **Responsive UI** — locked `dvh` console with safe-area insets; horizontal queue + stacked detail below `lg`, sidebar layout at `lg+`
 
 ---
 
@@ -92,7 +92,11 @@ launch-ops/
 │   │   │   ├── CountdownReadout.tsx  # Ticking countdown + status labels
 │   │   │   └── FeedStatus.tsx        # Live/offline feed indicator
 │   │   ├── hooks/
-│   │   │   └── useConsoleBoot.ts     # Cold-load boot timing gate
+│   │   │   ├── useConsoleBoot.ts
+│   │   │   ├── useCompactMotion.ts
+│   │   │   ├── useShortViewportBand.ts
+│   │   │   ├── useCardDensityBand.ts
+│   │   │   └── useConsoleScrollbarActivity.ts
 │   │   ├── lib/
 │   │   │   ├── motionTokens.ts       # Shared Framer transition presets
 │   │   │   └── bootMotion.ts         # Boot-sequence motion variants
@@ -168,6 +172,14 @@ npm run dev
 ```
 
 Vite default local URL is `http://localhost:5173`.
+
+For LAN / phone preview on the same network:
+
+```bash
+npm run dev -- --host
+```
+
+Then open `http://<your-computer-ip>:5173` on the device.
 
 ### 4. Production frontend build
 
