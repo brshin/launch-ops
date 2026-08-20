@@ -4,7 +4,6 @@ import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
 import { transitions, travel } from "../lib/motionTokens";
 import {
-    AwaitingTelemetryLabel,
     CountdownFailureLabel,
     CountdownHoldLabel,
     TickingCountdown,
@@ -21,6 +20,7 @@ import {
     formatLocalTime,
     getLocalUtcOffsetLabel,
 } from "../utils/localTime";
+import { getLaunchTime } from "../utils/launchTime";
 
 interface LaunchCardProps {
     launch: Launch;
@@ -182,6 +182,18 @@ export default function LaunchCard({
     const [time, setTime] = useState(calculateTimeLeft());
 
     const status = launch.status.abbrev;
+    const launchTime = getLaunchTime({
+        net: launch.net,
+        status,
+        netPrecision: launch.net_precision,
+        now: Date.now(),
+    });
+    const showProvisional =
+        launchTime.phase === "provisional" ||
+        (!launchTime.preciseEnough &&
+            launchTime.phase !== "hold" &&
+            launchTime.phase !== "failed" &&
+            launchTime.phase !== "live");
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -325,11 +337,11 @@ export default function LaunchCard({
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 min-w-0">
-                        {status === 'Hold' ? (
+                        {launchTime.phase === 'hold' ? (
                             <CountdownHoldLabel />
-                        ) : status === 'Failure' || status === 'Partial Failure' ? (
+                        ) : launchTime.phase === 'failed' ? (
                             <CountdownFailureLabel />
-                        ) : status === 'TBD' || status === 'TBC' ? (
+                        ) : showProvisional ? (
                             <div className="flex flex-col items-start sm:items-end gap-0.5">
                                 <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
                                     Net · Provisional
@@ -340,17 +352,6 @@ export default function LaunchCard({
                                     <span>{tZero.time}</span>
                                 </span>
                             </div>
-                        ) : status === 'In Flight' || status === 'Success' ? (
-                            <TickingCountdown
-                                days={time.days}
-                                hours={time.hours}
-                                minutes={time.minutes}
-                                seconds={time.seconds}
-                                difference={time.difference}
-                                mode="plus"
-                            />
-                        ) : time.difference <= 0 ? (
-                            <AwaitingTelemetryLabel />
                         ) : (
                             <TickingCountdown
                                 days={time.days}
@@ -358,7 +359,7 @@ export default function LaunchCard({
                                 minutes={time.minutes}
                                 seconds={time.seconds}
                                 difference={time.difference}
-                                mode="minus"
+                                mode={launchTime.phase === "countdown" ? "minus" : "plus"}
                             />
                         )}
                     </div>
