@@ -39,6 +39,10 @@ const urgencyGlow: Record<
   },
 };
 
+const plusGlow = {
+  textShadow: "0 0 8px rgba(52,211,153,0.35)",
+};
+
 /** Single glyph — remounts via key when the digit changes so exit/enter can tick. */
 function TickDigit({ char }: { char: string }) {
   return (
@@ -75,34 +79,42 @@ function TickingDigits({
   minutes,
   seconds,
   urgency,
+  mode,
 }: {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
   urgency: Urgency;
+  mode: "minus" | "plus";
 }) {
-  const glow = urgencyGlow[urgency];
+  const glow = mode === "plus" ? plusGlow : urgencyGlow[urgency];
   const hh = String(hours).padStart(2, "0");
   const mm = String(minutes).padStart(2, "0");
   const ss = String(seconds).padStart(2, "0");
+  const sign = mode === "minus" ? "T−" : "T+";
+  const tone = mode === "plus" ? "text-emerald-400" : "text-cyan-400";
+  const sep = mode === "plus" ? "text-emerald-500/80" : "text-cyan-500/80";
 
   return (
     <motion.span
-      className="inline-flex items-center gap-x-1 font-mono font-bold text-base sm:text-lg md:text-xl text-cyan-400 tabular-nums tracking-normal"
+      className={`inline-flex items-center gap-x-1 font-mono font-bold text-base sm:text-lg md:text-xl tabular-nums tracking-normal ${tone}`}
       animate={{ textShadow: glow.textShadow }}
-      transition={glow.transition ?? transitions.soft}
+      transition={
+        mode === "plus" ? transitions.soft : glow.transition ?? transitions.soft
+      }
     >
+      <span className="w-[2.2ch] text-center tracking-normal">{sign}</span>
       <TickGroup value={String(days)} groupKey="days" />
-      <span className="w-[0.55ch] text-center text-cyan-500/80" aria-hidden>
+      <span className={`w-[0.55ch] text-center ${sep}`} aria-hidden>
         :
       </span>
       <TickGroup value={hh} groupKey="hours" />
-      <span className="w-[0.55ch] text-center text-cyan-500/80" aria-hidden>
+      <span className={`w-[0.55ch] text-center ${sep}`} aria-hidden>
         :
       </span>
       <TickGroup value={mm} groupKey="minutes" />
-      <span className="w-[0.55ch] text-center text-cyan-500/80" aria-hidden>
+      <span className={`w-[0.55ch] text-center ${sep}`} aria-hidden>
         :
       </span>
       <TickGroup value={ss} groupKey="seconds" />
@@ -173,7 +185,7 @@ interface TickingCountdownProps {
   mode: "minus" | "plus";
 }
 
-/** Live D:HH:MM:SS readout with per-digit ticks and urgency glow. */
+/** Live D:HH:MM:SS readout with per-digit ticks. T− is cyan/urgent; T+ is emerald/elapsed. */
 export function TickingCountdown({
   days,
   hours,
@@ -183,19 +195,16 @@ export function TickingCountdown({
   mode,
 }: TickingCountdownProps) {
   const urgency = getUrgency(Math.max(difference, 0), mode);
-  const label = mode === "minus" ? "T-Minus" : "T-Plus";
 
   return (
     <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
-      <span className="text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] shrink-0">
-        {label}
-      </span>
       <TickingDigits
         days={days}
         hours={hours}
         minutes={minutes}
         seconds={seconds}
         urgency={urgency}
+        mode={mode}
       />
     </div>
   );

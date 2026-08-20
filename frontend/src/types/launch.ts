@@ -3,6 +3,14 @@ export interface Status {
     abbrev: string;
 }
 
+/** Launch Library NET precision (second / minute / hour / day / …). */
+export interface NetPrecision {
+    id?: number;
+    name?: string;
+    abbrev?: string;
+    description?: string;
+}
+
 export interface Image {
     name: string;
     image_url: string;
@@ -124,6 +132,7 @@ export interface Launch {
     status: Status;
     last_updated: string;
     net: string;
+    net_precision?: NetPrecision | null;
     window_start: string;
     window_end: string;
     image: Image;

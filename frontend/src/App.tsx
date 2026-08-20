@@ -5,6 +5,7 @@ import { FeedStatus } from './components/FeedStatus';
 import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
+import { getLaunchTime, type LaunchTimePhase } from "./utils/launchTime";
 import { STARFIELD_COUNT, transitions, travel } from "./lib/motionTokens";
 import {
   bootQueueListVariants,
@@ -38,14 +39,60 @@ function createStarfield(count: number) {
 /** Pre-generate full field once; slice for compact viewports to avoid regen jitter. */
 const starfieldPool = createStarfield(STARFIELD_COUNT.desktop);
 
+const HOUR_MS = 60 * 60 * 1000;
+
+function findQueueFocusIndex(launches: Launch[], nowMs: number): number {
+  let live = -1;
+  let upcoming = -1;
+  for (let i = 0; i < launches.length; i++) {
+    const t = getLaunchTime({
+      net: launches[i].net,
+      status: launches[i].status?.abbrev,
+      netPrecision: launches[i].net_precision,
+      now: nowMs,
+    });
+    if (live < 0 && t.phase === "live") live = i;
+    if (upcoming < 0 && t.msUntilNet > 0 && t.phase !== "failed") upcoming = i;
+  }
+  return live >= 0 ? live : upcoming;
+}
+
+function pickDefaultApiId(launches: Launch[], nowMs: number = Date.now()): string | null {
+  if (!launches.length) return null;
+  const focus = findQueueFocusIndex(launches, nowMs);
+  const idx = focus >= 0 ? focus : 0;
+  return launches[idx]?.apiId ?? null;
+}
+
+function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
+  const base =
+    "shrink-0 text-[9px] md:text-[10px] leading-tight font-mono uppercase tracking-wider tabular-nums";
+  switch (phase) {
+    case "live":
+      return `${base} text-cyan-300 font-bold [text-shadow:0_0_8px_rgba(34,211,238,0.75)]`;
+    case "elapsed":
+      return `${base} text-emerald-400`;
+    case "hold":
+    case "provisional":
+      return `${base} text-amber-400`;
+    case "failed":
+      return `${base} text-red-400`;
+    default:
+      return msUntilNet <= HOUR_MS
+        ? `${base} text-cyan-300`
+        : `${base} text-cyan-500`;
+  }
+}
+
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedApiId, setSelectedApiId] = useState<string | null>(null);
   const [feedLive, setFeedLive] = useState(socket.connected);
   const [sysClock, setSysClock] = useState<{
     time: string;
     date: string;
     offset: string;
+    nowMs: number;
   } | null>(null);
   const [queueRevealed, setQueueRevealed] = useState(false);
   const queueScrollRef = useRef<HTMLDivElement>(null);
@@ -102,6 +149,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (launches.length === 0) return;
+    if (selectedApiId && launches.some((launch) => launch.apiId === selectedApiId)) {
+      return;
+    }
+    setSelectedApiId(pickDefaultApiId(launches));
+  }, [launches, selectedApiId]);
+
+  useEffect(() => {
     if (launches.length > 0) setQueueRevealed(true);
   }, [launches]);
 
@@ -133,6 +188,7 @@ export default function App() {
         date: formatLocalDate(now),
         time: formatLocalTime(now, { includeSeconds: true }),
         offset: getLocalUtcOffsetLabel(now),
+        nowMs: now.getTime(),
       });
     };
 
@@ -158,6 +214,19 @@ export default function App() {
       window.removeEventListener('resize', syncQueueEdges);
     };
   }, [launches, queueRevealed, syncQueueEdges]);
+
+  const nowMs = sysClock?.nowMs ?? Date.now();
+  const focusIndex = useMemo(
+    () => findQueueFocusIndex(launches, nowMs),
+    [launches, nowMs],
+  );
+  const selectedIndex = useMemo(() => {
+    if (!launches.length) return 0;
+    const byId = launches.findIndex((launch) => launch.apiId === selectedApiId);
+    if (byId >= 0) return byId;
+    const focus = findQueueFocusIndex(launches, nowMs);
+    return focus >= 0 ? focus : 0;
+  }, [launches, selectedApiId, nowMs]);
 
   const activeLaunch = launches[selectedIndex];
   // Hold the detail card until boot settles so cold load feels staged
@@ -377,6 +446,17 @@ export default function App() {
                   launch.launch_service_provider?.name ||
                   null;
                 const selected = selectedIndex === index;
+                const launchTime = getLaunchTime({
+                  net: launch.net,
+                  status: launch.status?.abbrev,
+                  netPrecision: launch.net_precision,
+                  now: nowMs,
+                });
+                const isFocus = index === focusIndex;
+                const isPast =
+                  launchTime.msUntilNet <= 0 && launchTime.phase !== "live";
+                const showNext =
+                  isFocus && launchTime.phase !== "live";
 
                 return (
                 <motion.button
@@ -384,12 +464,16 @@ export default function App() {
                   type="button"
                   variants={bootQueueItemVariants}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedIndex(index)}
-                  className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-colors duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
+                  onClick={() => {
+                    if (launch.apiId) setSelectedApiId(launch.apiId);
+                  }}
+                  className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-[colors,opacity] duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
                     selected
-                      ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]' 
-                      : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
-                  }`}
+                      ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]'
+                      : isFocus
+                        ? 'bg-cyan-950/20 border-cyan-600/45 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
+                        : 'bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60'
+                  } ${isPast && !selected ? 'opacity-50' : 'opacity-100'}`}
                 >
                   <AnimatePresence>
                     {selected && (
@@ -403,10 +487,24 @@ export default function App() {
                       />
                     )}
                   </AnimatePresence>
-                  
-                  <span className="text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
-                    {formatLocalDateTime(launch.net, { includeYear: false }).label}
-                  </span>
+
+                  <div className="flex items-baseline justify-between gap-1.5 w-full min-w-0">
+                    <span className="min-w-0 truncate text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+                      {formatLocalDateTime(launch.net, { includeYear: false }).label}
+                    </span>
+                    <span className="flex items-baseline gap-1.5 shrink-0">
+                      {showNext && (
+                        <span className="hidden lg:inline text-[8px] font-mono text-cyan-400 uppercase tracking-[0.2em]">
+                          NEXT
+                        </span>
+                      )}
+                      {launchTime.chip && (
+                        <span className={queueChipClass(launchTime.phase, launchTime.msUntilNet)}>
+                          {launchTime.chip}
+                        </span>
+                      )}
+                    </span>
+                  </div>
 
                   <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
                     <span className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide sm:tracking-wider lg:tracking-widest truncate transition-colors ${selected ? 'text-cyan-100 font-bold' : 'text-slate-300 group-hover:text-cyan-50 group-active:text-cyan-50'}`}>
