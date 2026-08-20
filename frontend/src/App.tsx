@@ -57,6 +57,13 @@ function findQueueFocusIndex(launches: Launch[], nowMs: number): number {
   return live >= 0 ? live : upcoming;
 }
 
+function pickDefaultApiId(launches: Launch[], nowMs: number = Date.now()): string | null {
+  if (!launches.length) return null;
+  const focus = findQueueFocusIndex(launches, nowMs);
+  const idx = focus >= 0 ? focus : 0;
+  return launches[idx]?.apiId ?? null;
+}
+
 function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
   const base =
     "shrink-0 text-[9px] md:text-[10px] leading-tight font-mono uppercase tracking-wider tabular-nums";
@@ -79,7 +86,7 @@ function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
 
 export default function App() {
   const [launches, setLaunches] = useState<Launch[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedApiId, setSelectedApiId] = useState<string | null>(null);
   const [feedLive, setFeedLive] = useState(socket.connected);
   const [sysClock, setSysClock] = useState<{
     time: string;
@@ -140,6 +147,14 @@ export default function App() {
       .then((data) => setLaunches(data))
       .catch((err) => console.error(err));
   }, []);
+
+  useEffect(() => {
+    if (launches.length === 0) return;
+    if (selectedApiId && launches.some((launch) => launch.apiId === selectedApiId)) {
+      return;
+    }
+    setSelectedApiId(pickDefaultApiId(launches));
+  }, [launches, selectedApiId]);
 
   useEffect(() => {
     if (launches.length > 0) setQueueRevealed(true);
@@ -205,6 +220,13 @@ export default function App() {
     () => findQueueFocusIndex(launches, nowMs),
     [launches, nowMs],
   );
+  const selectedIndex = useMemo(() => {
+    if (!launches.length) return 0;
+    const byId = launches.findIndex((launch) => launch.apiId === selectedApiId);
+    if (byId >= 0) return byId;
+    const focus = findQueueFocusIndex(launches, nowMs);
+    return focus >= 0 ? focus : 0;
+  }, [launches, selectedApiId, nowMs]);
 
   const activeLaunch = launches[selectedIndex];
   // Hold the detail card until boot settles so cold load feels staged
@@ -442,7 +464,9 @@ export default function App() {
                   type="button"
                   variants={bootQueueItemVariants}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedIndex(index)}
+                  onClick={() => {
+                    if (launch.apiId) setSelectedApiId(launch.apiId);
+                  }}
                   className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-[colors,opacity] duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
                     selected
                       ? 'bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]'
