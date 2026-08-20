@@ -8,14 +8,14 @@ Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/),
 
 ## Features
 
-- **Launch Queue** — upcoming launches with local NET (`DD MMM · HH:MM`), provider abbreviation, and selection state
-- **Mission detail panel** — provider, mission/rocket titles, Status chip, T-Minus / T-Plus countdown (`D:HH:MM:SS`), and provisional NET for TBD/TBC
+- **Launch Queue** — upcoming launches with local NET (`DD MMM · HH:MM`), a relative chip (`T− 21 min`, `T+ 12 min`, `LIVE`, `HOLD`, `NET TBD`), provider abbreviation, dimmed past rows, and a `NEXT` marker on the in-flight or soonest upcoming launch (sidebar). Selection is by launch `apiId` (sticky across live cache refreshes) and defaults to in-flight or next NET
+- **Mission detail panel** — provider, mission/rocket titles, Status chip, T− (cyan countdown) vs T+ (emerald elapsed) as `D:HH:MM:SS`, and provisional NET for TBD/TBC or coarse `net_precision` (day/month and coarser — no fake minute countdown)
 - **T-Zero and coordinates** — local launch time with explicit `UTC±X` offset, launch window, pad name, and location
 - **Mission Brief** — mission description with type/orbit chips (unknown metadata hidden)
 - **Live Feed indicator** — Socket.IO connect/disconnect status in the queue header and card footer (event flash on link change)
 - **Last Updated** — provider `last_updated` timestamp in Sys Time–style local formatting
 - **Sys Time** — local clock with explicit timezone offset
-- **HUD motion** — Framer Motion cold-load boot, launch-selection crossfade, ticking countdown with urgency, and calmer ambient chrome
+- **HUD motion** — Framer Motion cold-load boot, launch-selection crossfade, ticking T− urgency vs calm T+, and calmer ambient chrome
 - **Live UI updates** — when the worker refreshes the cache, Redis Pub/Sub notifies the server, which emits the new payload to connected Socket.IO clients
 - **Cached API** — `GET /launches` reads Redis first, then MongoDB on a cache miss
 - **Scheduled ingestion** — cron worker polls Launch Library every 5 minutes, upserts MongoDB, writes Redis, and publishes a cache-update message
@@ -104,6 +104,7 @@ launch-ops/
 │   │   │   └── launch.ts             # Frontend launch types
 │   │   ├── utils/
 │   │   │   ├── launchTitle.ts        # Mission/rocket title helpers
+│   │   │   ├── launchTime.ts         # Relative T−/T+ chips and NET precision honesty
 │   │   │   └── localTime.ts          # Shared local date/time + UTC offset labels
 │   │   ├── App.tsx                   # Queue, Socket.IO client, boot + layout
 │   │   ├── main.jsx                  # React root, MotionConfig, Analytics
