@@ -6,6 +6,7 @@ const cron = require('node-cron');
 const mongoose = require('mongoose');
 
 const Launch = require('./models/Launch');
+const { mapUpcomingLaunches } = require('./mapLaunch');
 
 // Redis Client Initializer
 const { createClient } = require('redis');
@@ -52,21 +53,7 @@ const fetchUpcomingLaunches = async() => {
 };
 
 const saveData = async (data) => {
-    const launches = data.results.map((launch) => ({
-        apiId: launch.id,
-        name: launch.name,
-        status: launch.status,
-        last_updated: launch.last_updated,
-        net: launch.net,
-        net_precision: launch.net_precision,
-        window_start: launch.window_start,
-        window_end: launch.window_end,
-        image: launch.image,
-        launch_service_provider: launch.launch_service_provider,
-        rocket: launch.rocket,
-        mission: launch.mission,
-        pad: launch.pad
-    }));
+    const launches = mapUpcomingLaunches(data);
     
     // Save to Redis
     try {

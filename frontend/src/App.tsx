@@ -6,6 +6,7 @@ import { io } from 'socket.io-client';
 import { Launch } from "./types/launch";
 import { getLaunchTitle } from "./utils/launchTitle";
 import { getLaunchTime, type LaunchTimePhase } from "./utils/launchTime";
+import { findQueueFocusIndex, pickDefaultApiId } from "./utils/queueFocus";
 import { STARFIELD_COUNT, transitions, travel } from "./lib/motionTokens";
 import {
   bootQueueListVariants,
@@ -40,29 +41,6 @@ function createStarfield(count: number) {
 const starfieldPool = createStarfield(STARFIELD_COUNT.desktop);
 
 const HOUR_MS = 60 * 60 * 1000;
-
-function findQueueFocusIndex(launches: Launch[], nowMs: number): number {
-  let live = -1;
-  let upcoming = -1;
-  for (let i = 0; i < launches.length; i++) {
-    const t = getLaunchTime({
-      net: launches[i].net,
-      status: launches[i].status?.abbrev,
-      netPrecision: launches[i].net_precision,
-      now: nowMs,
-    });
-    if (live < 0 && t.phase === "live") live = i;
-    if (upcoming < 0 && t.msUntilNet > 0 && t.phase !== "failed") upcoming = i;
-  }
-  return live >= 0 ? live : upcoming;
-}
-
-function pickDefaultApiId(launches: Launch[], nowMs: number = Date.now()): string | null {
-  if (!launches.length) return null;
-  const focus = findQueueFocusIndex(launches, nowMs);
-  const idx = focus >= 0 ? focus : 0;
-  return launches[idx]?.apiId ?? null;
-}
 
 function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
   const base =
