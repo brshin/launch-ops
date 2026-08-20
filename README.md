@@ -69,6 +69,8 @@ The worker is required by `server.js`, so it runs in the same Node process as th
 | External data   | [The Space Devs Launch Library 2.3](https://ll.thespacedevs.com/)    |
 | Analytics       | Vercel Analytics                                                     |
 | Hosting         | Frontend on **Vercel**; backend on **Render**                        |
+| Tests           | Vitest (frontend), `node:test` (backend)                             |
+| CI              | GitHub Actions on pull requests and pushes to `main`                 |
 | Source control  | [GitHub](https://github.com/brshin/launch-ops)                       |
 
 ---
@@ -77,9 +79,15 @@ The worker is required by `server.js`, so it runs in the same Node process as th
 
 ```
 launch-ops/
+├── .github/
+│   └── workflows/
+│       └── test.yml           # CI: frontend + backend `npm test`
+│
 ├── backend/
 │   ├── models/
 │   │   └── Launch.js          # Mongoose schema
+│   ├── mapLaunch.js           # Launch Library payload → stored documents
+│   ├── mapLaunch.test.js
 │   ├── server.js              # Express API, Socket.IO, Redis subscriber
 │   ├── worker.js              # Cron ingestion, Redis publish, Mongo upsert
 │   └── package.json
@@ -104,7 +112,11 @@ launch-ops/
 │   │   │   └── launch.ts             # Frontend launch types
 │   │   ├── utils/
 │   │   │   ├── launchTitle.ts        # Mission/rocket title helpers
+│   │   │   ├── launchTitle.test.ts
 │   │   │   ├── launchTime.ts         # Relative T−/T+ chips and NET precision honesty
+│   │   │   ├── launchTime.test.ts
+│   │   │   ├── queueFocus.ts         # Default queue selection (live, else next NET)
+│   │   │   ├── queueFocus.test.ts
 │   │   │   └── localTime.ts          # Shared local date/time + UTC offset labels
 │   │   ├── App.tsx                   # Queue, Socket.IO client, boot + layout
 │   │   ├── main.jsx                  # React root, MotionConfig, Analytics
@@ -187,6 +199,17 @@ Then open `http://<your-computer-ip>:5173` on the device.
 ```bash
 cd frontend && npm run build && npm run preview
 ```
+
+### 5. Tests
+
+Contract tests for queue chips/phases, titles, default selection, and Launch Library → `apiId` mapping. No Redis or Mongo required.
+
+```bash
+cd frontend && npm test
+cd backend && npm test
+```
+
+GitHub Actions runs the same commands on pull requests and pushes to `main`.
 
 ---
 
