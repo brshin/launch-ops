@@ -49,10 +49,12 @@ Launch Library API
 2. Results are written to Redis and **upserted into MongoDB**.
 3. A Redis Pub/Sub message on `launch-updates` notifies the API server.
 4. The server emits `live-launch-data` over Socket.IO to connected clients.
-5. On load, the frontend hydrates via `GET /launches` (Redis, then MongoDB on miss).
+5. On load, the React shell (`App.tsx`) hydrates via `GET /launches` (Redis, then MongoDB on miss).
 6. The client tracks Socket.IO `connect` / `disconnect` to drive the Live Feed indicator (including a one-shot flash when the uplink state changes).
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
+
+On the frontend, `App.tsx` is the console **shell**: launch list, Socket.IO, Sys Time, sticky `apiId` selection, and cold-load boot. UI regions are components (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
 
 ---
 
@@ -96,15 +98,18 @@ launch-ops/
 │   ├── public/                # favicon.svg, icons.svg
 │   ├── src/
 │   │   ├── components/
+│   │   │   ├── Starfield.tsx         # Ambient space background
+│   │   │   ├── ConsoleHeader.tsx     # Brand + Sys Time
+│   │   │   ├── LaunchQueue.tsx       # Horizontal strip / sidebar queue
 │   │   │   ├── LaunchCard.tsx        # Mission detail panel
 │   │   │   ├── CountdownReadout.tsx  # Ticking countdown + status labels
 │   │   │   └── FeedStatus.tsx        # Live/offline feed indicator
 │   │   ├── hooks/
-│   │   │   ├── useConsoleBoot.ts
-│   │   │   ├── useCompactMotion.ts
-│   │   │   ├── useShortViewportBand.ts
-│   │   │   ├── useCardDensityBand.ts
-│   │   │   └── useConsoleScrollbarActivity.ts
+│   │   │   ├── useConsoleBoot.ts              # Cold-load boot window
+│   │   │   ├── useCompactMotion.ts            # Below-lg motion / star budget
+│   │   │   ├── useShortViewportBand.ts        # Short/mid/roomy height bands
+│   │   │   ├── useCardDensityBand.ts          # LaunchCard stacked density
+│   │   │   └── useConsoleScrollbarActivity.ts # Show thumbs while scrolling
 │   │   ├── lib/
 │   │   │   ├── motionTokens.ts       # Shared Framer transition presets
 │   │   │   └── bootMotion.ts         # Boot-sequence motion variants
@@ -118,9 +123,9 @@ launch-ops/
 │   │   │   ├── queueFocus.ts         # Default queue selection (live, else next NET)
 │   │   │   ├── queueFocus.test.ts
 │   │   │   └── localTime.ts          # Shared local date/time + UTC offset labels
-│   │   ├── App.tsx                   # Queue, Socket.IO client, boot + layout
+│   │   ├── App.tsx                   # Shell: feed, selection, clock, layout
 │   │   ├── main.jsx                  # React root, MotionConfig, Analytics
-│   │   └── index.css
+│   │   └── index.css                 # Console insets, short bands, scrollbars
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
