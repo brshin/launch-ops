@@ -1,28 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
 import { Starfield } from './components/Starfield';
-import { ConsoleHeader, type SysClock } from './components/ConsoleHeader';
+import { ConsoleHeader } from './components/ConsoleHeader';
 import { LaunchQueue } from './components/LaunchQueue';
-import { io } from 'socket.io-client';
-import { Launch } from "./types/launch";
-import { findQueueFocusIndex, pickDefaultApiId } from "./utils/queueFocus";
+import { findQueueFocusIndex } from "./utils/queueFocus";
 import { transitions, travel } from "./lib/motionTokens";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
+import { useLaunchFeed } from "./hooks/useLaunchFeed";
+import { useSysClock } from "./hooks/useSysClock";
 import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
-import { formatLocalDate, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-const socket = io(API_URL);
 
 export default function App() {
-  const [launches, setLaunches] = useState<Launch[]>([]);
-  const [selectedApiId, setSelectedApiId] = useState<string | null>(null);
-  const [feedLive, setFeedLive] = useState(socket.connected);
-  const [sysClock, setSysClock] = useState<SysClock | null>(null);
+  const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
+  const sysClock = useSysClock();
 
   const compactMotion = useCompactMotion();
   const shortBand = useShortViewportBand();
@@ -30,59 +23,6 @@ export default function App() {
   const cardEnterY = compactMotion ? travel.compact.cardY : travel.desktop.cardY;
 
   const { bootComplete, isBooting } = useConsoleBoot(launches.length > 0);
-
-  useEffect(() => {
-    fetch(`${API_URL}/launches`)
-      .then((res) => res.json())
-      .then((data) => setLaunches(data))
-      .catch((err) => console.error(err));
-  }, []);
-
-  useEffect(() => {
-    if (launches.length === 0) return;
-    if (selectedApiId && launches.some((launch) => launch.apiId === selectedApiId)) {
-      return;
-    }
-    setSelectedApiId(pickDefaultApiId(launches));
-  }, [launches, selectedApiId]);
-
-  useEffect(() => {
-    const onConnect = () => setFeedLive(true);
-    const onDisconnect = () => setFeedLive(false);
-
-    setFeedLive(socket.connected);
-
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-    socket.on('live-launch-data', (freshData) => {
-      console.log('🚀 Real-time telemetry received from server!', freshData);
-      setLaunches(freshData);
-    });
-
-    return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-      socket.off('live-launch-data');
-    };
-  }, []);
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-
-      setSysClock({
-        date: formatLocalDate(now),
-        time: formatLocalTime(now, { includeSeconds: true }),
-        offset: getLocalUtcOffsetLabel(now),
-        nowMs: now.getTime(),
-      });
-    };
-
-    updateClock(); 
-    const timer = setInterval(updateClock, 1000); 
-
-    return () => clearInterval(timer); 
-  }, []);
 
   const nowMs = sysClock?.nowMs ?? Date.now();
   const selectedIndex = useMemo(() => {
