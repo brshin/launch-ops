@@ -49,12 +49,12 @@ Launch Library API
 2. Results are written to Redis and **upserted into MongoDB**.
 3. A Redis Pub/Sub message on `launch-updates` notifies the API server.
 4. The server emits `live-launch-data` over Socket.IO to connected clients.
-5. On load, the React shell (`App.tsx`) hydrates via `GET /launches` (Redis, then MongoDB on miss).
-6. The client tracks Socket.IO `connect` / `disconnect` to drive the Live Feed indicator (including a one-shot flash when the uplink state changes).
+5. On load, `useLaunchFeed` hydrates via `GET /launches` (Redis, then MongoDB on miss) and opens a Socket.IO connection (created on mount, torn down on unmount).
+6. The same hook tracks Socket.IO `connect` / `disconnect` to drive the Live Feed indicator (including a one-shot flash when the uplink state changes) and replaces the list on `live-launch-data`. Sticky `apiId` selection lives there too (`pickDefaultApiId` when none is set or the previous pick left the queue).
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
 
-On the frontend, `App.tsx` is the console **shell**: launch list, Socket.IO, Sys Time, sticky `apiId` selection, and cold-load boot. UI regions are components (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
+On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
 
 ---
 
@@ -105,6 +105,8 @@ launch-ops/
 │   │   │   ├── CountdownReadout.tsx  # Ticking countdown + status labels
 │   │   │   └── FeedStatus.tsx        # Live/offline feed indicator
 │   │   ├── hooks/
+│   │   │   ├── useLaunchFeed.ts               # REST hydrate, Socket.IO, sticky apiId
+│   │   │   ├── useSysClock.ts                 # Local Sys Time tick
 │   │   │   ├── useConsoleBoot.ts              # Cold-load boot window
 │   │   │   ├── useCompactMotion.ts            # Below-lg motion / star budget
 │   │   │   ├── useShortViewportBand.ts        # Short/mid/roomy height bands
@@ -123,7 +125,7 @@ launch-ops/
 │   │   │   ├── queueFocus.ts         # Default queue selection (live, else next NET)
 │   │   │   ├── queueFocus.test.ts
 │   │   │   └── localTime.ts          # Shared local date/time + UTC offset labels
-│   │   ├── App.tsx                   # Shell: feed, selection, clock, layout
+│   │   ├── App.tsx                   # Shell: hooks, selection index, layout
 │   │   ├── main.jsx                  # React root, MotionConfig, Analytics
 │   │   └── index.css                 # Console insets, short bands, scrollbars
 │   ├── index.html
