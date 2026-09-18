@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard';
 import { Starfield } from './components/Starfield';
-import { ConsoleHeader, type SysClock } from './components/ConsoleHeader';
+import { ConsoleHeader } from './components/ConsoleHeader';
 import { LaunchQueue } from './components/LaunchQueue';
 import { findQueueFocusIndex } from "./utils/queueFocus";
 import { transitions, travel } from "./lib/motionTokens";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
 import { useLaunchFeed } from "./hooks/useLaunchFeed";
+import { useSysClock } from "./hooks/useSysClock";
 import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
-import { formatLocalDate, formatLocalTime, getLocalUtcOffsetLabel } from "./utils/localTime";
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
-  const [sysClock, setSysClock] = useState<SysClock | null>(null);
+  const sysClock = useSysClock();
 
   const compactMotion = useCompactMotion();
   const shortBand = useShortViewportBand();
@@ -23,24 +23,6 @@ export default function App() {
   const cardEnterY = compactMotion ? travel.compact.cardY : travel.desktop.cardY;
 
   const { bootComplete, isBooting } = useConsoleBoot(launches.length > 0);
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-
-      setSysClock({
-        date: formatLocalDate(now),
-        time: formatLocalTime(now, { includeSeconds: true }),
-        offset: getLocalUtcOffsetLabel(now),
-        nowMs: now.getTime(),
-      });
-    };
-
-    updateClock(); 
-    const timer = setInterval(updateClock, 1000); 
-
-    return () => clearInterval(timer); 
-  }, []);
 
   const nowMs = sysClock?.nowMs ?? Date.now();
   const selectedIndex = useMemo(() => {
