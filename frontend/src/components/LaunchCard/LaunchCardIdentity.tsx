@@ -2,9 +2,9 @@ import {
   CountdownFailureLabel,
   CountdownHoldLabel,
   TickingCountdown,
-} from "./CountdownReadout";
-import type { DensityChrome } from "../lib/cardDensityChrome";
-import type { LaunchTime } from "../utils/launchTime";
+} from "../CountdownReadout";
+import type { DensityChrome } from "../../lib/cardDensityChrome";
+import type { LaunchTime } from "../../utils/launchTime";
 
 type CountdownParts = {
   difference: number;

@@ -54,7 +54,7 @@ Launch Library API
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
 
-On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). `LaunchCard` is the mission-panel **orchestrator**: density, the 1s countdown tick, derived copy, and Framer stagger. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD image), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
+On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, the 1s countdown tick, derived copy, and Framer stagger. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD image), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
 
 ---
 
@@ -101,13 +101,14 @@ launch-ops/
 │   │   │   ├── Starfield.tsx         # Ambient space background
 │   │   │   ├── ConsoleHeader.tsx     # Brand + Sys Time
 │   │   │   ├── LaunchQueue.tsx       # Horizontal strip / sidebar queue
-│   │   │   ├── LaunchCard.tsx             # Mission panel orchestrator
-│   │   │   ├── LaunchCardIdentity.tsx     # Titles, status pills, countdown
-│   │   │   ├── LaunchCardVisual.tsx       # HUD image + rest/focus chrome
-│   │   │   ├── LaunchCardMission.tsx      # T-Zero, pad, brief grid
-│   │   │   ├── LaunchCardFooter.tsx       # Live feed + last updated
-│   │   │   ├── CountdownReadout.tsx       # Ticking countdown + status labels
-│   │   │   └── FeedStatus.tsx             # Live/offline feed indicator
+│   │   │   ├── LaunchCard/
+│   │   │   │   ├── LaunchCard.tsx         # Mission panel orchestrator
+│   │   │   │   ├── LaunchCardIdentity.tsx # Titles, status pills, countdown
+│   │   │   │   ├── LaunchCardVisual.tsx   # HUD image + rest/focus chrome
+│   │   │   │   ├── LaunchCardMission.tsx  # T-Zero, pad, brief grid
+│   │   │   │   └── LaunchCardFooter.tsx   # Live feed + last updated
+│   │   │   ├── CountdownReadout.tsx  # Ticking countdown + status labels
+│   │   │   └── FeedStatus.tsx        # Live/offline feed indicator
 │   │   ├── hooks/
 │   │   │   ├── useLaunchFeed.ts               # REST hydrate, Socket.IO, sticky apiId
 │   │   │   ├── useSysClock.ts                 # Local Sys Time tick

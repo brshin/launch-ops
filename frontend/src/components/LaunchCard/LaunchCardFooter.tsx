@@ -1,4 +1,4 @@
-import { FeedStatus } from "./FeedStatus";
+import { FeedStatus } from "../FeedStatus";
 
 type LocalDateTime = {
   date: string;

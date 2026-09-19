@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion, type Variants } from "framer-motion";
-import { transitions } from "../lib/motionTokens";
+import { transitions } from "../../lib/motionTokens";
 
 /** Visual feed: rest = always-on HUD; focus = hover or tap intensify. */
 const visualFrameVariants: Variants = {

@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, type Variants } from "framer-motion";
-import { Launch } from "../types/launch";
-import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
-import { transitions, travel } from "../lib/motionTokens";
-import { densityChrome } from "../lib/cardDensityChrome";
+import { Launch } from "../../types/launch";
+import { getLaunchTitle, getRocketName } from "../../utils/launchTitle";
+import { transitions, travel } from "../../lib/motionTokens";
+import { densityChrome } from "../../lib/cardDensityChrome";
 import { LaunchCardFooter } from "./LaunchCardFooter";
 import { LaunchCardIdentity } from "./LaunchCardIdentity";
 import { LaunchCardMission } from "./LaunchCardMission";
 import { LaunchCardVisual } from "./LaunchCardVisual";
-import { useCompactMotion } from "../hooks/useCompactMotion";
+import { useCompactMotion } from "../../hooks/useCompactMotion";
 import {
     useCardDensityBand,
     type CardDensity,
-} from "../hooks/useCardDensityBand";
-import { useShortViewportBand } from "../hooks/useShortViewportBand";
+} from "../../hooks/useCardDensityBand";
+import { useShortViewportBand } from "../../hooks/useShortViewportBand";
 import {
     formatLocalDateTime,
     formatLocalTime,
     getLocalUtcOffsetLabel,
-} from "../utils/localTime";
-import { getLaunchTime } from "../utils/launchTime";
+} from "../../utils/localTime";
+import { getLaunchTime } from "../../utils/launchTime";
 
 interface LaunchCardProps {
     launch: Launch;

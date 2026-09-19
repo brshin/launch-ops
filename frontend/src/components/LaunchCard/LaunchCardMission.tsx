@@ -1,5 +1,5 @@
 import { motion, type Variants } from "framer-motion";
-import type { DensityChrome } from "../lib/cardDensityChrome";
+import type { DensityChrome } from "../../lib/cardDensityChrome";
 
 const customScrollbar = "console-scrollbar console-scrollbar-y";
 
