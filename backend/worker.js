@@ -31,7 +31,7 @@ connectDB();
 
 const fetchUpcomingLaunches = async() => {
     try {
-        const response = await fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/');
+        const response = await fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed');
 
         if (!response.ok) {
             console.error(`API Error: HTTP ${response.status}`);

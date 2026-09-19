@@ -17,7 +17,9 @@ function mapUpcomingLaunches(data) {
         launch_service_provider: launch.launch_service_provider,
         rocket: launch.rocket,
         mission: launch.mission,
-        pad: launch.pad
+        pad: launch.pad,
+        webcast_live: Boolean(launch.webcast_live),
+        vid_urls: Array.isArray(launch.vid_urls) ? launch.vid_urls : [],
     }));
 }
 

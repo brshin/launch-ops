@@ -94,8 +94,22 @@ export interface Mission {
     image: string | null;
     orbit: Orbit;
     agencies: Agency[];
-    info_urls: string[];
-    vid_urls: string[];
+}
+
+export interface VidUrlType {
+    name?: string;
+}
+
+/** Launch-level webcast entry from Launch Library `mode=detailed`. */
+export interface VidUrl {
+    url?: string;
+    live?: boolean;
+    publisher?: string;
+    title?: string;
+    source?: string;
+    start_time?: string | null;
+    end_time?: string | null;
+    type?: string | VidUrlType;
 }
 
 export interface Location {
@@ -140,4 +154,6 @@ export interface Launch {
     rocket: Rocket;
     mission: Mission;
     pad: Pad;
+    webcast_live?: boolean;
+    vid_urls?: VidUrl[];
 }

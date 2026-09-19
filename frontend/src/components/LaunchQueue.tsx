@@ -5,6 +5,7 @@ import { Launch } from "../types/launch";
 import { getLaunchTitle } from "../utils/launchTitle";
 import { getLaunchTime, type LaunchTimePhase } from "../utils/launchTime";
 import { findQueueFocusIndex } from "../utils/queueFocus";
+import { isWebcastLive } from "../utils/watchTarget";
 import { transitions } from "../lib/motionTokens";
 import {
   bootQueueListVariants,
@@ -17,23 +18,26 @@ import { formatLocalDateTime, getLocalUtcOffsetLabel } from "../utils/localTime"
 
 const HOUR_MS = 60 * 60 * 1000;
 
+const queueChipBase =
+  "shrink-0 text-[9px] md:text-[10px] leading-tight font-mono uppercase tracking-wider tabular-nums";
+
+const streamChipClass = `${queueChipBase} text-cyan-300 font-bold [text-shadow:0_0_8px_rgba(34,211,238,0.75)]`;
+
 function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
-  const base =
-    "shrink-0 text-[9px] md:text-[10px] leading-tight font-mono uppercase tracking-wider tabular-nums";
   switch (phase) {
     case "live":
-      return `${base} text-cyan-300 font-bold [text-shadow:0_0_8px_rgba(34,211,238,0.75)]`;
+      return streamChipClass;
     case "elapsed":
-      return `${base} text-emerald-400`;
+      return `${queueChipBase} text-emerald-400`;
     case "hold":
     case "provisional":
-      return `${base} text-amber-400`;
+      return `${queueChipBase} text-amber-400`;
     case "failed":
-      return `${base} text-red-400`;
+      return `${queueChipBase} text-red-400`;
     default:
       return msUntilNet <= HOUR_MS
-        ? `${base} text-cyan-300`
-        : `${base} text-cyan-500`;
+        ? `${queueChipBase} text-cyan-300`
+        : `${queueChipBase} text-cyan-500`;
   }
 }
 
@@ -196,6 +200,16 @@ export function LaunchQueue({
             const isPast =
               launchTime.msUntilNet <= 0 && launchTime.phase !== "live";
             const showNext = isFocus && launchTime.phase !== "live";
+            const streaming = isWebcastLive({
+              webcastLive: launch.webcast_live,
+              vidUrls: launch.vid_urls,
+            });
+            // STREAM replaces T−/T+/NET TBD while a webcast is on; LIVE/HOLD/FAIL stay.
+            const showStreamChip =
+              streaming &&
+              launchTime.phase !== "live" &&
+              launchTime.phase !== "hold" &&
+              launchTime.phase !== "failed";
 
             return (
               <motion.button
@@ -237,10 +251,14 @@ export function LaunchQueue({
                         NEXT
                       </span>
                     )}
-                    {launchTime.chip && (
-                      <span className={queueChipClass(launchTime.phase, launchTime.msUntilNet)}>
-                        {launchTime.chip}
-                      </span>
+                    {showStreamChip ? (
+                      <span className={streamChipClass}>STREAM</span>
+                    ) : (
+                      launchTime.chip && (
+                        <span className={queueChipClass(launchTime.phase, launchTime.msUntilNet)}>
+                          {launchTime.chip}
+                        </span>
+                      )
                     )}
                   </span>
                 </div>

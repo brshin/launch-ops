@@ -1,5 +1,6 @@
 import { motion, type Variants } from "framer-motion";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
+import { transitions } from "../../lib/motionTokens";
 
 const customScrollbar = "console-scrollbar console-scrollbar-y";
 
@@ -43,7 +44,9 @@ export function LaunchCardMission({
 }: LaunchCardMissionProps) {
   return (
     <motion.div
+      layout="size"
       variants={cardVariants}
+      transition={transitions.soft}
       className={`order-2 lg:order-1 w-full shrink-0 h-auto self-start lg:self-stretch lg:w-auto lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 content-start items-start lg:grid-rows-[auto_1fr] lg:content-stretch lg:items-stretch density-ease ${chrome.metaGap}`}
     >
       <motion.div

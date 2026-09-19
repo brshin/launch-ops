@@ -2,13 +2,14 @@
 
 Global launch tracker dashboard for upcoming rocket launches.
 
-Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/), stored in MongoDB, cached in Redis, and delivered to a React frontend over REST and Socket.IO.
+Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/) (`mode=detailed`), stored in MongoDB, cached in Redis, and delivered to a React frontend over REST and Socket.IO. When a provider posts a webcast, YouTube plays in the mission camera pane; X and other hosts open outbound.
 
 ---
 
 ## Features
 
-- **Launch Queue** — upcoming launches with local NET (`DD MMM · HH:MM`), a relative chip (`T− 21 min`, `T+ 12 min`, `LIVE`, `HOLD`, `NET TBD`), provider abbreviation, dimmed past rows, and a `NEXT` marker on the in-flight or soonest upcoming launch (sidebar). Selection is by launch `apiId` (sticky across live cache refreshes) and defaults to in-flight or next NET
+- **Watch** — YouTube embeds in the camera pane (Watch / Replay / Close; live webcasts auto-open). X and other URLs open in a new tab (`Watch on X`, `Open webcast`). Queue **`STREAM`** replaces `T−` / `T+` / `NET TBD` while a webcast is live; **`LIVE` stays for In Flight**
+- **Launch Queue** — upcoming launches with local NET (`DD MMM · HH:MM`), a relative chip (`T− 21 min`, `T+ 12 min`, `LIVE`, `HOLD`, `NET TBD`, `STREAM`), provider abbreviation, dimmed past rows, and a `NEXT` marker on the in-flight or soonest upcoming launch (sidebar). Selection is by launch `apiId` (sticky across live cache refreshes) and defaults to in-flight or next NET
 - **Mission detail panel** — provider, mission/rocket titles, Status chip, T− (cyan countdown) vs T+ (emerald elapsed) as `D:HH:MM:SS`, and provisional NET for TBD/TBC or coarse `net_precision` (day/month and coarser — no fake minute countdown)
 - **T-Zero and coordinates** — local launch time with explicit `UTC±X` offset, launch window, pad name, and location
 - **Mission Brief** — mission description with type/orbit chips (unknown metadata hidden)
@@ -21,17 +22,24 @@ Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/),
 - **Scheduled ingestion** — cron worker polls Launch Library every 5 minutes, upserts MongoDB, writes Redis, and publishes a cache-update message
 - **Responsive UI** — locked `dvh` console with safe-area insets; horizontal queue + stacked detail below `lg`, sidebar layout at `lg+`
 
+### Watch ranking
+
+`pickWatchTarget` runs on `LaunchCard` render (not in the worker). Priority: YouTube (in-app) > X > other hosts, then live URLs, then official (`Official Webcast` as a word-boundary match so Unofficial stays unofficial). `isWebcastLive` drives the queue `STREAM` chip from `webcast_live` or any `vid_urls[].live` flag.
+
+X broadcasts cannot iframe (`SAMEORIGIN`). Empty `vid_urls` usually means the provider has not posted a stream yet.
+
 ---
 
 ## Architecture
 
 ```
-Launch Library API
+Launch Library API  (?mode=detailed)
         |
         |  cron every 5 min (+ fetch on worker load)
         v
   Worker (node-cron)
         |
+        |-- mapLaunch whitelist (incl. webcast_live, vid_urls)
         |-- upsert --> MongoDB
         |-- setEx ----> Redis key: upcoming-launches
         |-- publish --> Redis channel: launch-updates
@@ -43,18 +51,23 @@ Launch Library API
                         |           |
                         v           v
                    React (Vite) <-- live-launch-data
+                              |
+                              |  pickWatchTarget / isWebcastLive
+                              v
+                   Camera pane + STREAM chip
 ```
 
-1. The **worker** fetches upcoming launches from The Space Devs API.
-2. Results are written to Redis and **upserted into MongoDB**.
+1. The **worker** fetches upcoming launches from The Space Devs API in **detailed** mode (`vid_urls` is omitted in `normal`).
+2. `mapLaunch` keeps a field whitelist (including `webcast_live` and `vid_urls`); results are written to Redis and **upserted into MongoDB**.
 3. A Redis Pub/Sub message on `launch-updates` notifies the API server.
 4. The server emits `live-launch-data` over Socket.IO to connected clients.
 5. On load, `useLaunchFeed` hydrates via `GET /launches` (Redis, then MongoDB on miss) and opens a Socket.IO connection (created on mount, torn down on unmount).
 6. The same hook tracks Socket.IO `connect` / `disconnect` to drive the Live Feed indicator (including a one-shot flash when the uplink state changes) and replaces the list on `live-launch-data`. Sticky `apiId` selection lives there too (`pickDefaultApiId` when none is set or the previous pick left the queue).
+7. Each card / queue row **ranks watch URLs at render time**. A cache refresh rerenders with the new `vid_urls`.
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
 
-On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, `useCountdown` (the card's 1s T−/T+ tick — owned by LaunchCard, not App), derived copy, and Framer stagger. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD image), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
+On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, `useCountdown` (the card's 1s T−/T+ tick — owned by LaunchCard, not App), derived copy, watch playing state, and Framer stagger. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD still, Watch/Close, YouTube IFrame API host), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time, watch target, live-player resync) with contract tests.
 
 ---
 
@@ -87,11 +100,11 @@ launch-ops/
 │
 ├── backend/
 │   ├── models/
-│   │   └── Launch.js          # Mongoose schema
+│   │   └── Launch.js          # Mongoose schema (incl. webcast_live, vid_urls)
 │   ├── mapLaunch.js           # Launch Library payload → stored documents
 │   ├── mapLaunch.test.js
 │   ├── server.js              # Express API, Socket.IO, Redis subscriber
-│   ├── worker.js              # Cron ingestion, Redis publish, Mongo upsert
+│   ├── worker.js              # Cron ingestion (mode=detailed), Redis publish, Mongo upsert
 │   └── package.json
 │
 ├── frontend/
@@ -100,11 +113,11 @@ launch-ops/
 │   │   ├── components/
 │   │   │   ├── Starfield.tsx         # Ambient space background
 │   │   │   ├── ConsoleHeader.tsx     # Brand + Sys Time
-│   │   │   ├── LaunchQueue.tsx       # Horizontal strip / sidebar queue
+│   │   │   ├── LaunchQueue.tsx       # Horizontal strip / sidebar queue (+ STREAM)
 │   │   │   ├── LaunchCard/
-│   │   │   │   ├── LaunchCard.tsx         # Mission panel orchestrator
+│   │   │   │   ├── LaunchCard.tsx         # Mission panel orchestrator + watch state
 │   │   │   │   ├── LaunchCardIdentity.tsx # Titles, status pills, countdown
-│   │   │   │   ├── LaunchCardVisual.tsx   # HUD image + rest/focus chrome
+│   │   │   │   ├── LaunchCardVisual.tsx   # HUD still, Watch/Close, YouTube host
 │   │   │   │   ├── LaunchCardMission.tsx  # T-Zero, pad, brief grid
 │   │   │   │   └── LaunchCardFooter.tsx   # Live feed + last updated
 │   │   │   ├── CountdownReadout.tsx  # Ticking countdown + status labels
@@ -131,7 +144,11 @@ launch-ops/
 │   │   │   ├── launchTime.test.ts
 │   │   │   ├── queueFocus.ts         # Default queue selection (live, else next NET)
 │   │   │   ├── queueFocus.test.ts
-│   │   │   └── localTime.ts          # Shared local date/time + UTC offset labels
+│   │   │   ├── localTime.ts          # Shared local date/time + UTC offset labels
+│   │   │   ├── watchTarget.ts        # Rank YouTube vs X vs other; live/watch/replay
+│   │   │   ├── watchTarget.test.ts
+│   │   │   ├── youtubeLiveResync.ts  # IFrame API mount + live-head resync
+│   │   │   └── youtubeLiveResync.test.ts
 │   │   ├── App.tsx                   # Shell: hooks, selection index, layout
 │   │   ├── main.jsx                  # React root, MotionConfig, Analytics
 │   │   └── index.css                 # Console insets, short bands, scrollbars
@@ -216,7 +233,7 @@ cd frontend && npm run build && npm run preview
 
 ### 5. Tests
 
-Contract tests for queue chips/phases, titles, default selection, and Launch Library → `apiId` mapping. No Redis or Mongo required.
+Contract tests for queue chips/phases, titles, default selection, watch ranking, live-player resync, and Launch Library → `apiId` / webcast field mapping. No Redis or Mongo required.
 
 ```bash
 cd frontend && npm test
@@ -255,6 +272,8 @@ GitHub Actions runs the same commands on pull requests and pushes to `main`.
 | `GET`  | `/`         | Returns plain text confirming the process is listening               |
 | `GET`  | `/launches` | Upcoming launches from Redis, or MongoDB if the cache key is missing |
 
+Each launch document may include `webcast_live` (boolean) and `vid_urls` (Launch Library video objects). The UI derives playable vs outbound links from those fields; the API does not precompute a watch target.
+
 ### Socket.IO
 
 | Event                       | Direction       | Description                                                                 |
@@ -278,9 +297,10 @@ The repository is on GitHub and connected to those hosts. Configure platform env
 ## Data Source
 
 ```
-GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/
+GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed
 ```
 
+- **`mode=detailed`** is required for `vid_urls`. `webcast_live` also appears in `normal` mode. Mapping still whitelists only those two extra fields (no timelines or other detailed payload).
 - Cron schedule: every **5 minutes** (`*/5 * * * *`)
 - An initial fetch also runs when the worker module loads
 - Worker Redis write TTL: **86400 seconds** (24 hours)
