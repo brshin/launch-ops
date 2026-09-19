@@ -141,84 +141,124 @@ export function LaunchCardVisual({
         </motion.div>
       )}
 
-      {iframeSrc && (
-        <iframe
-          key={iframeSrc}
-          src={iframeSrc}
-          title="Launch webcast"
-          className="absolute inset-0 z-10 h-full w-full border-0 bg-black"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
-      )}
-
-      {showHudFx && (
-        <>
-          <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
-          <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
-          <motion.div
-            variants={visualCornerVariants}
-            transition={transitions.snappy}
-            className="absolute top-4 left-4 z-20 border-t border-l pointer-events-none"
-          />
-          <motion.div
-            variants={visualCornerVariants}
-            transition={transitions.snappy}
-            className="absolute top-4 right-4 z-20 border-t border-r pointer-events-none"
-          />
-          <motion.div
-            variants={visualCornerVariants}
-            transition={transitions.snappy}
-            className="absolute bottom-4 left-4 z-20 border-b border-l pointer-events-none"
-          />
-          <motion.div
-            variants={visualCornerVariants}
-            transition={transitions.snappy}
-            className="absolute bottom-4 right-4 z-20 border-b border-r pointer-events-none"
-          />
-          <motion.div
-            variants={visualCrosshairVariants}
-            transition={transitions.soft}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none flex items-center justify-center"
-          >
-            <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
-            <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
-          </motion.div>
-        </>
-      )}
-
-      {watchTarget?.live && !showPlayer && (
-        <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
-          </span>
-          <span className="text-[9px] font-mono uppercase tracking-[0.28em] text-cyan-300">
-            STREAM LIVE
-          </span>
-        </div>
-      )}
-
-      {showPlayer && (
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-3 right-3 z-30 cursor-pointer touch-manipulation flex items-center bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.28em] text-cyan-300 hover:border-cyan-500/80 hover:bg-cyan-950/60 active:border-cyan-500/80"
-        >
-          Close
-        </button>
-      )}
-
       <AnimatePresence>
-        {watchTarget && !showPlayer && (
+        {iframeSrc && (
+          <motion.div
+            key="watch-player"
+            className="absolute inset-0 z-10 bg-black"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transitions.soft}
+          >
+            <iframe
+              src={iframeSrc}
+              title="Launch webcast"
+              className="h-full w-full border-0 bg-black"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </motion.div>
+        )}
+
+        {showHudFx && (
+          <motion.div
+            key="watch-hud"
+            className="absolute inset-0 z-[15] pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transitions.soft}
+          >
+            <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)]"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px]"></div>
+            <motion.div
+              variants={visualCornerVariants}
+              transition={transitions.snappy}
+              className="absolute top-4 left-4 border-t border-l"
+            />
+            <motion.div
+              variants={visualCornerVariants}
+              transition={transitions.snappy}
+              className="absolute top-4 right-4 border-t border-r"
+            />
+            <motion.div
+              variants={visualCornerVariants}
+              transition={transitions.snappy}
+              className="absolute bottom-4 left-4 border-b border-l"
+            />
+            <motion.div
+              variants={visualCornerVariants}
+              transition={transitions.snappy}
+              className="absolute bottom-4 right-4 border-b border-r"
+            />
+            <motion.div
+              variants={visualCrosshairVariants}
+              transition={transitions.soft}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center"
+            >
+              <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
+              <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {watchTarget?.live && !showPlayer && (
+          <motion.div
+            key="stream-live"
+            className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transitions.soft}
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
+            </span>
+            <span className="text-[9px] font-mono uppercase tracking-[0.28em] text-cyan-300">
+              STREAM LIVE
+            </span>
+          </motion.div>
+        )}
+
+        {showPlayer && (
           <motion.button
-            key="watch-cta"
+            key="watch-close"
             type="button"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={transitions.soft}
+            onPointerDown={(e) => {
+              if (e.button !== 0) return;
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-3 right-3 z-30 cursor-pointer touch-manipulation flex items-center bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.28em] text-cyan-300 hover:border-cyan-500/80 hover:bg-cyan-950/60 active:border-cyan-500/80"
+          >
+            Close
+          </motion.button>
+        )}
+
+        {watchTarget && !showPlayer && (
+          <motion.button
+            key="watch-cta"
+            type="button"
+            initial={{ opacity: 0, pointerEvents: "none" }}
+            animate={{
+              opacity: 1,
+              transitionEnd: { pointerEvents: "auto" },
+            }}
+            exit={{ opacity: 0, pointerEvents: "none" }}
+            transition={transitions.soft}
             onClick={onWatch}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/30 cursor-pointer touch-manipulation pointer-events-auto group/watch"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/30 cursor-pointer touch-manipulation group/watch"
           >
             <span className="flex items-center gap-2 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-3 py-2 font-mono text-[10px] uppercase tracking-wider sm:tracking-widest text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.12)] transition-all duration-300 group-hover/watch:border-cyan-500/80 group-hover/watch:bg-cyan-950/60 group-active/watch:border-cyan-500/80">
               <span className="relative flex h-2 w-2 shrink-0">

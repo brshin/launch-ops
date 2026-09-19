@@ -190,7 +190,9 @@ export default function LaunchCard({
             >
                 {/* Visual feed — capped when stacked; fills column on desktop */}
                 <motion.div
+                    layout="size"
                     variants={sectionVariants}
+                    transition={transitions.soft}
                     className={`order-1 lg:order-2 relative w-full aspect-[16/10] shrink-0 lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
                         playing
                             ? "max-h-[min(50dvh,22rem)] sm:max-h-[min(52dvh,24rem)] lg:w-[62%] cursor-default"
