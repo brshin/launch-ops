@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
 import { getLaunchTitle, getRocketName } from "../../utils/launchTitle";
@@ -8,6 +8,7 @@ import { LaunchCardFooter } from "./LaunchCardFooter";
 import { LaunchCardIdentity } from "./LaunchCardIdentity";
 import { LaunchCardMission } from "./LaunchCardMission";
 import { LaunchCardVisual } from "./LaunchCardVisual";
+import { useCountdown } from "../../hooks/useCountdown";
 import { useCompactMotion } from "../../hooks/useCompactMotion";
 import {
     useCardDensityBand,
@@ -74,23 +75,7 @@ export default function LaunchCard({
 
     const imageUrl = launch.image?.image_url || null;
 
-    const calculateTimeLeft = () => {
-        const target = new Date(launch.net).getTime();
-        const now = new Date().getTime();
-        const difference = target - now;
-
-        const absDiff = Math.abs(difference);
-
-        return {
-            difference,
-            days: Math.floor(absDiff / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((absDiff / (1000 * 60 * 60)) % 24),
-            minutes: Math.floor((absDiff / 1000 / 60) % 60),
-            seconds: Math.floor((absDiff / 1000) % 60),
-        };
-    };
-
-    const [time, setTime] = useState(calculateTimeLeft());
+    const time = useCountdown(launch.net);
 
     const status = launch.status.abbrev;
     const launchTime = getLaunchTime({
@@ -105,16 +90,6 @@ export default function LaunchCard({
             launchTime.phase !== "hold" &&
             launchTime.phase !== "failed" &&
             launchTime.phase !== "live");
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setTime(calculateTimeLeft());
-
-        }, 1000);
-
-        return () => clearInterval(timer);
-
-    }, [launch.net]);
 
     const title = getLaunchTitle(launch);
     const rocketName = getRocketName(launch);
