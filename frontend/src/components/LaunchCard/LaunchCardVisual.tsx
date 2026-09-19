@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { motion, type Variants } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { transitions } from "../../lib/motionTokens";
 import type { WatchTarget } from "../../utils/watchTarget";
 
@@ -35,6 +35,13 @@ function watchCtaLabel(target: WatchTarget): string {
     return target.mode === "replay" ? "Open replay" : "Open webcast";
   }
   return target.mode === "replay" ? "Replay" : "Watch";
+}
+
+function watchSourceLabel(target: WatchTarget): string {
+  if (target.publisher) return target.publisher;
+  if (target.kind === "youtube") return "YouTube";
+  if (target.kind === "x") return "X";
+  return "Webcast";
 }
 
 function youtubePlayerSrc(
@@ -183,27 +190,40 @@ export function LaunchCardVisual({
       )}
 
       {watchTarget?.live && (
-        <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/85 border border-cyan-500/50 px-2.5 py-1 rounded-sm">
+        <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1">
           <span className="relative flex h-1.5 w-1.5">
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
           </span>
           <span className="text-[9px] font-mono uppercase tracking-[0.28em] text-cyan-300">
-            Stream Live
+            STREAM LIVE
           </span>
         </div>
       )}
 
-      {watchTarget && !showPlayer && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/35">
-          <button
+      <AnimatePresence>
+        {watchTarget && !showPlayer && (
+          <motion.button
+            key="watch-cta"
             type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transitions.soft}
             onClick={onWatch}
-            className="pointer-events-auto cursor-pointer touch-manipulation border border-cyan-500/70 bg-[#020617]/85 px-4 py-2.5 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.28em] text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.25)] hover:border-cyan-300 hover:text-white active:border-cyan-200"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/30 cursor-pointer touch-manipulation pointer-events-auto group/watch"
           >
-            {watchCtaLabel(watchTarget)}
-          </button>
-        </div>
-      )}
+            <span className="flex items-center gap-2 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-3 py-2 font-mono text-[10px] uppercase tracking-wider sm:tracking-widest text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.12)] transition-all duration-300 group-hover/watch:border-cyan-500/80 group-hover/watch:bg-cyan-950/60 group-active/watch:border-cyan-500/80">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
+              </span>
+              {watchCtaLabel(watchTarget)}
+            </span>
+            <span className="text-[9px] font-mono uppercase tracking-[0.28em] text-cyan-500 group-hover/watch:text-cyan-400">
+              {watchSourceLabel(watchTarget)}
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

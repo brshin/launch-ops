@@ -10,6 +10,7 @@ export interface WatchTarget {
   live: boolean;
   mode: WatchMode;
   official: boolean;
+  publisher?: string | null;
 }
 
 const KIND_RANK: Record<WatchKind, number> = {
@@ -137,6 +138,7 @@ interface RankedVid {
   kind: WatchKind;
   live: boolean;
   official: boolean;
+  publisher: string | null;
   index: number;
 }
 
@@ -181,6 +183,7 @@ export function pickWatchTarget(input: {
       kind: classifyWatchKind(url),
       live: Boolean(entry.live),
       official: isOfficialVid(entry),
+      publisher: entry.publisher?.trim() || null,
       index: i,
     });
   }
@@ -204,5 +207,6 @@ export function pickWatchTarget(input: {
     live,
     mode,
     official: best.official,
+    publisher: best.publisher,
   };
 }

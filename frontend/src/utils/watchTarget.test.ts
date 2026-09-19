@@ -105,6 +105,7 @@ describe("pickWatchTarget", () => {
       mode: "watch",
       live: false,
       official: true,
+      publisher: "Rocket Lab",
       embedUrl: "https://www.youtube-nocookie.com/embed/AnN8Pj8WvSo",
       url: rocketLabYt.url,
     });
@@ -163,6 +164,7 @@ describe("pickWatchTarget", () => {
       url: spacexX.url,
       mode: "watch",
       live: false,
+      publisher: "SpaceX",
     });
     expect(
       pickWatchTarget({
