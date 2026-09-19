@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { transitions } from "../../lib/motionTokens";
-import type { WatchTarget } from "../../utils/watchTarget";
+import { youtubeVideoId, type WatchTarget } from "../../utils/watchTarget";
 import {
   applyLiveResync,
-  bindYoutubePlayer,
+  createYoutubePlayer,
   type YtPlayer,
 } from "../../utils/youtubeLiveResync";
 
@@ -50,19 +50,70 @@ function watchSourceLabel(target: WatchTarget): string {
   return "Webcast";
 }
 
-function youtubePlayerSrc(embedUrl: string, opts: { autoplay: boolean }): string {
-  const src = new URL(embedUrl);
-  src.searchParams.set("rel", "0");
-  src.searchParams.set("modestbranding", "1");
-  src.searchParams.set("playsinline", "1");
-  src.searchParams.set("enablejsapi", "1");
-  src.searchParams.set("origin", window.location.origin);
-  if (opts.autoplay) src.searchParams.set("autoplay", "1");
-  return src.toString();
-}
-
 function openOutbound(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/**
+ * React keeps the outer node; YouTube may replace/remove the inner host on
+ * destroy. Building a fresh host each mount avoids a dead black pane when
+ * the card remounts (queue switch).
+ */
+function YoutubePlayerMount({
+  videoId,
+  playerRef,
+}: {
+  videoId: string;
+  playerRef: { current: YtPlayer | null };
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const host = document.createElement("div");
+    host.style.width = "100%";
+    host.style.height = "100%";
+    container.replaceChildren(host);
+
+    let cancelled = false;
+    createYoutubePlayer(host, videoId)
+      .then((player) => {
+        if (cancelled) {
+          try {
+            player.destroy();
+          } catch {
+            /* already gone */
+          }
+          return;
+        }
+        playerRef.current = player;
+      })
+      .catch(() => {
+        if (!cancelled) playerRef.current = null;
+      });
+
+    return () => {
+      cancelled = true;
+      const player = playerRef.current;
+      playerRef.current = null;
+      try {
+        player?.destroy();
+      } catch {
+        /* YouTube already removed its iframe */
+      }
+      container.replaceChildren();
+    };
+  }, [playerRef, videoId]);
+
+  return (
+    <div
+      ref={containerRef}
+      title="Launch webcast"
+      className="h-full w-full bg-black [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0"
+    />
+  );
 }
 
 /**
@@ -90,52 +141,13 @@ export function LaunchCardVisual({
   const showHudFx = !showPlayer;
   const canEmbed = Boolean(watchTarget?.embedUrl);
   const livePlayer = showPlayer && watchTarget?.mode === "live";
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const videoId =
+    showPlayer && watchTarget
+      ? youtubeVideoId(watchTarget.embedUrl ?? watchTarget.url)
+      : null;
   const playerRef = useRef<YtPlayer | null>(null);
   const wasHiddenRef = useRef(false);
   const hiddenAtRef = useRef(0);
-
-  const iframeSrc =
-    showPlayer && watchTarget?.embedUrl
-      ? youtubePlayerSrc(watchTarget.embedUrl, { autoplay: true })
-      : null;
-
-  useEffect(() => {
-    if (!iframeSrc) {
-      playerRef.current = null;
-      return;
-    }
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    let cancelled = false;
-    bindYoutubePlayer(iframe)
-      .then((player) => {
-        if (cancelled) {
-          try {
-            player.destroy();
-          } catch {
-            /* already gone */
-          }
-          return;
-        }
-        playerRef.current = player;
-      })
-      .catch(() => {
-        if (!cancelled) playerRef.current = null;
-      });
-
-    return () => {
-      cancelled = true;
-      const player = playerRef.current;
-      playerRef.current = null;
-      try {
-        player?.destroy();
-      } catch {
-        /* YouTube player already torn down with the iframe */
-      }
-    };
-  }, [iframeSrc]);
 
   useEffect(() => {
     if (!livePlayer) {
@@ -210,23 +222,16 @@ export function LaunchCardVisual({
       )}
 
       <AnimatePresence>
-        {iframeSrc && (
+        {videoId && (
           <motion.div
-            key="watch-player"
+            key={videoId}
             className="absolute inset-0 z-10 bg-black"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={transitions.soft}
           >
-            <iframe
-              ref={iframeRef}
-              src={iframeSrc}
-              title="Launch webcast"
-              className="h-full w-full border-0 bg-black"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
+            <YoutubePlayerMount videoId={videoId} playerRef={playerRef} />
           </motion.div>
         )}
 

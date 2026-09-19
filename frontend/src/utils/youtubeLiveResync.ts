@@ -19,10 +19,25 @@ export type YtPlayer = {
   destroy: () => void;
 };
 
+type YtPlayerVars = {
+  autoplay?: 0 | 1;
+  rel?: 0 | 1;
+  modestbranding?: 0 | 1;
+  playsinline?: 0 | 1;
+  origin?: string;
+};
+
 type YtNamespace = {
   Player: new (
-    el: HTMLIFrameElement | string,
-    opts?: { events?: { onReady?: (event: { target: YtPlayer }) => void } },
+    el: HTMLElement | string,
+    opts?: {
+      host?: string;
+      videoId?: string;
+      width?: string | number;
+      height?: string | number;
+      playerVars?: YtPlayerVars;
+      events?: { onReady?: (event: { target: YtPlayer }) => void };
+    },
   ) => YtPlayer;
 };
 
@@ -105,7 +120,10 @@ export function loadYoutubeIframeApi(): Promise<void> {
   return apiReady;
 }
 
-export function bindYoutubePlayer(iframe: HTMLIFrameElement): Promise<YtPlayer> {
+export function createYoutubePlayer(
+  host: HTMLElement,
+  videoId: string,
+): Promise<YtPlayer> {
   return loadYoutubeIframeApi().then(
     () =>
       new Promise((resolve, reject) => {
@@ -114,7 +132,18 @@ export function bindYoutubePlayer(iframe: HTMLIFrameElement): Promise<YtPlayer> 
           reject(new Error("YouTube IFrame API missing"));
           return;
         }
-        const player = new Player(iframe, {
+        const player = new Player(host, {
+          host: "https://www.youtube-nocookie.com",
+          videoId,
+          width: "100%",
+          height: "100%",
+          playerVars: {
+            autoplay: 1,
+            rel: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            origin: window.location.origin,
+          },
           events: {
             onReady: (event) => resolve(event.target),
           },
