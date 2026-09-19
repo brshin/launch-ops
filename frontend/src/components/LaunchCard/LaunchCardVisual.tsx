@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { transitions } from "../../lib/motionTokens";
 import type { WatchTarget } from "../../utils/watchTarget";
@@ -45,16 +45,12 @@ function watchSourceLabel(target: WatchTarget): string {
   return "Webcast";
 }
 
-function youtubePlayerSrc(
-  embedUrl: string,
-  opts: { autoplay: boolean; mute: boolean },
-): string {
+function youtubePlayerSrc(embedUrl: string, opts: { autoplay: boolean }): string {
   const src = new URL(embedUrl);
   src.searchParams.set("rel", "0");
   src.searchParams.set("modestbranding", "1");
   src.searchParams.set("playsinline", "1");
   if (opts.autoplay) src.searchParams.set("autoplay", "1");
-  if (opts.mute) src.searchParams.set("mute", "1");
   return src.toString();
 }
 
@@ -86,12 +82,39 @@ export function LaunchCardVisual({
   const showPlayer = Boolean(playing && watchTarget?.embedUrl);
   const showHudFx = !showPlayer;
   const canEmbed = Boolean(watchTarget?.embedUrl);
+  const livePlayer = showPlayer && watchTarget?.mode === "live";
+  const [liveEpoch, setLiveEpoch] = useState(0);
+  const wasHiddenRef = useRef(false);
+
+  /**
+   * Browsers freeze YouTube in a hidden tab; the embed then resumes from that
+   * pause (DVR delay). Remount when we become visible again so live snaps to now.
+   */
+  useEffect(() => {
+    if (!livePlayer) {
+      wasHiddenRef.current = false;
+      return;
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        wasHiddenRef.current = true;
+        return;
+      }
+      if (document.visibilityState !== "visible" || !wasHiddenRef.current) {
+        return;
+      }
+      wasHiddenRef.current = false;
+      setLiveEpoch((epoch) => epoch + 1);
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [livePlayer]);
+
   const iframeSrc =
     showPlayer && watchTarget?.embedUrl
-      ? youtubePlayerSrc(watchTarget.embedUrl, {
-          autoplay: true,
-          mute: watchTarget.mode === "live",
-        })
+      ? youtubePlayerSrc(watchTarget.embedUrl, { autoplay: true })
       : null;
 
   const onWatch = () => {
@@ -152,6 +175,7 @@ export function LaunchCardVisual({
             transition={transitions.soft}
           >
             <iframe
+              key={liveEpoch}
               src={iframeSrc}
               title="Launch webcast"
               className="h-full w-full border-0 bg-black"
