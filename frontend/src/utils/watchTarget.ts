@@ -149,6 +149,15 @@ function rankVid(a: RankedVid, b: RankedVid): number {
   );
 }
 
+/** True when LL says a webcast is on, or any vid_url is flagged live. */
+export function isWebcastLive(input: {
+  webcastLive?: boolean;
+  vidUrls?: VidUrl[] | null;
+}): boolean {
+  if (input.webcastLive) return true;
+  return (input.vidUrls ?? []).some((entry) => Boolean(entry?.live));
+}
+
 /**
  * Pick one webcast for the camera pane.
  * YouTube wins (in-app embed); X/other are outbound only.

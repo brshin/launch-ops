@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyWatchKind,
   isOfficialVid,
+  isWebcastLive,
   pickWatchTarget,
   youtubeEmbedUrl,
   youtubeVideoId,
@@ -67,6 +68,21 @@ describe("youtubeVideoId / youtubeEmbedUrl", () => {
     expect(youtubeEmbedUrl("https://youtu.be/AnN8Pj8WvSo")).toBe(
       "https://www.youtube-nocookie.com/embed/AnN8Pj8WvSo",
     );
+  });
+});
+
+describe("isWebcastLive", () => {
+  it("is true from launch webcast_live or any vid_url live flag", () => {
+    expect(isWebcastLive({ webcastLive: true, vidUrls: [] })).toBe(true);
+    expect(
+      isWebcastLive({
+        webcastLive: false,
+        vidUrls: [{ url: "https://youtu.be/AnN8Pj8WvSo", live: true }],
+      }),
+    ).toBe(true);
+    expect(
+      isWebcastLive({ webcastLive: false, vidUrls: [rocketLabYt] }),
+    ).toBe(false);
   });
 });
 
