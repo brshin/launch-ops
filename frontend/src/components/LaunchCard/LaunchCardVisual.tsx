@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { transitions } from "../../lib/motionTokens";
 import type { WatchTarget } from "../../utils/watchTarget";
+import {
+  applyLiveResync,
+  bindYoutubePlayer,
+  type YtPlayer,
+} from "../../utils/youtubeLiveResync";
 
 /** Visual feed: rest = always-on HUD; focus = hover or tap intensify. */
 const visualFrameVariants: Variants = {
@@ -50,6 +55,8 @@ function youtubePlayerSrc(embedUrl: string, opts: { autoplay: boolean }): string
   src.searchParams.set("rel", "0");
   src.searchParams.set("modestbranding", "1");
   src.searchParams.set("playsinline", "1");
+  src.searchParams.set("enablejsapi", "1");
+  src.searchParams.set("origin", window.location.origin);
   if (opts.autoplay) src.searchParams.set("autoplay", "1");
   return src.toString();
 }
@@ -83,13 +90,53 @@ export function LaunchCardVisual({
   const showHudFx = !showPlayer;
   const canEmbed = Boolean(watchTarget?.embedUrl);
   const livePlayer = showPlayer && watchTarget?.mode === "live";
-  const [liveEpoch, setLiveEpoch] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<YtPlayer | null>(null);
   const wasHiddenRef = useRef(false);
+  const hiddenAtRef = useRef(0);
 
-  /**
-   * Browsers freeze YouTube in a hidden tab; the embed then resumes from that
-   * pause (DVR delay). Remount when we become visible again so live snaps to now.
-   */
+  const iframeSrc =
+    showPlayer && watchTarget?.embedUrl
+      ? youtubePlayerSrc(watchTarget.embedUrl, { autoplay: true })
+      : null;
+
+  useEffect(() => {
+    if (!iframeSrc) {
+      playerRef.current = null;
+      return;
+    }
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    let cancelled = false;
+    bindYoutubePlayer(iframe)
+      .then((player) => {
+        if (cancelled) {
+          try {
+            player.destroy();
+          } catch {
+            /* already gone */
+          }
+          return;
+        }
+        playerRef.current = player;
+      })
+      .catch(() => {
+        if (!cancelled) playerRef.current = null;
+      });
+
+    return () => {
+      cancelled = true;
+      const player = playerRef.current;
+      playerRef.current = null;
+      try {
+        player?.destroy();
+      } catch {
+        /* YouTube player already torn down with the iframe */
+      }
+    };
+  }, [iframeSrc]);
+
   useEffect(() => {
     if (!livePlayer) {
       wasHiddenRef.current = false;
@@ -99,23 +146,21 @@ export function LaunchCardVisual({
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
         wasHiddenRef.current = true;
+        hiddenAtRef.current = Date.now();
         return;
       }
       if (document.visibilityState !== "visible" || !wasHiddenRef.current) {
         return;
       }
       wasHiddenRef.current = false;
-      setLiveEpoch((epoch) => epoch + 1);
+      const player = playerRef.current;
+      if (!player) return;
+      applyLiveResync(player, Date.now() - hiddenAtRef.current);
     };
 
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [livePlayer]);
-
-  const iframeSrc =
-    showPlayer && watchTarget?.embedUrl
-      ? youtubePlayerSrc(watchTarget.embedUrl, { autoplay: true })
-      : null;
 
   const onWatch = () => {
     if (!watchTarget) return;
@@ -175,7 +220,7 @@ export function LaunchCardVisual({
             transition={transitions.soft}
           >
             <iframe
-              key={liveEpoch}
+              ref={iframeRef}
               src={iframeSrc}
               title="Launch webcast"
               className="h-full w-full border-0 bg-black"
