@@ -4,7 +4,7 @@ import { Launch } from "../types/launch";
 import { getLaunchTitle, getRocketName } from "../utils/launchTitle";
 import { transitions, travel } from "../lib/motionTokens";
 import { densityChrome } from "../lib/cardDensityChrome";
-import { FeedStatus } from "./FeedStatus";
+import { LaunchCardFooter } from "./LaunchCardFooter";
 import { LaunchCardIdentity } from "./LaunchCardIdentity";
 import { LaunchCardMission } from "./LaunchCardMission";
 import { LaunchCardVisual } from "./LaunchCardVisual";
@@ -231,28 +231,11 @@ export default function LaunchCard({
                 variants={sectionVariants}
                 className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[9px] font-mono uppercase tracking-[0.2em] density-ease ${chrome.footer}`}
             >
-                <FeedStatus
-                    live={feedLive}
-                    className="tracking-[0.2em]"
+                <LaunchCardFooter
+                    feedLive={feedLive}
+                    lastUpdated={lastUpdated}
+                    localOffsetLabel={localOffsetLabel}
                 />
-                <span
-                    className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-cyan-500"
-                    title="When the launch provider last updated this record (local time)"
-                >
-                    <span className="tracking-[0.25em]">Last Updated</span>
-                    <span className="text-cyan-600 tracking-wider">
-                        {localOffsetLabel}
-                    </span>
-                    {lastUpdated ? (
-                        <span className="flex items-baseline gap-1.5 text-cyan-400 tabular-nums tracking-[0.15em]">
-                            <span>{lastUpdated.date}</span>
-                            <span className="text-cyan-700">·</span>
-                            <span>{lastUpdated.time}</span>
-                        </span>
-                    ) : (
-                        <span className="text-cyan-700 tracking-[0.15em]">—</span>
-                    )}
-                </span>
             </motion.div>
             </div>
             
