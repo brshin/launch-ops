@@ -54,7 +54,7 @@ Launch Library API
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
 
-On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, the 1s countdown tick, derived copy, and Framer stagger. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD image), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
+On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, `useCountdown` (the card's 1s T−/T+ tick — owned by LaunchCard, not App), derived copy, and Framer stagger. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD image), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time) with contract tests.
 
 ---
 
@@ -112,6 +112,7 @@ launch-ops/
 │   │   ├── hooks/
 │   │   │   ├── useLaunchFeed.ts               # REST hydrate, Socket.IO, sticky apiId
 │   │   │   ├── useSysClock.ts                 # Local Sys Time tick
+│   │   │   ├── useCountdown.ts                # LaunchCard 1s T−/T+ tick
 │   │   │   ├── useConsoleBoot.ts              # Cold-load boot window
 │   │   │   ├── useCompactMotion.ts            # Below-lg motion / star budget
 │   │   │   ├── useShortViewportBand.ts        # Short/mid/roomy height bands
