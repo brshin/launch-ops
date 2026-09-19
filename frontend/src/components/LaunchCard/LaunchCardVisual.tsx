@@ -25,6 +25,7 @@ interface LaunchCardVisualProps {
   watchTarget: WatchTarget | null;
   playing: boolean;
   onPlay: () => void;
+  onClose: () => void;
 }
 
 function watchCtaLabel(target: WatchTarget): string {
@@ -72,6 +73,7 @@ export function LaunchCardVisual({
   watchTarget,
   playing,
   onPlay,
+  onClose,
 }: LaunchCardVisualProps) {
   const visualImageVariants: Variants = useMemo(
     () => ({
@@ -154,42 +156,38 @@ export function LaunchCardVisual({
         <>
           <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
           <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
+          <motion.div
+            variants={visualCornerVariants}
+            transition={transitions.snappy}
+            className="absolute top-4 left-4 z-20 border-t border-l pointer-events-none"
+          />
+          <motion.div
+            variants={visualCornerVariants}
+            transition={transitions.snappy}
+            className="absolute top-4 right-4 z-20 border-t border-r pointer-events-none"
+          />
+          <motion.div
+            variants={visualCornerVariants}
+            transition={transitions.snappy}
+            className="absolute bottom-4 left-4 z-20 border-b border-l pointer-events-none"
+          />
+          <motion.div
+            variants={visualCornerVariants}
+            transition={transitions.snappy}
+            className="absolute bottom-4 right-4 z-20 border-b border-r pointer-events-none"
+          />
+          <motion.div
+            variants={visualCrosshairVariants}
+            transition={transitions.soft}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none flex items-center justify-center"
+          >
+            <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
+            <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
+          </motion.div>
         </>
       )}
 
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute top-4 left-4 z-20 border-t border-l pointer-events-none"
-      />
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute top-4 right-4 z-20 border-t border-r pointer-events-none"
-      />
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute bottom-4 left-4 z-20 border-b border-l pointer-events-none"
-      />
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute bottom-4 right-4 z-20 border-b border-r pointer-events-none"
-      />
-
-      {showHudFx && (
-        <motion.div
-          variants={visualCrosshairVariants}
-          transition={transitions.soft}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none flex items-center justify-center"
-        >
-          <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
-          <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
-        </motion.div>
-      )}
-
-      {watchTarget?.live && (
+      {watchTarget?.live && !showPlayer && (
         <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1">
           <span className="relative flex h-1.5 w-1.5">
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
@@ -198,6 +196,16 @@ export function LaunchCardVisual({
             STREAM LIVE
           </span>
         </div>
+      )}
+
+      {showPlayer && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-3 right-3 z-30 cursor-pointer touch-manipulation flex items-center bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.28em] text-cyan-300 hover:border-cyan-500/80 hover:bg-cyan-950/60 active:border-cyan-500/80"
+        >
+          Close
+        </button>
       )}
 
       <AnimatePresence>

@@ -78,6 +78,7 @@ export default function LaunchCard({
 
     const time = useCountdown(launch.net);
     const [userPlaying, setUserPlaying] = useState(false);
+    const [feedDismissed, setFeedDismissed] = useState(false);
     const watchTarget = useMemo(
         () =>
             pickWatchTarget({
@@ -91,6 +92,7 @@ export default function LaunchCard({
     );
     const playing = Boolean(
         watchTarget?.embedUrl &&
+            !feedDismissed &&
             (userPlaying || watchTarget.mode === "live"),
     );
 
@@ -189,12 +191,12 @@ export default function LaunchCard({
                 {/* Visual feed — capped when stacked; fills column on desktop */}
                 <motion.div
                     variants={sectionVariants}
-                    className={`order-1 lg:order-2 relative w-full aspect-[16/10] shrink-0 lg:w-[45%] lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
+                    className={`order-1 lg:order-2 relative w-full aspect-[16/10] shrink-0 lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
                         playing
-                            ? "max-h-[min(50dvh,22rem)] sm:max-h-[min(52dvh,24rem)] cursor-default"
+                            ? "max-h-[min(50dvh,22rem)] sm:max-h-[min(52dvh,24rem)] lg:w-[62%] cursor-default"
                             : watchTarget
-                              ? "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] cursor-pointer"
-                              : "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] cursor-crosshair"
+                              ? "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:w-[45%] cursor-pointer"
+                              : "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:w-[45%] cursor-crosshair"
                     }`}
                 >
                     <LaunchCardVisual
@@ -202,7 +204,14 @@ export default function LaunchCard({
                         compactTravel={compactTravel}
                         watchTarget={watchTarget}
                         playing={playing}
-                        onPlay={() => setUserPlaying(true)}
+                        onPlay={() => {
+                            setFeedDismissed(false);
+                            setUserPlaying(true);
+                        }}
+                        onClose={() => {
+                            setUserPlaying(false);
+                            setFeedDismissed(true);
+                        }}
                     />
                 </motion.div>
 
