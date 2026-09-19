@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { motion, type Variants } from "framer-motion";
 import { transitions } from "../../lib/motionTokens";
+import type { WatchTarget } from "../../utils/watchTarget";
 
 /** Visual feed: rest = always-on HUD; focus = hover or tap intensify. */
 const visualFrameVariants: Variants = {
@@ -21,15 +22,49 @@ const visualCrosshairVariants: Variants = {
 interface LaunchCardVisualProps {
   imageUrl: string | null;
   compactTravel: boolean;
+  watchTarget: WatchTarget | null;
+  playing: boolean;
+  onPlay: () => void;
+}
+
+function watchCtaLabel(target: WatchTarget): string {
+  if (target.kind === "x") {
+    return target.mode === "replay" ? "Replay on X" : "Watch on X";
+  }
+  if (target.kind === "other") {
+    return target.mode === "replay" ? "Open replay" : "Open webcast";
+  }
+  return target.mode === "replay" ? "Replay" : "Watch";
+}
+
+function youtubePlayerSrc(
+  embedUrl: string,
+  opts: { autoplay: boolean; mute: boolean },
+): string {
+  const src = new URL(embedUrl);
+  src.searchParams.set("rel", "0");
+  src.searchParams.set("modestbranding", "1");
+  src.searchParams.set("playsinline", "1");
+  if (opts.autoplay) src.searchParams.set("autoplay", "1");
+  if (opts.mute) src.searchParams.set("mute", "1");
+  return src.toString();
+}
+
+function openOutbound(url: string) {
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 /**
  * HUD image (or no-feed placeholder) plus scanlines, corners, and crosshair.
+ * When a watch target exists, this pane is Watch / in-app YouTube / outbound X.
  * Motion wrapper stays on LaunchCard so card stagger still sees a motion child.
  */
 export function LaunchCardVisual({
   imageUrl,
   compactTravel,
+  watchTarget,
+  playing,
+  onPlay,
 }: LaunchCardVisualProps) {
   const visualImageVariants: Variants = useMemo(
     () => ({
@@ -39,21 +74,41 @@ export function LaunchCardVisual({
     [compactTravel],
   );
 
+  const showPlayer = Boolean(playing && watchTarget?.embedUrl);
+  const showHudFx = !showPlayer;
+  const canEmbed = Boolean(watchTarget?.embedUrl);
+  const iframeSrc =
+    showPlayer && watchTarget?.embedUrl
+      ? youtubePlayerSrc(watchTarget.embedUrl, {
+          autoplay: true,
+          mute: watchTarget.mode === "live",
+        })
+      : null;
+
+  const onWatch = () => {
+    if (!watchTarget) return;
+    if (canEmbed) {
+      onPlay();
+      return;
+    }
+    openOutbound(watchTarget.url);
+  };
+
   return (
     <motion.div
       className="absolute inset-0"
       variants={visualFrameVariants}
       initial="rest"
       animate="rest"
-      whileHover="focus"
-      whileTap="focus"
+      whileHover={showPlayer ? undefined : "focus"}
+      whileTap={showPlayer ? undefined : "focus"}
     >
       {imageUrl ? (
         <motion.img
           src={imageUrl}
           variants={visualImageVariants}
           transition={{ duration: 0.85, ease: "easeOut" }}
-          className="w-full h-full object-cover mix-blend-screen"
+          className={`w-full h-full object-cover ${showPlayer ? "" : "mix-blend-screen"}`}
           alt="Launch Visual"
           onError={(e) => {
             e.currentTarget.style.display = "none";
@@ -63,7 +118,7 @@ export function LaunchCardVisual({
         <motion.div
           variants={visualImageVariants}
           transition={{ duration: 0.45, ease: "easeOut" }}
-          className="w-full h-full flex flex-col items-center justify-center bg-[#020617] mix-blend-screen"
+          className={`w-full h-full flex flex-col items-center justify-center bg-[#020617] ${showPlayer ? "" : "mix-blend-screen"}`}
         >
           <div className="relative flex items-center justify-center mb-6">
             <div className="absolute w-24 h-24 border border-cyan-900/40 rounded-full"></div>
@@ -77,39 +132,78 @@ export function LaunchCardVisual({
         </motion.div>
       )}
 
-      <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
+      {iframeSrc && (
+        <iframe
+          key={iframeSrc}
+          src={iframeSrc}
+          title="Launch webcast"
+          className="absolute inset-0 z-10 h-full w-full border-0 bg-black"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      )}
 
-      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
-
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute top-4 left-4 border-t border-l pointer-events-none"
-      />
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute top-4 right-4 border-t border-r pointer-events-none"
-      />
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute bottom-4 left-4 border-b border-l pointer-events-none"
-      />
-      <motion.div
-        variants={visualCornerVariants}
-        transition={transitions.snappy}
-        className="absolute bottom-4 right-4 border-b border-r pointer-events-none"
-      />
+      {showHudFx && (
+        <>
+          <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,1)] pointer-events-none"></div>
+          <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(8,145,178,0.05)_50%)] bg-[size:100%_4px] pointer-events-none"></div>
+        </>
+      )}
 
       <motion.div
-        variants={visualCrosshairVariants}
-        transition={transitions.soft}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none flex items-center justify-center"
-      >
-        <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
-        <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
-      </motion.div>
+        variants={visualCornerVariants}
+        transition={transitions.snappy}
+        className="absolute top-4 left-4 z-20 border-t border-l pointer-events-none"
+      />
+      <motion.div
+        variants={visualCornerVariants}
+        transition={transitions.snappy}
+        className="absolute top-4 right-4 z-20 border-t border-r pointer-events-none"
+      />
+      <motion.div
+        variants={visualCornerVariants}
+        transition={transitions.snappy}
+        className="absolute bottom-4 left-4 z-20 border-b border-l pointer-events-none"
+      />
+      <motion.div
+        variants={visualCornerVariants}
+        transition={transitions.snappy}
+        className="absolute bottom-4 right-4 z-20 border-b border-r pointer-events-none"
+      />
+
+      {showHudFx && (
+        <motion.div
+          variants={visualCrosshairVariants}
+          transition={transitions.soft}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none flex items-center justify-center"
+        >
+          <div className="w-full h-[1px] bg-cyan-400 absolute"></div>
+          <div className="h-full w-[1px] bg-cyan-400 absolute"></div>
+        </motion.div>
+      )}
+
+      {watchTarget?.live && (
+        <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/85 border border-cyan-500/50 px-2.5 py-1 rounded-sm">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
+          </span>
+          <span className="text-[9px] font-mono uppercase tracking-[0.28em] text-cyan-300">
+            Stream Live
+          </span>
+        </div>
+      )}
+
+      {watchTarget && !showPlayer && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/35">
+          <button
+            type="button"
+            onClick={onWatch}
+            className="pointer-events-auto cursor-pointer touch-manipulation border border-cyan-500/70 bg-[#020617]/85 px-4 py-2.5 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.28em] text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.25)] hover:border-cyan-300 hover:text-white active:border-cyan-200"
+          >
+            {watchCtaLabel(watchTarget)}
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }

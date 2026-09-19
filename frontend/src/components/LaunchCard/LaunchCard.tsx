@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
 import { getLaunchTitle, getRocketName } from "../../utils/launchTitle";
@@ -21,6 +21,7 @@ import {
     getLocalUtcOffsetLabel,
 } from "../../utils/localTime";
 import { getLaunchTime } from "../../utils/launchTime";
+import { pickWatchTarget } from "../../utils/watchTarget";
 
 interface LaunchCardProps {
     launch: Launch;
@@ -76,6 +77,22 @@ export default function LaunchCard({
     const imageUrl = launch.image?.image_url || null;
 
     const time = useCountdown(launch.net);
+    const [userPlaying, setUserPlaying] = useState(false);
+    const watchTarget = useMemo(
+        () =>
+            pickWatchTarget({
+                vidUrls: launch.vid_urls,
+                webcastLive: launch.webcast_live,
+                net: launch.net,
+                status: launch.status?.abbrev,
+                now: Date.now(),
+            }),
+        [launch.vid_urls, launch.webcast_live, launch.net, launch.status, time.difference],
+    );
+    const playing = Boolean(
+        watchTarget?.embedUrl &&
+            (userPlaying || watchTarget.mode === "live"),
+    );
 
     const status = launch.status.abbrev;
     const launchTime = getLaunchTime({
@@ -172,11 +189,20 @@ export default function LaunchCard({
                 {/* Visual feed — capped when stacked; fills column on desktop */}
                 <motion.div
                     variants={sectionVariants}
-                    className="order-1 lg:order-2 relative w-full aspect-[16/10] max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] shrink-0 lg:w-[45%] lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] cursor-crosshair shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+                    className={`order-1 lg:order-2 relative w-full aspect-[16/10] shrink-0 lg:w-[45%] lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
+                        playing
+                            ? "max-h-[min(50dvh,22rem)] sm:max-h-[min(52dvh,24rem)] cursor-default"
+                            : watchTarget
+                              ? "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] cursor-pointer"
+                              : "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] cursor-crosshair"
+                    }`}
                 >
                     <LaunchCardVisual
                         imageUrl={imageUrl}
                         compactTravel={compactTravel}
+                        watchTarget={watchTarget}
+                        playing={playing}
+                        onPlay={() => setUserPlaying(true)}
                     />
                 </motion.div>
 
