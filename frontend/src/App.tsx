@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import LaunchCard from './components/LaunchCard';
+import LaunchCard from './components/LaunchCard/LaunchCard';
 import { Starfield } from './components/Starfield';
 import { ConsoleHeader } from './components/ConsoleHeader';
 import { LaunchQueue } from './components/LaunchQueue';
