@@ -13,7 +13,9 @@ const launchSchema = new mongoose.Schema({
     launch_service_provider: Object,
     rocket: Object,
     mission: Object,
-    pad: Object
+    pad: Object,
+    webcast_live: Boolean,
+    vid_urls: Array
 });
 
 module.exports = mongoose.model('Launch', launchSchema);

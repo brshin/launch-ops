@@ -28,6 +28,14 @@ describe('mapUpcomingLaunches', () => {
                     rocket,
                     mission: { name: 'Starlink' },
                     pad: { name: 'SLC-40' },
+                    webcast_live: true,
+                    vid_urls: [
+                        {
+                            url: 'https://www.youtube.com/watch?v=abc',
+                            live: true,
+                        },
+                    ],
+                    timeline: [{ type: 'T-0' }],
                     extra_api_field: 'drop-me',
                 },
             ],
@@ -37,10 +45,23 @@ describe('mapUpcomingLaunches', () => {
         assert.equal(mapped[0].apiId, 'abc-123');
         assert.equal(mapped[0].id, undefined);
         assert.equal(mapped[0].extra_api_field, undefined);
+        assert.equal(mapped[0].timeline, undefined);
         assert.equal(mapped[0].name, 'Starlink Group 6-1');
         assert.equal(mapped[0].status, status);
         assert.equal(mapped[0].rocket, rocket);
         assert.equal(mapped[0].pad.name, 'SLC-40');
+        assert.equal(mapped[0].webcast_live, true);
+        assert.equal(mapped[0].vid_urls.length, 1);
+        assert.equal(mapped[0].vid_urls[0].url, 'https://www.youtube.com/watch?v=abc');
+    });
+
+    it('defaults webcast_live and vid_urls when detailed fields are missing', () => {
+        const mapped = mapUpcomingLaunches({
+            results: [{ id: 'no-vids', name: 'Test' }],
+        });
+
+        assert.equal(mapped[0].webcast_live, false);
+        assert.deepEqual(mapped[0].vid_urls, []);
     });
 
     it('maps an empty results array to []', () => {
