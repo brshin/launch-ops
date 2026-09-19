@@ -95,7 +95,7 @@ launch-ops/
 │   └── package.json
 │
 ├── frontend/
-│   ├── public/                # favicon.svg, icons.svg
+│   ├── public/                # favicon.svg
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Starfield.tsx         # Ambient space background

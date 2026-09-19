@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
 import { getLaunchTitle, getRocketName } from "../../utils/launchTitle";

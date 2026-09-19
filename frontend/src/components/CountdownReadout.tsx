@@ -156,25 +156,6 @@ export function CountdownFailureLabel() {
   );
 }
 
-export function AwaitingTelemetryLabel() {
-  return (
-    <motion.span
-      className="max-w-full text-sm sm:text-base md:text-xl font-mono font-bold text-cyan-600 tracking-wide sm:tracking-wider md:tracking-widest leading-tight break-words"
-      animate={{
-        opacity: [0.55, 1, 0.55],
-        textShadow: [
-          "0 0 6px rgba(8,145,178,0.25)",
-          "0 0 12px rgba(8,145,178,0.5)",
-          "0 0 6px rgba(8,145,178,0.25)",
-        ],
-      }}
-      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-    >
-      AWAITING TELEMETRY
-    </motion.span>
-  );
-}
-
 interface TickingCountdownProps {
   days: number;
   hours: number;
