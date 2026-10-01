@@ -37,7 +37,7 @@ function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
     default:
       return msUntilNet <= HOUR_MS
         ? `${queueChipBase} text-cyan-300`
-        : `${queueChipBase} text-cyan-500`;
+        : `${queueChipBase} text-cyan-400`;
   }
 }
 
