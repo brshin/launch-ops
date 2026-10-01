@@ -1,74 +1,121 @@
-import { Suspense, useLayoutEffect, useRef } from "react";
+import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
+import { PerspectiveCamera, type Group, type Texture } from "three";
 import {
-  AdditiveBlending,
   BackSide,
-  Color,
-  NoToneMapping,
-  PerspectiveCamera,
+  MeshBasicNodeMaterial,
+  MeshStandardNodeMaterial,
   SRGBColorSpace,
-  type Group,
-} from "three";
+  Vector3,
+  WebGPURenderer,
+} from "three/webgpu";
+import {
+  bumpMap,
+  cameraPosition,
+  color,
+  max,
+  mix,
+  normalWorldGeometry,
+  normalize,
+  output,
+  positionWorld,
+  step,
+  texture,
+  uniform,
+  uv,
+  vec3,
+  vec4,
+} from "three/tsl";
 
 /**
- * Blue-marble map shipped with the three.js examples (NASA imagery, resized).
- * Served from /textures so the globe chunk can load it after first paint.
+ * Day, night, and packed bump/roughness/clouds maps from the three.js earth
+ * example. Textures by Solar System Scope, resized for this panel.
  */
-const EARTH_MAP = "/textures/earth.jpg";
+const EARTH_DAY = "/textures/earth-day.jpg";
+const EARTH_NIGHT = "/textures/earth-night.jpg";
+const EARTH_PACKED = "/textures/earth-packed.jpg";
 
-const ATMOSPHERE_COLOR = new Color("#67e8f9");
+/** Fixed in view, so the earth rotates through a steady day/night line. */
+const SUN_POSITION = new Vector3(1.8, 0.4, 1.1);
 
-const atmosphereVertex = /* glsl */ `
-  varying vec3 vNormal;
-  varying vec3 vWorldPos;
-  void main() {
-    vNormal = normalize(normalMatrix * normal);
-    vec4 worldPos = modelMatrix * vec4(position, 1.0);
-    vWorldPos = worldPos.xyz;
-    gl_Position = projectionMatrix * viewMatrix * worldPos;
-  }
-`;
+const ATMOSPHERE_DAY = "#3ec6ff";
+const ATMOSPHERE_TWILIGHT = "#8d5a3c";
 
-const atmosphereFragment = /* glsl */ `
-  varying vec3 vNormal;
-  varying vec3 vWorldPos;
-  uniform vec3 glowColor;
-  void main() {
-    vec3 viewDir = normalize(cameraPosition - vWorldPos);
-    float fresnel = pow(1.0 - abs(dot(viewDir, normalize(vNormal))), 2.6);
-    gl_FragColor = vec4(glowColor, fresnel * 0.9);
-  }
-`;
-
-function Earth() {
-  const texture = useTexture(EARTH_MAP);
-  texture.colorSpace = SRGBColorSpace;
-  texture.anisotropy = 8;
-
-  return (
-    <mesh>
-      <sphereGeometry args={[1, 64, 64]} />
-      {/* Tint cools the daylight map toward the console cyan. */}
-      <meshBasicMaterial map={texture} color="#c5d8e6" />
-    </mesh>
-  );
+function prepareMap(map: Texture, srgb: boolean) {
+  if (srgb) map.colorSpace = SRGBColorSpace;
+  map.anisotropy = 8;
 }
 
-function Atmosphere() {
+function Earth() {
+  const maps = useTexture({
+    day: EARTH_DAY,
+    night: EARTH_NIGHT,
+    packed: EARTH_PACKED,
+  });
+
+  const materials = useMemo(() => {
+    prepareMap(maps.day, true);
+    prepareMap(maps.night, true);
+    prepareMap(maps.packed, false);
+
+    const atmosphereDayColor = uniform(color(ATMOSPHERE_DAY));
+    const atmosphereTwilightColor = uniform(color(ATMOSPHERE_TWILIGHT));
+
+    const viewDirection = positionWorld.sub(cameraPosition).normalize();
+    const fresnel = viewDirection.dot(normalWorldGeometry).abs().oneMinus();
+    const sunOrientation = normalWorldGeometry.dot(normalize(SUN_POSITION));
+    const atmosphereColor = mix(
+      atmosphereTwilightColor,
+      atmosphereDayColor,
+      sunOrientation.smoothstep(-0.25, 0.75),
+    );
+
+    const globeMaterial = new MeshStandardNodeMaterial();
+    const cloudsStrength = texture(maps.packed, uv()).b.smoothstep(0.2, 1);
+    globeMaterial.colorNode = mix(texture(maps.day), vec3(1), cloudsStrength.mul(2));
+
+    const roughness = max(texture(maps.packed).g, step(0.01, cloudsStrength));
+    globeMaterial.roughnessNode = roughness.remap(0, 1, 0.25, 0.35);
+
+    const dayStrength = sunOrientation.smoothstep(-0.25, 0.5);
+    const atmosphereMix = sunOrientation
+      .smoothstep(-0.5, 1)
+      .mul(fresnel.pow(2))
+      .clamp(0, 1);
+
+    const lit = mix(texture(maps.night).rgb, output.rgb, dayStrength);
+    globeMaterial.outputNode = vec4(
+      mix(lit, atmosphereColor, atmosphereMix),
+      output.a,
+    );
+
+    const bumpElevation = max(texture(maps.packed).r, cloudsStrength);
+    globeMaterial.normalNode = bumpMap(bumpElevation);
+
+    const atmosphereMaterial = new MeshBasicNodeMaterial({
+      side: BackSide,
+      transparent: true,
+      depthWrite: false,
+    });
+    const alpha = fresnel
+      .remap(0.73, 1, 1, 0)
+      .pow(3)
+      .mul(sunOrientation.smoothstep(-0.5, 1));
+    atmosphereMaterial.outputNode = vec4(atmosphereColor, alpha);
+
+    return { globeMaterial, atmosphereMaterial };
+  }, [maps.day, maps.night, maps.packed]);
+
   return (
-    <mesh scale={1.14}>
-      <sphereGeometry args={[1, 48, 48]} />
-      <shaderMaterial
-        vertexShader={atmosphereVertex}
-        fragmentShader={atmosphereFragment}
-        uniforms={{ glowColor: { value: ATMOSPHERE_COLOR } }}
-        side={BackSide}
-        blending={AdditiveBlending}
-        transparent
-        depthWrite={false}
-      />
-    </mesh>
+    <>
+      <mesh material={materials.globeMaterial}>
+        <sphereGeometry args={[1, 64, 64]} />
+      </mesh>
+      <mesh material={materials.atmosphereMaterial} scale={1.06}>
+        <sphereGeometry args={[1, 64, 64]} />
+      </mesh>
+    </>
   );
 }
 
@@ -82,7 +129,7 @@ function FrameCamera() {
     const vFov = (camera.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
     const limit = Math.min(vFov, hFov);
-    const distance = 1.32 / Math.tan(limit / 2);
+    const distance = 1.22 / Math.tan(limit / 2);
     camera.position.set(0, 0.06, distance);
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
@@ -96,21 +143,23 @@ function SpinningGlobe() {
 
   useFrame((_, delta) => {
     if (!group.current) return;
-    group.current.rotation.y += delta * 0.055;
+    group.current.rotation.y += delta * 0.035;
   });
 
   return (
-    <group ref={group} rotation={[0.32, 0.6, 0]}>
-      <Suspense fallback={null}>
-        <Earth />
-      </Suspense>
-      <Atmosphere />
-    </group>
+    <>
+      <directionalLight position={SUN_POSITION.toArray()} intensity={2} />
+      <group ref={group} rotation={[0.32, 0.6, 0]}>
+        <Suspense fallback={null}>
+          <Earth />
+        </Suspense>
+      </group>
+    </>
   );
 }
 
 /**
- * Desktop hero globe. Owns the only WebGL canvas.
+ * Desktop hero globe. Owns the only canvas.
  * Mounted from the shell, outside the launch-keyed card, so selection does not rebuild it.
  */
 export default function GlobePanel() {
@@ -119,16 +168,19 @@ export default function GlobePanel() {
       <Canvas
         dpr={[1, 1.5]}
         frameloop="always"
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance",
+        gl={async (props) => {
+          const renderer = new WebGPURenderer({
+            canvas: props.canvas,
+            antialias: true,
+            alpha: true,
+          });
+          await renderer.init();
+          return renderer;
         }}
-        camera={{ position: [0, 0.06, 4.2], fov: 34 }}
+        camera={{ position: [0, 0.06, 3.4], fov: 34 }}
         style={{ width: "100%", height: "100%", display: "block" }}
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0);
-          gl.toneMapping = NoToneMapping;
         }}
       >
         <FrameCamera />
