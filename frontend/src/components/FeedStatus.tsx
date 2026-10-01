@@ -14,6 +14,8 @@ interface FeedStatusProps {
   className?: string;
   /** Show the status dot (default true) */
   showDot?: boolean;
+  /** Healthy state stays dim and dotless. Offline and arming stay loud. */
+  quietLive?: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ export function FeedStatus({
   armingLabel = "Arming Feed",
   className = "",
   showDot = true,
+  quietLive = false,
 }: FeedStatusProps) {
   const prevLive = useRef<boolean | null>(null);
   const [flash, setFlash] = useState<FlashKind | null>(null);
@@ -47,15 +50,16 @@ export function FeedStatus({
 
   const label = live ? liveLabel : arming ? armingLabel : offlineLabel;
   const accent = live ? "cyan" : "amber";
+  const dotOn = showDot && !(quietLive && live);
 
   return (
     <motion.span
       className={`inline-flex items-center gap-2 font-mono uppercase tracking-wider transition-colors duration-300 select-none ${
         live
-          ? "text-cyan-400"
-          : arming
-            ? "text-amber-500/90"
-            : "text-amber-500/90"
+          ? quietLive
+            ? "text-cyan-500/70"
+            : "text-cyan-400"
+          : "text-amber-500/90"
       } ${className}`}
       title={
         live
@@ -77,7 +81,7 @@ export function FeedStatus({
           : transitions.snappy
       }
     >
-      {showDot && (
+      {dotOn && (
         <span className="relative flex h-1.5 w-1.5 shrink-0">
           <AnimatePresence>
             {flash && (

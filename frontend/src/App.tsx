@@ -95,7 +95,6 @@ export default function App() {
             feedLive={feedLive}
             isBooting={isBooting}
             shortBand={shortBand}
-            utcOffset={sysClock?.offset}
           />
 
           {/* Desktop hero. Hidden below lg so the stacked console stays queue + card. */}

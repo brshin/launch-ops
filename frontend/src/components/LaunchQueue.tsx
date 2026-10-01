@@ -14,7 +14,7 @@ import {
 } from "../lib/bootMotion";
 import { useCompactMotion } from "../hooks/useCompactMotion";
 import type { ShortViewportBand } from "../hooks/useShortViewportBand";
-import { formatLocalDateTime, getLocalUtcOffsetLabel, getLocalZoneName } from "../utils/localTime";
+import { formatLocalDateTime } from "../utils/localTime";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -49,7 +49,6 @@ interface LaunchQueueProps {
   feedLive: boolean;
   isBooting: boolean;
   shortBand: ShortViewportBand;
-  utcOffset?: string | null;
 }
 
 /**
@@ -64,7 +63,6 @@ export function LaunchQueue({
   feedLive,
   isBooting,
   shortBand,
-  utcOffset,
 }: LaunchQueueProps) {
   const [queueRevealed, setQueueRevealed] = useState(false);
   const queueScrollRef = useRef<HTMLDivElement>(null);
@@ -139,7 +137,7 @@ export function LaunchQueue({
         }`}
       >
         <h2
-          className={`text-cyan-400 font-mono uppercase flex items-center gap-2 lg:gap-3 min-w-0 density-ease ${
+          className={`text-cyan-400 font-mono uppercase min-w-0 truncate density-ease ${
             shortBand === "short"
               ? "tracking-[0.15em] text-[9px] lg:tracking-[0.25em] lg:text-xs"
               : shortBand === "mid"
@@ -147,27 +145,17 @@ export function LaunchQueue({
                 : "tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs"
           }`}
         >
-          <span className="relative flex h-1.5 w-1.5 lg:h-2 lg:w-2 shrink-0">
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 lg:h-2 lg:w-2 bg-cyan-500 shadow-[0_0_8px_#22d3ee]"></span>
-          </span>
           Launch Queue
         </h2>
-        <div className="flex items-center gap-2 shrink-0">
-          <FeedStatus
-            live={feedLive}
-            arming={isBooting && !feedLive}
-            liveLabel="Feed Live"
-            offlineLabel="Feed Offline"
-            armingLabel="Arming Feed"
-            className="text-[9px]"
-          />
-          <span
-            className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider"
-            title={`Queue times shown in ${getLocalZoneName()} (${utcOffset ?? getLocalUtcOffsetLabel()})`}
-          >
-            {utcOffset ?? getLocalUtcOffsetLabel()}
-          </span>
-        </div>
+        <FeedStatus
+          live={feedLive}
+          arming={isBooting && !feedLive}
+          quietLive
+          liveLabel="Feed Live"
+          offlineLabel="Feed Offline"
+          armingLabel="Arming Feed"
+          className="shrink-0 text-[9px]"
+        />
       </div>
 
       <div className="relative min-h-0 lg:flex-1 lg:min-h-0 flex flex-col">
