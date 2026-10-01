@@ -2,6 +2,8 @@
 
 Global launch tracker dashboard for upcoming rocket launches.
 
+![LaunchOps console with the launch queue, a day-and-night Earth, and the selected mission card](docs/console.jpg)
+
 Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/) (`mode=detailed`), stored in MongoDB, cached in Redis, and delivered to a React frontend over REST and Socket.IO. When a provider posts a webcast, YouTube plays in the mission camera pane; X and other hosts open outbound.
 
 ---
@@ -99,6 +101,8 @@ launch-ops/
 ├── .github/
 │   └── workflows/
 │       └── test.yml           # CI: frontend + backend `npm test`
+├── docs/
+│   └── console.jpg            # README console screenshot
 │
 ├── backend/
 │   ├── models/
