@@ -1,13 +1,13 @@
 import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
-import { PerspectiveCamera, type Group, type Texture } from "three";
+import { DirectionalLight, PerspectiveCamera, Vector3, type Group, type Texture } from "three";
+import { solarAttitude } from "../../utils/solarAttitude";
 import {
   BackSide,
   MeshBasicNodeMaterial,
   MeshStandardNodeMaterial,
   SRGBColorSpace,
-  Vector3,
   WebGPURenderer,
 } from "three/webgpu";
 import {
@@ -21,6 +21,7 @@ import {
   output,
   positionWorld,
   step,
+  renderGroup,
   texture,
   uniform,
   uv,
@@ -29,22 +30,45 @@ import {
 } from "three/tsl";
 
 /**
- * Day, night, and packed bump/roughness/clouds maps from the three.js earth
- * example. Textures by Solar System Scope, resized for this panel.
+ * Day, night, and packed bump/roughness/clouds maps from the three.js
+ * WebGPU earth example, at their original 4096 size. Textures by Solar System Scope.
  */
 const EARTH_DAY = "/textures/earth-day.jpg";
 const EARTH_NIGHT = "/textures/earth-night.jpg";
 const EARTH_PACKED = "/textures/earth-packed.jpg";
 
-/** Fixed in view, so the earth rotates through a steady day/night line. */
-const SUN_POSITION = new Vector3(1.8, 0.4, 1.1);
+/** One turn in about three minutes, around the poles. The sun turns with the earth, so local time stays put. */
+const SPIN_RATE = 0.035;
+/** Look down a little so the globe reads as a planet, not a flat disc. */
+const VIEW_TILT = 0.32;
 
-const ATMOSPHERE_DAY = "#3ec6ff";
-const ATMOSPHERE_TWILIGHT = "#8d5a3c";
+/** World-space sun. Declination lifts it; spin is the same polar rotation as the globe. */
+const SUN_POSITION = new Vector3(1, 0, 0);
+// A plain vector becomes a shader constant and freezes the terminator.
+// This uniform is uploaded every frame, same direction as the light.
+const SUN_DIRECTION = uniform(SUN_POSITION).setGroup(renderGroup);
+
+function placeSun(declination: number, spin: number) {
+  const cosDeclination = Math.cos(declination);
+  SUN_POSITION.set(
+    cosDeclination * Math.cos(spin),
+    Math.sin(declination),
+    -cosDeclination * Math.sin(spin),
+  );
+}
+
+{
+  const initial = solarAttitude(new Date());
+  placeSun(initial.declination, 0);
+}
+
+/** Same limb colors as the three.js earth example. */
+const ATMOSPHERE_DAY = "#4db2ff";
+const ATMOSPHERE_TWILIGHT = "#bc490b";
 
 function prepareMap(map: Texture, srgb: boolean) {
   if (srgb) map.colorSpace = SRGBColorSpace;
-  map.anisotropy = 8;
+  map.anisotropy = 16;
 }
 
 function Earth() {
@@ -63,8 +87,8 @@ function Earth() {
     const atmosphereTwilightColor = uniform(color(ATMOSPHERE_TWILIGHT));
 
     const viewDirection = positionWorld.sub(cameraPosition).normalize();
-    const fresnel = viewDirection.dot(normalWorldGeometry).abs().oneMinus();
-    const sunOrientation = normalWorldGeometry.dot(normalize(SUN_POSITION));
+    const fresnel = viewDirection.dot(normalWorldGeometry).abs().oneMinus().toVar();
+    const sunOrientation = normalWorldGeometry.dot(normalize(SUN_DIRECTION)).toVar();
     const atmosphereColor = mix(
       atmosphereTwilightColor,
       atmosphereDayColor,
@@ -79,9 +103,10 @@ function Earth() {
     globeMaterial.roughnessNode = roughness.remap(0, 1, 0.25, 0.35);
 
     const dayStrength = sunOrientation.smoothstep(-0.25, 0.5);
+    // Only the silhouette. A wide fresnel paints the whole day side blue as the planet turns.
     const atmosphereMix = sunOrientation
       .smoothstep(-0.5, 1)
-      .mul(fresnel.pow(2))
+      .mul(fresnel.smoothstep(0.65, 1).pow(2))
       .clamp(0, 1);
 
     const lit = mix(texture(maps.night).rgb, output.rgb, dayStrength);
@@ -98,10 +123,8 @@ function Earth() {
       transparent: true,
       depthWrite: false,
     });
-    const alpha = fresnel
-      .remap(0.73, 1, 1, 0)
-      .pow(3)
-      .mul(sunOrientation.smoothstep(-0.5, 1));
+    // Rim only. The example's remap climbs above 1 across the disc and fogs the day side.
+    const alpha = fresnel.smoothstep(0.8, 1).pow(3).mul(sunOrientation.smoothstep(-0.5, 1));
     atmosphereMaterial.outputNode = vec4(atmosphereColor, alpha);
 
     return { globeMaterial, atmosphereMaterial };
@@ -112,7 +135,7 @@ function Earth() {
       <mesh material={materials.globeMaterial}>
         <sphereGeometry args={[1, 64, 64]} />
       </mesh>
-      <mesh material={materials.atmosphereMaterial} scale={1.06}>
+      <mesh material={materials.atmosphereMaterial} scale={1.04}>
         <sphereGeometry args={[1, 64, 64]} />
       </mesh>
     </>
@@ -130,7 +153,7 @@ function FrameCamera() {
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
     const limit = Math.min(vFov, hFov);
     const distance = 1.22 / Math.tan(limit / 2);
-    camera.position.set(0, 0.06, distance);
+    camera.position.set(0, Math.sin(VIEW_TILT) * distance, Math.cos(VIEW_TILT) * distance);
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
   }, [camera, size]);
@@ -138,18 +161,34 @@ function FrameCamera() {
   return null;
 }
 
-function SpinningGlobe() {
+function OrientedGlobe() {
   const group = useRef<Group>(null);
+  const light = useRef<DirectionalLight>(null);
+  const spin = useRef(0);
+
+  useLayoutEffect(() => {
+    const { declination, subsolarLongitude } = solarAttitude(new Date());
+    placeSun(declination, 0);
+    if (group.current) group.current.rotation.y = -subsolarLongitude;
+  }, []);
 
   useFrame((_, delta) => {
-    if (!group.current) return;
-    group.current.rotation.y += delta * 0.035;
+    spin.current += delta * SPIN_RATE;
+    const { declination, subsolarLongitude } = solarAttitude(new Date());
+    placeSun(declination, spin.current);
+    light.current?.position.copy(SUN_POSITION);
+    if (group.current) group.current.rotation.y = -subsolarLongitude + spin.current;
   });
 
   return (
     <>
-      <directionalLight position={SUN_POSITION.toArray()} intensity={2} />
-      <group ref={group} rotation={[0.32, 0.6, 0]}>
+      <directionalLight ref={light} position={SUN_POSITION.toArray()} intensity={2} />
+      {/*
+        Spin is only around the poles. Yaw lines local noon up with the sun,
+        and the same angle is added to both, so the surface turns while night
+        stays on the real night side.
+      */}
+      <group ref={group}>
         <Suspense fallback={null}>
           <Earth />
         </Suspense>
@@ -166,7 +205,8 @@ export default function GlobePanel() {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
       <Canvas
-        dpr={[1, 1.5]}
+        dpr={[1, 2]}
+        flat
         frameloop="always"
         gl={async (props) => {
           const renderer = new WebGPURenderer({
@@ -184,7 +224,7 @@ export default function GlobePanel() {
         }}
       >
         <FrameCamera />
-        <SpinningGlobe />
+        <OrientedGlobe />
       </Canvas>
     </div>
   );
