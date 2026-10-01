@@ -4,6 +4,7 @@ import {
   formatLocalDate,
   formatLocalTime,
   getLocalUtcOffsetLabel,
+  getLocalZoneName,
 } from "../utils/localTime";
 
 /**
@@ -20,6 +21,7 @@ export function useSysClock(): SysClock | null {
         date: formatLocalDate(now),
         time: formatLocalTime(now, { includeSeconds: true }),
         offset: getLocalUtcOffsetLabel(now),
+        zone: getLocalZoneName(now),
         nowMs: now.getTime(),
       });
     };

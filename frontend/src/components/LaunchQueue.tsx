@@ -14,7 +14,7 @@ import {
 } from "../lib/bootMotion";
 import { useCompactMotion } from "../hooks/useCompactMotion";
 import type { ShortViewportBand } from "../hooks/useShortViewportBand";
-import { formatLocalDateTime, getLocalUtcOffsetLabel } from "../utils/localTime";
+import { formatLocalDateTime, getLocalUtcOffsetLabel, getLocalZoneName } from "../utils/localTime";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -163,7 +163,7 @@ export function LaunchQueue({
           />
           <span
             className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider"
-            title="Queue times shown in your local timezone"
+            title={`Queue times shown in ${getLocalZoneName()} (${utcOffset ?? getLocalUtcOffsetLabel()})`}
           >
             {utcOffset ?? getLocalUtcOffsetLabel()}
           </span>

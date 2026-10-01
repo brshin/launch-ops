@@ -11,6 +11,8 @@ export type SysClock = {
   time: string;
   date: string;
   offset: string;
+  /** Shared zone name, such as Pacific or Singapore. */
+  zone: string;
   nowMs: number;
 };
 
@@ -36,7 +38,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
 
   return (
     <motion.header
-      className={`w-full flex justify-between items-center gap-3 border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
+      className={`w-full flex justify-between items-center gap-2 sm:gap-3 border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
         shortBand === "short"
           ? "mb-1.5 pb-1.5 lg:mb-3 lg:pb-2.5"
           : shortBand === "mid"
@@ -47,14 +49,14 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
       initial="hidden"
       animate="show"
     >
-      <div className="flex flex-col justify-center cursor-default min-w-0">
+      <div className="flex flex-col justify-center cursor-default shrink-0">
         <h1
           className={`font-bold text-slate-100 uppercase leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] density-ease ${
             shortBand === "short"
               ? "text-xl tracking-[0.1em] lg:text-3xl lg:tracking-[0.16em]"
               : shortBand === "mid"
                 ? "text-[1.35rem] sm:text-[1.65rem] tracking-[0.11em] sm:tracking-[0.14em] lg:text-3xl lg:tracking-[0.16em]"
-                : "text-2xl sm:text-3xl tracking-[0.12em] sm:tracking-[0.16em]"
+                : "text-2xl sm:text-3xl tracking-[0.06em] sm:tracking-[0.16em]"
           }`}
         >
           Launch
@@ -81,8 +83,9 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
         </p>
       </div>
 
+      <div className="flex min-w-0 flex-1 justify-end">
       <motion.div
-        className="flex items-center gap-2 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-sm backdrop-blur-md shrink-0"
+        className="flex w-max max-w-full min-w-0 items-center gap-1.5 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-sm backdrop-blur-md"
         variants={bootSysClockVariants}
         initial="hidden"
         animate="show"
@@ -90,25 +93,34 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
         <span className="relative flex h-1.5 w-1.5 shrink-0">
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
         </span>
-        {/* Stacked / mid: single horizontal readout — no extra header height */}
-        <div className="flex lg:hidden items-baseline gap-x-2 font-mono uppercase leading-none min-w-0">
-          <span className="text-[9px] tracking-[0.2em] text-cyan-500 shrink-0">Sys</span>
-          <span className="text-[11px] sm:text-xs tracking-[0.14em] text-cyan-100 tabular-nums whitespace-nowrap">
-            {sysClock?.time ?? "—:—:—"}
-          </span>
-          <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-500 tabular-nums whitespace-nowrap">
-            {sysClock?.date ?? "—"}
-          </span>
-          <span className="text-[9px] tracking-widest text-cyan-600 shrink-0">
-            {sysClock?.offset ?? "—"}
+        {/* Below desktop: time stays on one line; a long zone wraps under it */}
+        <div className="flex lg:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
+          <div className="flex items-baseline gap-x-2">
+            <span className="text-[9px] tracking-[0.2em] text-cyan-500 shrink-0">Sys</span>
+            <span className="text-[11px] sm:text-xs tracking-[0.14em] text-cyan-100 tabular-nums whitespace-nowrap shrink-0">
+              {sysClock?.time ?? "—:—:—"}
+            </span>
+            <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-500 tabular-nums whitespace-nowrap shrink-0">
+              {sysClock?.date ?? "—"}
+            </span>
+          </div>
+          <span
+            className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-600"
+            title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
+          >
+            <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
+            {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
           </span>
         </div>
         {/* Desktop: compact two-line block, still short */}
         <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[9px] tracking-[0.3em] text-cyan-500">Sys Time</span>
-            <span className="text-[9px] tracking-widest text-cyan-500">
-              {sysClock?.offset ?? "—"}
+            <span className="text-[9px] tracking-[0.3em] text-cyan-500 shrink-0">Sys Time</span>
+            <span
+              className="max-w-[16rem] truncate text-[9px] tracking-[0.14em] text-cyan-500"
+              title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
+            >
+              {sysClock ? `${sysClock.zone} · ${sysClock.offset}` : "—"}
             </span>
           </div>
           <div className="flex items-baseline gap-2">
@@ -121,6 +133,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
           </div>
         </div>
       </motion.div>
+      </div>
     </motion.header>
   );
 }
