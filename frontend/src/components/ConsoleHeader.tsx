@@ -100,12 +100,12 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
             <span className="text-[11px] sm:text-xs tracking-[0.14em] text-cyan-100 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.time ?? "—:—:—"}
             </span>
-            <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-500 tabular-nums whitespace-nowrap shrink-0">
+            <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.date ?? "—"}
             </span>
           </div>
           <span
-            className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-600"
+            className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-300"
             title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
           >
             <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
@@ -117,7 +117,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
           <div className="flex items-center justify-between gap-3">
             <span className="text-[9px] tracking-[0.3em] text-cyan-500 shrink-0">Sys Time</span>
             <span
-              className="max-w-[16rem] truncate text-[9px] tracking-[0.14em] text-cyan-500"
+              className="max-w-[16rem] truncate text-[9px] tracking-[0.14em] text-cyan-300"
               title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
             >
               {sysClock ? `${sysClock.zone} · ${sysClock.offset}` : "—"}
@@ -127,7 +127,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
             <span className="text-sm tracking-[0.18em] text-cyan-100 tabular-nums">
               {sysClock?.time ?? "INITIALIZING..."}
             </span>
-            <span className="text-[10px] tracking-[0.18em] text-cyan-500 tabular-nums">
+            <span className="text-xs tracking-[0.18em] text-cyan-300 tabular-nums">
               {sysClock?.date ?? "—"}
             </span>
           </div>
