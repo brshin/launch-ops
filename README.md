@@ -11,16 +11,17 @@ Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/) 
 - **Watch** — YouTube embeds in the camera pane (Watch / Replay / Close; live webcasts auto-open). X and other URLs open in a new tab (`Watch on X`, `Open webcast`). Queue **`STREAM`** replaces `T−` / `T+` / `NET TBD` while a webcast is live; **`LIVE` stays for In Flight**
 - **Launch Queue** — upcoming launches with local NET (`DD MMM · HH:MM`), a relative chip (`T− 21 min`, `T+ 12 min`, `LIVE`, `HOLD`, `NET TBD`, `STREAM`), provider abbreviation, dimmed past rows, and a `NEXT` marker on the in-flight or soonest upcoming launch (sidebar). Selection is by launch `apiId` (sticky across live cache refreshes) and defaults to in-flight or next NET
 - **Mission detail panel** — provider, mission/rocket titles, Status chip, T− (cyan countdown) vs T+ (emerald elapsed) as `D:HH:MM:SS`, and provisional NET for TBD/TBC or coarse `net_precision` (day/month and coarser — no fake minute countdown)
-- **T-Zero and coordinates** — local launch time with explicit `UTC±X` offset, launch window, pad name, and location
+- **T-Zero and coordinates** — local launch time with an explicit offset (`UTC-7`, or `UTC+5:30` for a half-hour zone), launch window, pad name, and location
 - **Mission Brief** — mission description with type/orbit chips (unknown metadata hidden)
 - **Live Feed indicator** — Socket.IO connect/disconnect status in the queue header and card footer (event flash on link change)
 - **Last Updated** — provider `last_updated` timestamp in Sys Time–style local formatting
-- **Sys Time** — local clock with explicit timezone offset
-- **HUD motion** — Framer Motion cold-load boot, launch-selection crossfade, ticking T− urgency vs calm T+, and calmer ambient chrome
+- **Sys Time** — local clock with the shared zone name and offset (`Pacific · UTC-7`), not a reference city (San Jose stays Pacific, not Los Angeles). Half-hour zones use `UTC+5:30`. The header shows zone and offset; the queue chip stays the numeric offset, with the zone in its tooltip. On a phone the zone sits under the time so a long name does not cover the wordmark. At `xl` (1280px) the desktop clock steps up one size
+- **Earth** — desktop-only globe between the queue and the launch card (`lg`, 1024px and up). Day and night follow real solar time. The earth spins on its poles, and the sun turns with it, so local time stays put. No orbit controls and no pad markers. Below `lg` the canvas is not mounted
+- **HUD motion** — Framer Motion cold-load boot, launch-selection crossfade, ticking T− urgency vs calm T+, and a dimmed spinning starfield behind the globe
 - **Live UI updates** — when the worker refreshes the cache, Redis Pub/Sub notifies the server, which emits the new payload to connected Socket.IO clients
 - **Cached API** — `GET /launches` reads Redis first, then MongoDB on a cache miss
 - **Scheduled ingestion** — cron worker polls Launch Library every 5 minutes, upserts MongoDB, writes Redis, and publishes a cache-update message
-- **Responsive UI** — locked `dvh` console with safe-area insets; horizontal queue + stacked detail below `lg`, sidebar layout at `lg+`
+- **Responsive UI** — locked `dvh` console with safe-area insets. Below `lg`: horizontal queue and stacked detail, no globe. At `lg+`: queue sidebar (320px), globe, and a narrower stacked mission card (`22.5rem`, `26rem` at `xl`)
 
 ### Watch ranking
 
@@ -67,7 +68,7 @@ Launch Library API  (?mode=detailed)
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
 
-On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `LaunchCard`). `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, `useCountdown` (the card's 1s T−/T+ tick — owned by LaunchCard, not App), derived copy, watch playing state, and Framer stagger. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD still, Watch/Close, YouTube IFrame API host), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time, watch target, live-player resync) with contract tests.
+On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `GlobePanel`, `LaunchCard`). `GlobePanel` is lazy-loaded and mounted only at `lg+`. It sits outside the `apiId`-keyed card motion, so selecting a launch does not remount the canvas. `solarAttitude` places the day/night terminator from UTC; a slow polar spin is added to both the earth and the sun so continents turn while local time stays put. `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, `useCountdown` (the card's 1s T−/T+ tick — owned by LaunchCard, not App), derived copy, watch playing state, and Framer stagger. The card is always stacked. Presentational regions are `LaunchCardIdentity` (titles/status/countdown), `LaunchCardVisual` (HUD still, Watch/Close, YouTube IFrame API host), `LaunchCardMission` (T-Zero/pad/brief), and `LaunchCardFooter` (live feed + last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, T−/T+ chips, default selection, local time and zone name, solar attitude, watch target, live-player resync) with contract tests.
 
 ---
 
@@ -76,6 +77,7 @@ On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed` an
 | Layer           | Technology                                                        |
 | --------------- | ----------------------------------------------------------------- |
 | Frontend        | React 19, TypeScript (partial), Vite, Tailwind CSS v4, Framer Motion |
+| Globe           | three.js, React Three Fiber; WebGPU with a WebGL2 fallback            |
 | Realtime        | Socket.IO (client + server)                                          |
 | Backend         | Node.js, Express 5                                                   |
 | Worker          | node-cron                                                            |
@@ -108,11 +110,15 @@ launch-ops/
 │   └── package.json
 │
 ├── frontend/
-│   ├── public/                # favicon.svg
+│   ├── public/
+│   │   ├── favicon.svg
+│   │   └── textures/                 # 4K earth day, night, and packed maps
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Starfield.tsx         # Ambient space background
-│   │   │   ├── ConsoleHeader.tsx     # Brand + Sys Time
+│   │   │   ├── Globe/
+│   │   │   │   └── GlobePanel.tsx    # Desktop earth (solar time, polar spin)
+│   │   │   ├── ConsoleHeader.tsx     # Brand + Sys Time (zone · offset)
 │   │   │   ├── LaunchQueue.tsx       # Horizontal strip / sidebar queue (+ STREAM)
 │   │   │   ├── LaunchCard/
 │   │   │   │   ├── LaunchCard.tsx         # Mission panel orchestrator + watch state
@@ -127,7 +133,7 @@ launch-ops/
 │   │   │   ├── useSysClock.ts                 # Local Sys Time tick
 │   │   │   ├── useCountdown.ts                # LaunchCard 1s T−/T+ tick
 │   │   │   ├── useConsoleBoot.ts              # Cold-load boot window
-│   │   │   ├── useCompactMotion.ts            # Below-lg motion / star budget
+│   │   │   ├── useCompactMotion.ts            # Below-lg: no globe, lighter motion
 │   │   │   ├── useShortViewportBand.ts        # Short/mid/roomy height bands
 │   │   │   ├── useCardDensityBand.ts          # LaunchCard stacked density
 │   │   │   └── useConsoleScrollbarActivity.ts # Show thumbs while scrolling
@@ -144,7 +150,10 @@ launch-ops/
 │   │   │   ├── launchTime.test.ts
 │   │   │   ├── queueFocus.ts         # Default queue selection (live, else next NET)
 │   │   │   ├── queueFocus.test.ts
-│   │   │   ├── localTime.ts          # Shared local date/time + UTC offset labels
+│   │   │   ├── localTime.ts          # Local date/time, UTC offset, shared zone name
+│   │   │   ├── localTime.test.ts
+│   │   │   ├── solarAttitude.ts      # Subsolar point for the globe terminator
+│   │   │   ├── solarAttitude.test.ts
 │   │   │   ├── watchTarget.ts        # Rank YouTube vs X vs other; live/watch/replay
 │   │   │   ├── watchTarget.test.ts
 │   │   │   ├── youtubeLiveResync.ts  # IFrame API mount + live-head resync
@@ -233,7 +242,7 @@ cd frontend && npm run build && npm run preview
 
 ### 5. Tests
 
-Contract tests for queue chips/phases, titles, default selection, watch ranking, live-player resync, and Launch Library → `apiId` / webcast field mapping. No Redis or Mongo required.
+Contract tests for queue chips/phases, titles, default selection, watch ranking, live-player resync, solar attitude, local zone names, and Launch Library → `apiId` / webcast field mapping. No Redis or Mongo required.
 
 ```bash
 cd frontend && npm test

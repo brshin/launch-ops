@@ -85,7 +85,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
 
       <div className="flex min-w-0 flex-1 justify-end">
       <motion.div
-        className="flex w-max max-w-full min-w-0 items-center gap-1.5 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2 py-1 sm:px-3 sm:py-1.5 rounded-sm backdrop-blur-md"
+        className="flex w-max max-w-full min-w-0 items-center gap-1.5 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2 py-1 sm:px-3 sm:py-1.5 xl:px-3.5 xl:py-2 rounded-sm backdrop-blur-md"
         variants={bootSysClockVariants}
         initial="hidden"
         animate="show"
@@ -113,21 +113,21 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
           </span>
         </div>
         {/* Desktop: compact two-line block, still short */}
-        <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5">
+        <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5 xl:gap-1">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[9px] tracking-[0.3em] text-cyan-500 shrink-0">Sys Time</span>
+            <span className="text-[9px] xl:text-[10px] tracking-[0.3em] text-cyan-500 shrink-0">Sys Time</span>
             <span
-              className="max-w-[16rem] truncate text-[9px] tracking-[0.14em] text-cyan-300"
+              className="max-w-[16rem] truncate text-[9px] xl:text-[11px] tracking-[0.14em] text-cyan-300"
               title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
             >
               {sysClock ? `${sysClock.zone} · ${sysClock.offset}` : "—"}
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-sm tracking-[0.18em] text-cyan-100 tabular-nums">
+            <span className="text-sm xl:text-base tracking-[0.18em] text-cyan-100 tabular-nums">
               {sysClock?.time ?? "INITIALIZING..."}
             </span>
-            <span className="text-xs tracking-[0.18em] text-cyan-300 tabular-nums">
+            <span className="text-xs xl:text-sm tracking-[0.18em] text-cyan-300 tabular-nums">
               {sysClock?.date ?? "—"}
             </span>
           </div>
