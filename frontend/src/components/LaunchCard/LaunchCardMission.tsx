@@ -2,8 +2,6 @@ import { motion, type Variants } from "framer-motion";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import { transitions } from "../../lib/motionTokens";
 
-const customScrollbar = "console-scrollbar console-scrollbar-y";
-
 type LocalDateTime = {
   date: string;
   time: string;
@@ -47,7 +45,7 @@ export function LaunchCardMission({
       layout="size"
       variants={cardVariants}
       transition={transitions.soft}
-      className={`order-2 lg:order-1 w-full shrink-0 h-auto self-start lg:self-stretch lg:w-auto lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 content-start items-start lg:grid-rows-[auto_1fr] lg:content-stretch lg:items-stretch density-ease ${chrome.metaGap}`}
+      className={`w-full h-auto self-start max-lg:shrink-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto console-scrollbar console-scrollbar-y grid grid-cols-2 content-start items-start density-ease ${chrome.metaGap}`}
     >
       <motion.div
         variants={sectionVariants}
@@ -97,7 +95,7 @@ export function LaunchCardMission({
 
       <motion.div
         variants={sectionVariants}
-        className={`col-span-2 w-full h-auto min-h-0 self-start flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative lg:self-stretch lg:h-full density-ease ${chrome.metaPad}`}
+        className={`col-span-2 w-full h-auto self-start flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative density-ease ${chrome.metaPad}`}
       >
         <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 group-active:border-cyan-400 transition-colors pointer-events-none"></div>
 
@@ -123,7 +121,7 @@ export function LaunchCardMission({
           )}
         </div>
         <p
-          className={`text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors break-words lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1 ${customScrollbar}`}
+          className="text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors break-words"
         >
           {description}
         </p>

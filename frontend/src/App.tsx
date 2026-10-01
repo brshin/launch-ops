@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard/LaunchCard';
 import { Starfield } from './components/Starfield';
@@ -12,6 +12,30 @@ import { useSysClock } from "./hooks/useSysClock";
 import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
+
+const GlobePanel = lazy(() => import("./components/Globe/GlobePanel"));
+
+function GlobeSlot() {
+  return (
+    <div className="relative h-full min-h-0 w-full">
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[min(72%,30rem)] aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/10 blur-3xl"
+        aria-hidden
+      />
+      <Suspense
+        fallback={
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan-700">
+              Aligning globe
+            </p>
+          </div>
+        }
+      >
+        <GlobePanel />
+      </Suspense>
+    </div>
+  );
+}
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
@@ -56,10 +80,10 @@ export default function App() {
         <div
           className={`flex-1 flex flex-col lg:flex-row min-h-0 w-full relative z-10 density-ease ${
             shortBand === "short"
-              ? "gap-1.5 lg:gap-8"
+              ? "gap-1.5 lg:gap-5"
               : shortBand === "mid"
-                ? "gap-2 sm:gap-3 md:gap-4 lg:gap-8"
-                : "gap-3 sm:gap-4 md:gap-6 lg:gap-8"
+                ? "gap-2 sm:gap-3 md:gap-4 lg:gap-5"
+                : "gap-3 sm:gap-4 md:gap-6 lg:gap-5"
           }`}
         >
           
@@ -74,8 +98,15 @@ export default function App() {
             utcOffset={sysClock?.offset}
           />
 
-          {/* RIGHT PANEL: Main Display */}
-          <div className="flex-1 w-full lg:w-auto lg:h-full min-h-0 flex flex-col max-lg:min-h-0 max-lg:overflow-y-auto max-lg:overscroll-y-contain console-scrollbar console-scrollbar-y">
+          {/* Desktop hero. Hidden below lg so the stacked console stays queue + card. */}
+          {!compactMotion && (
+            <div className="relative hidden min-h-0 min-w-0 flex-1 lg:block">
+              <GlobeSlot />
+            </div>
+          )}
+
+          {/* Mission inspector. Narrow on desktop so the globe keeps the center. */}
+          <div className="flex-1 w-full lg:flex-none lg:w-[22.5rem] xl:w-[26rem] lg:shrink-0 lg:h-full min-h-0 flex flex-col max-lg:min-h-0 max-lg:overflow-y-auto max-lg:overscroll-y-contain console-scrollbar console-scrollbar-y">
             <AnimatePresence mode="wait">
               {showLaunchCard && activeLaunch ? (
                 <motion.div

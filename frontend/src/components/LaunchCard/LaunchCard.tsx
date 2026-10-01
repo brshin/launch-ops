@@ -48,8 +48,8 @@ export default function LaunchCard({
     const shortBand = useShortViewportBand();
     const cardBand = useCardDensityBand(rootRef, compactMotion);
     /**
-     * Soft density: card-height bands + short-viewport bands (whichever is tighter).
-     * Desktop width always stays roomy type.
+     * Below lg, height and short-viewport bands tighten type.
+     * At lg the inspector is a narrow column, so roomy tokens stay, with smaller lg sizes.
      */
     const density: CardDensity = useMemo(() => {
         if (!compactMotion) return "roomy";
@@ -177,28 +177,26 @@ export default function LaunchCard({
             </motion.div>
 
             {/*
-              Stacked: hug content; scroll only on the App panel (no nested trap).
-              Desktop: shell fills; brief / meta column scroll.
-              overflow-clip (not hidden) on chrome so wheel/touch reach the scroller.
+              Always stacked. The picture keeps an aspect ratio so it cannot
+              collapse. On desktop the mission region is what scrolls.
             */}
             <div
                 className="flex flex-col min-h-0 max-lg:flex-none max-lg:overflow-visible lg:flex-1 lg:overflow-hidden"
             >
             <motion.div
                 variants={cardVariants}
-                className={`flex flex-col lg:flex-row min-h-0 max-lg:flex-none lg:flex-1 lg:min-h-0 lg:overflow-hidden density-ease ${chrome.panelsGap}`}
+                className={`flex flex-col min-h-0 max-lg:flex-none lg:flex-1 lg:min-h-0 lg:overflow-hidden density-ease ${chrome.panelsGap}`}
             >
-                {/* Visual feed — capped when stacked; fills column on desktop */}
                 <motion.div
                     layout="size"
                     variants={sectionVariants}
                     transition={transitions.soft}
-                    className={`order-1 lg:order-2 relative w-full aspect-[16/10] shrink-0 lg:aspect-auto lg:max-h-none lg:h-full lg:min-h-0 lg:shrink rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
+                    className={`relative w-full aspect-[16/10] shrink-0 rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
                         playing
-                            ? "max-h-[min(50dvh,22rem)] sm:max-h-[min(52dvh,24rem)] lg:w-[62%] cursor-default"
+                            ? "max-h-[min(50dvh,22rem)] sm:max-h-[min(52dvh,24rem)] lg:max-h-48 cursor-default"
                             : watchTarget
-                              ? "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:w-[45%] cursor-pointer"
-                              : "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:w-[45%] cursor-crosshair"
+                              ? "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:max-h-36 cursor-pointer"
+                              : "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:max-h-36 cursor-crosshair"
                     }`}
                 >
                     <LaunchCardVisual

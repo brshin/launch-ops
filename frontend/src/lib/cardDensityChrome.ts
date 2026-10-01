@@ -16,23 +16,23 @@ export type DensityChrome = {
 
 /**
  * LaunchCard spacing/type tokens by density band.
- * Bands only apply below lg (`useCardDensityBand` forces roomy on desktop width).
+ * lg sizes are for the narrow desktop inspector, not the old full-width card.
  */
 export const densityChrome: Record<CardDensity, DensityChrome> = {
   roomy: {
-    rootPad: "p-3 sm:p-4 lg:p-5",
-    identity: "mb-2.5 sm:mb-3 lg:mb-5 gap-2 sm:gap-3",
+    rootPad: "p-3 sm:p-4 lg:p-3.5",
+    identity: "mb-2.5 sm:mb-3 lg:mb-3 gap-2 sm:gap-3",
     provider:
-      "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] lg:tracking-[0.35em] xl:tracking-[0.4em] mb-1 sm:mb-2",
+      "text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] lg:tracking-[0.22em] mb-1 sm:mb-1.5",
     title:
-      "text-lg sm:text-xl lg:text-xl xl:text-2xl tracking-[0.1em] sm:tracking-[0.12em] lg:tracking-[0.15em] xl:tracking-[0.2em]",
-    statusCol: "gap-1.5 sm:gap-3",
-    statusPill: "px-3 py-2 sm:px-5 sm:py-2.5 min-h-9",
-    panelsGap: "gap-3 sm:gap-4 lg:gap-5",
-    metaGap: "gap-2 sm:gap-3 lg:gap-3",
-    metaPad: "p-2.5 sm:p-3 lg:p-3.5",
-    briefHead: "mb-2 lg:mb-2.5 pb-2",
-    footer: "mt-1.5 pt-1.5 sm:mt-2 sm:pt-2 lg:mt-4 lg:pt-3",
+      "text-lg sm:text-xl lg:text-lg tracking-[0.1em] sm:tracking-[0.12em] lg:tracking-[0.08em]",
+    statusCol: "gap-1.5 sm:gap-3 lg:gap-2",
+    statusPill: "px-3 py-2 sm:px-5 sm:py-2.5 lg:px-3 lg:py-1.5 min-h-9 lg:min-h-8",
+    panelsGap: "gap-3 sm:gap-4 lg:gap-3",
+    metaGap: "gap-2 sm:gap-3 lg:gap-2",
+    metaPad: "p-2.5 sm:p-3 lg:p-2.5",
+    briefHead: "mb-2 lg:mb-1.5 pb-2 lg:pb-1.5",
+    footer: "mt-1.5 pt-1.5 sm:mt-2 sm:pt-2 lg:mt-2 lg:pt-2",
   },
   mid: {
     rootPad: "p-2.5 sm:p-3",
