@@ -8,7 +8,7 @@ function createStarfield(count: number) {
     x: Math.random() * 100,
     y: Math.random() * 100,
     size: Math.random() * 2.5 + 0.5,
-    opacity: Math.random() * 0.8 + 0.2,
+    opacity: Math.random() * 0.42 + 0.14,
     animationDelay: `${Math.random() * 5}s`,
     animationDuration: `${Math.random() * 3 + 2}s`,
   }));
@@ -49,7 +49,7 @@ export function Starfield() {
               opacity: star.opacity,
               animationDelay: star.animationDelay,
               animationDuration: star.animationDuration,
-              boxShadow: star.size > 1.5 ? "0 0 6px 1px rgba(34,211,238,0.6)" : "none",
+              boxShadow: star.size > 2.2 ? "0 0 4px 1px rgba(34,211,238,0.35)" : "none",
             }}
           />
         ))}
