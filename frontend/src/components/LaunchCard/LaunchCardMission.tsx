@@ -63,7 +63,7 @@ export function LaunchCardMission({
             {localOffsetLabel}
           </span>
         </div>
-        <p className="text-xs sm:text-sm text-cyan-50 font-mono tracking-wider tabular-nums">
+        <p className="text-xs sm:text-sm lg:text-[11px] xl:text-[13px] text-cyan-50 font-mono tracking-wider lg:tracking-wide tabular-nums">
           <span>{tZero.date}</span>
           <span className="mx-1.5 text-cyan-700">·</span>
           <span>{tZero.time}</span>
@@ -85,10 +85,10 @@ export function LaunchCardMission({
         <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           Launch Coordinates
         </h3>
-        <p className="text-[11px] sm:text-xs lg:text-[13px] text-cyan-50 font-mono tracking-wide lg:tracking-wider break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
+        <p className="text-[11px] sm:text-xs text-cyan-50 font-mono tracking-wide break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
           {padName}
         </p>
-        <p className="mt-1 text-[9px] sm:text-[10px] lg:text-[11px] text-cyan-500 font-mono uppercase tracking-[0.12em] lg:tracking-[0.15em] break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-500 font-mono uppercase tracking-[0.12em] break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
           {padLocation}
         </p>
       </motion.div>

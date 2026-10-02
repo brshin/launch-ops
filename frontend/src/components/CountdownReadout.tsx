@@ -98,7 +98,7 @@ function TickingDigits({
 
   return (
     <motion.span
-      className={`inline-flex items-center gap-x-1 font-mono font-bold text-base sm:text-lg md:text-xl tabular-nums tracking-normal ${tone}`}
+      className={`inline-flex items-center gap-x-1 font-mono font-bold text-base sm:text-lg md:text-xl lg:text-base xl:text-lg tabular-nums tracking-normal ${tone}`}
       animate={{ textShadow: glow.textShadow }}
       transition={
         mode === "plus" ? transitions.soft : glow.transition ?? transitions.soft
@@ -125,7 +125,7 @@ function TickingDigits({
 export function CountdownHoldLabel() {
   return (
     <motion.span
-      className="max-w-full text-sm sm:text-base md:text-xl font-mono font-bold text-amber-500 tracking-wide sm:tracking-wider md:tracking-widest leading-tight break-words"
+      className="max-w-full text-sm sm:text-base md:text-xl lg:text-base xl:text-lg font-mono font-bold text-amber-500 tracking-wide sm:tracking-wider md:tracking-widest lg:tracking-wide xl:tracking-wider leading-tight break-words"
       style={{ textShadow: "0 0 8px rgba(245,158,11,0.35)" }}
       animate={{ opacity: [0.82, 1, 0.82] }}
       transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
@@ -138,7 +138,7 @@ export function CountdownHoldLabel() {
 export function CountdownFailureLabel() {
   return (
     <motion.span
-      className="max-w-full text-sm sm:text-base md:text-xl font-mono font-bold text-red-500 tracking-wide sm:tracking-wider md:tracking-widest leading-tight break-words"
+      className="max-w-full text-sm sm:text-base md:text-xl lg:text-base xl:text-lg font-mono font-bold text-red-500 tracking-wide sm:tracking-wider md:tracking-widest lg:tracking-wide xl:tracking-wider leading-tight break-words"
       style={{ textShadow: "0 0 10px rgba(239,68,68,0.55)" }}
       animate={{
         x: [0, -1.5, 1.5, -1, 1, 0],

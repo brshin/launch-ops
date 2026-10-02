@@ -130,7 +130,7 @@ export function LaunchCardIdentity({
         className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 density-ease ${chrome.statusCol}`}
       >
         <div
-          className={`hidden sm:flex items-center gap-2 sm:gap-3 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
+          className={`hidden sm:flex items-center gap-2 sm:gap-3 lg:gap-1.5 xl:gap-2 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
         >
           <span className="relative flex h-2 w-2">
             <span
@@ -138,13 +138,13 @@ export function LaunchCardIdentity({
             ></span>
           </span>
           <span
-            className={`text-[10px] font-mono uppercase tracking-wider sm:tracking-widest ${statusColors.text}`}
+            className={`text-[10px] font-mono uppercase tracking-wider sm:tracking-widest lg:tracking-wider xl:tracking-widest ${statusColors.text}`}
           >
             Status: {status || "Unk"}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 lg:px-0 min-w-0">
           {launchTime.phase === "hold" ? (
             <CountdownHoldLabel />
           ) : launchTime.phase === "failed" ? (
@@ -154,7 +154,7 @@ export function LaunchCardIdentity({
               <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
                 Net · Provisional
               </span>
-              <span className="text-base sm:text-lg md:text-xl font-mono font-bold text-slate-300 tracking-wider sm:tracking-widest tabular-nums">
+              <span className="text-base sm:text-lg md:text-xl lg:text-base xl:text-lg font-mono font-bold text-slate-300 tracking-wider sm:tracking-widest lg:tracking-wider tabular-nums">
                 <span>{tZero.date}</span>
                 <span className="mx-1.5 text-slate-600">·</span>
                 <span>{tZero.time}</span>
