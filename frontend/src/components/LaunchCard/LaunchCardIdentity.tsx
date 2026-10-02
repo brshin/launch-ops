@@ -60,6 +60,7 @@ function getStatusColors(status: string) {
 interface LaunchCardIdentityProps {
   chrome: DensityChrome;
   providerName: string;
+  customers: string[];
   title: string;
   rocketName: string | null;
   showRocketSubtitle: boolean;
@@ -78,6 +79,7 @@ interface LaunchCardIdentityProps {
 export function LaunchCardIdentity({
   chrome,
   providerName,
+  customers,
   title,
   rocketName,
   showRocketSubtitle,
@@ -98,6 +100,12 @@ export function LaunchCardIdentity({
             className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}
           >
             {providerName}
+            {customers.map((customer) => (
+              <span key={customer}>
+                <span className="mx-1.5 text-cyan-700">·</span>
+                {customer}
+              </span>
+            ))}
           </p>
           <h2
             className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words density-ease ${chrome.title}`}

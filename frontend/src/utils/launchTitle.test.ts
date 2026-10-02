@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Launch } from "../types/launch";
-import { getLaunchTitle, getRocketName } from "./launchTitle";
+import { getLaunchTitle, getMissionCustomers, getRocketName } from "./launchTitle";
 
 function launch(overrides: {
   name?: string;
@@ -66,5 +66,37 @@ describe("getLaunchTitle", () => {
         launch({ name: "Starlink Group 6-1", missionName: "unknown payload" }),
       ),
     ).toBe("Starlink Group 6-1");
+  });
+});
+
+describe("getMissionCustomers", () => {
+  it("drops the launch provider and keeps the other agencies", () => {
+    const crew = {
+      launch_service_provider: { name: "SpaceX", abbrev: "SpX" },
+      mission: {
+        agencies: [
+          { abbrev: "CSA", name: "Canadian Space Agency" },
+          { abbrev: "NASA", name: "National Aeronautics and Space Administration" },
+          { abbrev: "SpX", name: "SpaceX" },
+          { abbrev: "RFSA", name: "Russian Federal Space Agency (ROSCOSMOS)" },
+        ],
+      },
+    } as Launch;
+
+    expect(getMissionCustomers(crew)).toEqual(["CSA", "NASA", "RFSA"]);
+  });
+
+  it("returns nothing when the only agency is the provider, or the list is empty", () => {
+    const starlink = {
+      launch_service_provider: { name: "SpaceX", abbrev: "SpX" },
+      mission: { agencies: [{ abbrev: "SpX", name: "SpaceX" }] },
+    } as Launch;
+    const empty = {
+      launch_service_provider: { name: "KARI", abbrev: "KARI" },
+      mission: { agencies: [] },
+    } as Launch;
+
+    expect(getMissionCustomers(starlink)).toEqual([]);
+    expect(getMissionCustomers(empty)).toEqual([]);
   });
 });
