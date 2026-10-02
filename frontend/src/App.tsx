@@ -116,10 +116,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -cardEnterY }}
                   transition={transitions.soft}
                 >
-                  <LaunchCard
-                    launch={activeLaunch}
-                    feedLive={feedLive}
-                  />
+                  <LaunchCard launch={activeLaunch} />
                 </motion.div>
               ) : (
                 <motion.div

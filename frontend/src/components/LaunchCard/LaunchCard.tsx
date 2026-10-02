@@ -25,7 +25,6 @@ import { pickWatchTarget } from "../../utils/watchTarget";
 
 interface LaunchCardProps {
     launch: Launch;
-    feedLive: boolean;
 }
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
@@ -41,7 +40,6 @@ const cardVariants: Variants = {
 
 export default function LaunchCard({
     launch,
-    feedLive,
 }: LaunchCardProps) {
     const rootRef = useRef<HTMLDivElement>(null);
     const compactMotion = useCompactMotion();
@@ -116,7 +114,7 @@ export default function LaunchCard({
         !!rocketName && rocketName.toLowerCase() !== title.toLowerCase();
 
     const lastUpdated = launch.last_updated
-        ? formatLocalDateTime(launch.last_updated, { includeSeconds: true })
+        ? formatLocalDateTime(launch.last_updated)
         : null;
     const tZero = formatLocalDateTime(launch.net);
     const localOffsetLabel = getLocalUtcOffsetLabel();
@@ -241,11 +239,7 @@ export default function LaunchCard({
                 variants={sectionVariants}
                 className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[9px] font-mono uppercase tracking-[0.2em] density-ease ${chrome.footer}`}
             >
-                <LaunchCardFooter
-                    feedLive={feedLive}
-                    lastUpdated={lastUpdated}
-                    localOffsetLabel={localOffsetLabel}
-                />
+                <LaunchCardFooter lastUpdated={lastUpdated} />
             </motion.div>
             </div>
             
