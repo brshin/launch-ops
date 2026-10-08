@@ -57,6 +57,68 @@ const PLACEHOLDER_BRIEFS = new Set([
 
 export const MISSING_MISSION_BRIEF = "No public payload details yet.";
 
+const UNKNOWN_META = new Set(["unknown", "unk", "n/a"]);
+
+function isKnownMeta(value?: string | null): boolean {
+  if (!value?.trim()) return false;
+  return !UNKNOWN_META.has(value.trim().toLowerCase());
+}
+
+/** Long orbit names, and their abbreviations, shown as a short plain label. */
+const ORBIT_LABELS: Record<string, string> = {
+  "low earth orbit": "Low Earth",
+  leo: "Low Earth",
+  "very low earth orbit": "Very Low Earth",
+  vleo: "Very Low Earth",
+  "polar orbit": "Polar",
+  po: "Polar",
+  "sun-synchronous orbit": "Sun-Sync",
+  sso: "Sun-Sync",
+  "medium earth orbit": "Medium Earth",
+  meo: "Medium Earth",
+  "geostationary orbit": "Geostationary",
+  geo: "Geostationary",
+  "geostationary transfer orbit": "GEO Transfer",
+  gto: "GEO Transfer",
+  "highly elliptical orbit": "Elliptical",
+  heo: "Elliptical",
+  "high earth orbit": "High Earth",
+  "mars orbit": "Mars",
+  "lunar orbit": "Lunar",
+  "heliocentric orbit": "Heliocentric",
+};
+
+function orbitKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+/**
+ * Short destination for the brief chip.
+ * Prefers the orbit name, then the abbreviation, and hides unknown values.
+ */
+export function getMissionOrbitLabel(orbit?: {
+  name?: string | null;
+  abbrev?: string | null;
+} | null): string | null {
+  const name = orbit?.name?.trim() ?? "";
+  const abbrev = orbit?.abbrev?.trim() ?? "";
+  if (isKnownMeta(name) && ORBIT_LABELS[orbitKey(name)]) return ORBIT_LABELS[orbitKey(name)];
+  if (isKnownMeta(abbrev) && ORBIT_LABELS[orbitKey(abbrev)]) return ORBIT_LABELS[orbitKey(abbrev)];
+  if (isKnownMeta(name)) return name.replace(/\s+orbit$/i, "").trim() || name;
+  if (isKnownMeta(abbrev)) return abbrev;
+  return null;
+}
+
+/** Mission purpose for the brief chip. Classified flights drop the slash name. */
+export function getMissionTypeLabel(type?: string | null): string | null {
+  if (!isKnownMeta(type)) return null;
+  const trimmed = type!.trim();
+  if (trimmed.toLowerCase().replace(/\s*\/\s*/g, "/") === "government/top secret") {
+    return "Classified";
+  }
+  return trimmed;
+}
+
 /** Real brief text, or one caption when the feed has no public description. */
 export function getMissionBrief(description?: string | null): string {
   const normalized = description?.trim().replace(/\.+$/, "").trim().toLowerCase() ?? "";

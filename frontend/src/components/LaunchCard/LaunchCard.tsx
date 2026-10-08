@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
-import { getLaunchTitle, getMissionBrief, getMissionCustomers, getRocketName } from "../../utils/launchTitle";
+import { getLaunchTitle, getMissionBrief, getMissionCustomers, getMissionOrbitLabel, getMissionTypeLabel, getRocketName } from "../../utils/launchTitle";
 import { transitions, travel } from "../../lib/motionTokens";
 import { densityChrome } from "../../lib/cardDensityChrome";
 import { LaunchCardFooter } from "./LaunchCardFooter";
@@ -125,20 +125,8 @@ export default function LaunchCard({
         ? formatLocalTime(launch.window_end)
         : null;
 
-    const isKnownMeta = (value?: string | null) => {
-        if (!value?.trim()) return false;
-        const normalized = value.trim().toLowerCase();
-        return normalized !== 'unknown' && normalized !== 'unk' && normalized !== 'n/a';
-    };
-
-    const missionType = isKnownMeta(launch.mission?.type)
-        ? launch.mission!.type
-        : null;
-    const missionOrbit = isKnownMeta(launch.mission?.orbit?.abbrev)
-        ? launch.mission!.orbit.abbrev
-        : isKnownMeta(launch.mission?.orbit?.name)
-          ? launch.mission!.orbit.name
-          : null;
+    const missionType = getMissionTypeLabel(launch.mission?.type);
+    const missionOrbit = getMissionOrbitLabel(launch.mission?.orbit);
 
     return (
         <motion.div

@@ -4,6 +4,8 @@ import {
   getLaunchTitle,
   getMissionBrief,
   getMissionCustomers,
+  getMissionOrbitLabel,
+  getMissionTypeLabel,
   getRocketName,
   MISSING_MISSION_BRIEF,
 } from "./launchTitle";
@@ -86,6 +88,31 @@ describe("getMissionBrief", () => {
   it("keeps a real description", () => {
     const text = "A batch of satellites for the Starlink constellation.";
     expect(getMissionBrief(text)).toBe(text);
+  });
+});
+
+describe("getMissionTypeLabel", () => {
+  it("keeps a readable category and shortens the classified slash name", () => {
+    expect(getMissionTypeLabel("Communications")).toBe("Communications");
+    expect(getMissionTypeLabel("Government/Top Secret")).toBe("Classified");
+    expect(getMissionTypeLabel("N/A")).toBeNull();
+    expect(getMissionTypeLabel("Unknown")).toBeNull();
+  });
+});
+
+describe("getMissionOrbitLabel", () => {
+  it("uses a short plain name instead of the abbreviation", () => {
+    expect(getMissionOrbitLabel({ name: "Low Earth Orbit", abbrev: "LEO" })).toBe("Low Earth");
+    expect(getMissionOrbitLabel({ name: "Polar Orbit", abbrev: "PO" })).toBe("Polar");
+    expect(getMissionOrbitLabel({ name: "Mars Orbit", abbrev: "Mars" })).toBe("Mars");
+    expect(getMissionOrbitLabel({ name: "Geostationary Transfer Orbit", abbrev: "GTO" })).toBe(
+      "GEO Transfer",
+    );
+  });
+
+  it("hides an unknown orbit", () => {
+    expect(getMissionOrbitLabel({ name: "Unknown", abbrev: "N/A" })).toBeNull();
+    expect(getMissionOrbitLabel(null)).toBeNull();
   });
 });
 
