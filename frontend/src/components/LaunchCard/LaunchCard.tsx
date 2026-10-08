@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
-import { getLaunchTitle, getMissionCustomers, getRocketName } from "../../utils/launchTitle";
+import { getLaunchTitle, getMissionBrief, getMissionCustomers, getRocketName } from "../../utils/launchTitle";
 import { transitions, travel } from "../../lib/motionTokens";
 import { densityChrome } from "../../lib/cardDensityChrome";
 import { LaunchCardFooter } from "./LaunchCardFooter";
@@ -229,10 +229,7 @@ export default function LaunchCard({
                     }
                     missionType={missionType}
                     missionOrbit={missionOrbit}
-                    description={
-                        launch.mission?.description ||
-                        "No mission details available at this time."
-                    }
+                    description={getMissionBrief(launch.mission?.description)}
                 />
             </motion.div>
 

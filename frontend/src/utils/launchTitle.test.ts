@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Launch } from "../types/launch";
-import { getLaunchTitle, getMissionCustomers, getRocketName } from "./launchTitle";
+import {
+  getLaunchTitle,
+  getMissionBrief,
+  getMissionCustomers,
+  getRocketName,
+  MISSING_MISSION_BRIEF,
+} from "./launchTitle";
 
 function launch(overrides: {
   name?: string;
@@ -66,6 +72,20 @@ describe("getLaunchTitle", () => {
         launch({ name: "Starlink Group 6-1", missionName: "unknown payload" }),
       ),
     ).toBe("Starlink Group 6-1");
+  });
+});
+
+describe("getMissionBrief", () => {
+  it("replaces feed placeholders with one caption", () => {
+    expect(getMissionBrief("Details TBD.")).toBe(MISSING_MISSION_BRIEF);
+    expect(getMissionBrief("TBD")).toBe(MISSING_MISSION_BRIEF);
+    expect(getMissionBrief("  ")).toBe(MISSING_MISSION_BRIEF);
+    expect(getMissionBrief(null)).toBe(MISSING_MISSION_BRIEF);
+  });
+
+  it("keeps a real description", () => {
+    const text = "A batch of satellites for the Starlink constellation.";
+    expect(getMissionBrief(text)).toBe(text);
   });
 });
 

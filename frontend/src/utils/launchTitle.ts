@@ -45,6 +45,25 @@ export function getMissionCustomers(launch: Launch): string[] {
   return customers;
 }
 
+const PLACEHOLDER_BRIEFS = new Set([
+  "details tbd",
+  "tbd",
+  "tba",
+  "unknown",
+  "n/a",
+  "to be determined",
+  "to be announced",
+]);
+
+export const MISSING_MISSION_BRIEF = "No public payload details yet.";
+
+/** Real brief text, or one caption when the feed has no public description. */
+export function getMissionBrief(description?: string | null): string {
+  const normalized = description?.trim().replace(/\.+$/, "").trim().toLowerCase() ?? "";
+  if (!normalized || PLACEHOLDER_BRIEFS.has(normalized)) return MISSING_MISSION_BRIEF;
+  return description!.trim();
+}
+
 /** Prefer mission name; if unknown/missing, fall back to rocket, then launch.name. */
 export function getLaunchTitle(launch: Launch): string {
   if (isUsableMissionName(launch.mission?.name)) {
