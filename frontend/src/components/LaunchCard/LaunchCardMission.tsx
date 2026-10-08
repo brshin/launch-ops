@@ -88,7 +88,7 @@ export function LaunchCardMission({
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
         <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
-          Launch Coordinates
+          Launch Site
         </h3>
         <p className="text-[11px] sm:text-xs text-cyan-50 font-mono uppercase tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
           {place}
