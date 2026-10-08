@@ -1,6 +1,7 @@
 import { motion, type Variants } from "framer-motion";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import { transitions } from "../../lib/motionTokens";
+import { formatPadPlace } from "../../utils/padPlace";
 
 type LocalDateTime = {
   date: string;
@@ -40,6 +41,10 @@ export function LaunchCardMission({
   missionOrbit,
   description,
 }: LaunchCardMissionProps) {
+  const { place, site } = formatPadPlace(padLocation);
+  const sameName = site?.trim().toLowerCase() === padName.trim().toLowerCase();
+  const detail = site && !sameName ? `${site} · ${padName}` : padName;
+
   return (
     <motion.div
       layout="size"
@@ -85,11 +90,11 @@ export function LaunchCardMission({
         <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           Launch Coordinates
         </h3>
-        <p className="text-[11px] sm:text-xs text-cyan-50 font-mono tracking-wide break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
-          {padName}
+        <p className="text-[11px] sm:text-xs text-cyan-50 font-mono uppercase tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
+          {place}
         </p>
-        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-500 font-mono uppercase tracking-[0.12em] break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
-          {padLocation}
+        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-500 font-mono tracking-wide break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+          {detail}
         </p>
       </motion.div>
 
