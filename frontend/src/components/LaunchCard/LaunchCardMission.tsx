@@ -102,27 +102,24 @@ export function LaunchCardMission({
         variants={sectionVariants}
         className={`sm:col-span-2 w-full h-auto self-start lg:h-full lg:min-h-0 lg:self-stretch flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative density-ease ${chrome.metaPad}`}
       >
-        <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-cyan-800 m-2 group-hover:border-cyan-400 group-active:border-cyan-400 transition-colors pointer-events-none"></div>
-
         <div
           className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 density-ease ${chrome.briefHead}`}
         >
-          <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight min-w-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+          <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight shrink-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             Mission Brief
           </h3>
           {(missionType || missionOrbit) && (
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0 flex-wrap justify-end">
-              {missionType && (
-                <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider max-w-[9rem] sm:max-w-none break-words px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
-                  {missionType}
-                </span>
-              )}
-              {missionOrbit && (
-                <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider max-w-[9rem] sm:max-w-none break-words px-1.5 py-0.5 border border-cyan-900/50 rounded-sm">
+            <p className="min-w-0 text-right text-[9px] font-mono text-cyan-500 uppercase tracking-wider leading-snug">
+              {missionType ? <span className="whitespace-nowrap">{missionType}</span> : null}
+              {missionType && missionOrbit ? (
+                <span className="whitespace-nowrap">
+                  <span className="mx-1.5 text-cyan-700">·</span>
                   {missionOrbit}
                 </span>
+              ) : (
+                missionOrbit
               )}
-            </div>
+            </p>
           )}
         </div>
         <p
