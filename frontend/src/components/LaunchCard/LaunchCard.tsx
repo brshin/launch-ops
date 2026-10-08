@@ -128,7 +128,7 @@ export default function LaunchCard({
     const isKnownMeta = (value?: string | null) => {
         if (!value?.trim()) return false;
         const normalized = value.trim().toLowerCase();
-        return normalized !== 'unknown' && normalized !== 'unk';
+        return normalized !== 'unknown' && normalized !== 'unk' && normalized !== 'n/a';
     };
 
     const missionType = isKnownMeta(launch.mission?.type)
