@@ -25,14 +25,29 @@ interface ConsoleHeaderProps {
   onHourCycle: (cycle: HourCycle) => void;
 }
 
-/** 12-hour faces keep AM/PM nearer the seconds. The reserved slot stays wide, so the date does not move. */
-function ClockReadout({ time }: { time: string }) {
-  const match = /^(.+?\d)\s+([AP]M)$/.exec(time);
-  if (!match) return <>{time}</>;
+/**
+ * 12-hour faces keep AM/PM nearer the seconds.
+ * :ss is a small step down. The reserved slot stays full size so the date does not move.
+ */
+function ClockReadout({ time, compactSeconds = false }: { time: string; compactSeconds?: boolean }) {
+  const meridianMatch = /^(.+?\d)\s+([AP]M)$/.exec(time);
+  const body = meridianMatch ? meridianMatch[1] : time;
+  const meridian = meridianMatch?.[2] ?? null;
+  const secondsMatch = compactSeconds ? /^(\d{1,2}:\d{2})(:\d{2})$/.exec(body) : null;
+
+  if (!secondsMatch && !meridian) return <>{time}</>;
+
   return (
     <span className="inline-flex items-baseline">
-      <span>{match[1]}</span>
-      <span className="ml-[0.22em]">{match[2]}</span>
+      {secondsMatch ? (
+        <>
+          <span>{secondsMatch[1]}</span>
+          <span className="text-[0.9em]">{secondsMatch[2]}</span>
+        </>
+      ) : (
+        <span>{body}</span>
+      )}
+      {meridian ? <span className="ml-[0.22em]">{meridian}</span> : null}
     </span>
   );
 }
@@ -140,33 +155,34 @@ export function ConsoleHeader({
         <span className="relative flex h-1.5 w-1.5 shrink-0">
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
         </span>
-        {/* Below desktop: time stays on one line; a long zone wraps under it */}
+        {/* Below desktop: same two lines as the desk clock, just shorter type */}
         <div className="flex lg:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
-          <div className="flex items-baseline gap-x-2">
-            <span className="text-[9px] tracking-[0.2em] text-cyan-600 shrink-0">Sys</span>
-            <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="max-[359px]:hidden" />
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-baseline gap-1.5 shrink-0">
+              <span className="text-[9px] tracking-[0.2em] text-cyan-600">Sys</span>
+              <HourCycleControl cycle={hourCycle} onChange={onHourCycle} />
+            </span>
+            <span
+              className="flex min-w-0 items-baseline gap-x-1 text-[9px] text-cyan-500"
+              title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
+            >
+              <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
+              {sysClock ? <span className="hidden min-[360px]:inline shrink-0">· {sysClock.offset}</span> : null}
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
             <HourCycleFade
               calm
               reserve="00:00:00 PM"
               cycle={hourCycle}
               className="inline-block text-[11px] sm:text-xs text-slate-100 tabular-nums whitespace-nowrap tracking-[0.04em]"
             >
-              <ClockReadout time={sysClock?.time ?? "—:—:—"} />
+              <ClockReadout time={sysClock?.time ?? "—:—:—"} compactSeconds />
             </HourCycleFade>
             <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.date ?? "—"}
             </span>
           </div>
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span
-              className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-500"
-              title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
-            >
-              <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
-              {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
-            </span>
-            <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="min-[360px]:hidden" />
-          </span>
         </div>
         {/* Desktop: compact two-line block, still short */}
         <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5 xl:gap-1">
@@ -189,7 +205,7 @@ export function ConsoleHeader({
               cycle={hourCycle}
               className="inline-block text-sm xl:text-base text-slate-100 tabular-nums tracking-[0.18em]"
             >
-              <ClockReadout time={sysClock?.time ?? "INITIALIZING..."} />
+              <ClockReadout time={sysClock?.time ?? "INITIALIZING..."} compactSeconds />
             </HourCycleFade>
             <span className="text-xs xl:text-sm tracking-[0.18em] text-cyan-300 tabular-nums">
               {sysClock?.date ?? "—"}
