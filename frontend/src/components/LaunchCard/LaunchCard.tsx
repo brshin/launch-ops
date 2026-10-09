@@ -137,12 +137,14 @@ export default function LaunchCard({
         >
             
             <motion.div
-                className="card-hairline absolute top-0 left-12 right-12 h-[1px]"
+                className="card-hairline absolute top-0 left-12 right-12 h-[1px] overflow-hidden"
                 style={{ originX: 0 }}
                 initial={reduceMotion ? false : { scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={transitions.soft}
-            />
+            >
+                <div className="card-hairline-gleam" />
+            </motion.div>
 
             {/* Identity + status/countdown
                 Narrow stack (<sm): status top-right beside title; countdown below.

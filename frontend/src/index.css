@@ -85,28 +85,39 @@ body,
   transition-timing-function: ease;
 }
 
-/* Dim gleam traveling the card's top hairline. The line itself draws in via Framer. */
+/* Dim line draws in via Framer. The gleam waits offstage, then drifts. */
 .card-hairline {
   background-image: linear-gradient(
     90deg,
     transparent,
-    rgba(34, 211, 238, 0.2),
-    rgba(34, 211, 238, 0.75),
-    rgba(34, 211, 238, 0.2),
+    rgba(34, 211, 238, 0.28),
     transparent
   );
-  background-size: 200% 100%;
-  animation: card-hairline 10s linear 0.35s infinite;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent);
 }
 
-@keyframes card-hairline {
+.card-hairline-gleam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(34, 211, 238, 0.85),
+    transparent
+  );
+  animation: card-hairline-gleam 10s linear 0.4s infinite backwards;
+}
+
+@keyframes card-hairline-gleam {
   from {
-    background-position: 100% 0;
+    transform: translateX(-120%);
   }
   to {
-    background-position: -100% 0;
+    transform: translateX(340%);
   }
 }
 
@@ -115,9 +126,9 @@ body,
     transition: none;
   }
 
-  .card-hairline {
+  .card-hairline-gleam {
     animation: none;
-    background-position: 50% 0;
+    opacity: 0;
   }
 }
 
