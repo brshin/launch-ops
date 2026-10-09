@@ -6,6 +6,7 @@ import {
 } from "../lib/bootMotion";
 import { useCompactMotion } from "../hooks/useCompactMotion";
 import type { ShortViewportBand } from "../hooks/useShortViewportBand";
+import type { HourCycle } from "../utils/hourCycle";
 
 export type SysClock = {
   time: string;
@@ -19,13 +20,60 @@ export type SysClock = {
 interface ConsoleHeaderProps {
   sysClock: SysClock | null;
   shortBand: ShortViewportBand;
+  hourCycle: HourCycle;
+  onHourCycle: (cycle: HourCycle) => void;
+}
+
+function HourCycleControl({
+  cycle,
+  onChange,
+  className = "",
+}: {
+  cycle: HourCycle;
+  onChange: (cycle: HourCycle) => void;
+  className?: string;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Time format"
+      className={`flex shrink-0 items-stretch overflow-clip rounded-sm border border-cyan-800/70 ${className}`}
+    >
+      {(["24", "12"] as const).map((option) => {
+        const active = cycle === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={active}
+            aria-label={option === "24" ? "24-hour time" : "12-hour time"}
+            onClick={() => onChange(option)}
+            className={`cursor-pointer touch-manipulation px-1.5 py-1 font-mono text-[9px] leading-none tracking-[0.08em] transition-colors ${
+              option === "12" ? "border-l border-cyan-800/70" : ""
+            } ${
+              active
+                ? "bg-cyan-950 font-medium text-slate-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.45)]"
+                : "text-cyan-700 hover:text-cyan-400 active:text-cyan-400"
+            }`}
+          >
+            {option}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 /**
  * Brand + Sys Time. Density comes from App so the shell and header share one band.
  * Boot travel is local — same compact-motion hook Starfield uses.
  */
-export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
+export function ConsoleHeader({
+  sysClock,
+  shortBand,
+  hourCycle,
+  onHourCycle,
+}: ConsoleHeaderProps) {
   const compactMotion = useCompactMotion();
   const bootHeaderVariants = useMemo(
     () => createBootHeaderVariants(compactMotion),
@@ -94,22 +142,29 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
         </span>
         {/* Below desktop: time stays on one line; a long zone wraps under it */}
-        <div className="flex lg:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
+        <div className="flex lg:hidden flex-col font-mono uppercase leading-none gap-0.5">
           <div className="flex items-baseline gap-x-2">
             <span className="text-[9px] tracking-[0.2em] text-cyan-600 shrink-0">Sys</span>
-            <span className="text-[11px] sm:text-xs tracking-[0.14em] text-slate-100 tabular-nums whitespace-nowrap shrink-0">
+            <span
+              className={`text-[11px] sm:text-xs text-slate-100 tabular-nums whitespace-nowrap shrink-0 ${
+                hourCycle === "12" ? "tracking-[0.04em]" : "tracking-[0.14em]"
+              }`}
+            >
               {sysClock?.time ?? "—:—:—"}
             </span>
             <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.date ?? "—"}
             </span>
           </div>
-          <span
-            className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-500"
-            title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
-          >
-            <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
-            {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span
+              className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-500"
+              title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
+            >
+              <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
+              {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
+            </span>
+            <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="lg:hidden" />
           </span>
         </div>
         {/* Desktop: compact two-line block, still short */}
@@ -124,7 +179,11 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-sm xl:text-base tracking-[0.18em] text-slate-100 tabular-nums">
+            <span
+              className={`text-sm xl:text-base text-slate-100 tabular-nums ${
+                hourCycle === "12" ? "tracking-[0.08em]" : "tracking-[0.18em]"
+              }`}
+            >
               {sysClock?.time ?? "INITIALIZING..."}
             </span>
             <span className="text-xs xl:text-sm tracking-[0.18em] text-cyan-300 tabular-nums">
@@ -132,6 +191,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
             </span>
           </div>
         </div>
+        <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="hidden lg:flex" />
       </motion.div>
       </div>
     </motion.header>

@@ -10,7 +10,7 @@ import {
 /**
  * Local Sys Time tick. Belongs to App — header displays it, queue chips use nowMs.
  */
-export function useSysClock(): SysClock | null {
+export function useSysClock(hour12 = false): SysClock | null {
   const [sysClock, setSysClock] = useState<SysClock | null>(null);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export function useSysClock(): SysClock | null {
 
       setSysClock({
         date: formatLocalDate(now),
-        time: formatLocalTime(now, { includeSeconds: true }),
+        time: formatLocalTime(now, { includeSeconds: true, hour12 }),
         offset: getLocalUtcOffsetLabel(now),
         zone: getLocalZoneName(now),
         nowMs: now.getTime(),
@@ -30,7 +30,7 @@ export function useSysClock(): SysClock | null {
     const timer = setInterval(updateClock, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [hour12]);
 
   return sysClock;
 }

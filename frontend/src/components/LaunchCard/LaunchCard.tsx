@@ -24,6 +24,7 @@ import { pickWatchTarget } from "../../utils/watchTarget";
 
 interface LaunchCardProps {
     launch: Launch;
+    hour12: boolean;
 }
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
@@ -39,6 +40,7 @@ const cardVariants: Variants = {
 
 export default function LaunchCard({
     launch,
+    hour12,
 }: LaunchCardProps) {
     const rootRef = useRef<HTMLDivElement>(null);
     const reduceMotion = useReducedMotion();
@@ -114,14 +116,14 @@ export default function LaunchCard({
         !!rocketName && rocketName.toLowerCase() !== title.toLowerCase();
 
     const lastUpdated = launch.last_updated
-        ? formatLocalDateTime(launch.last_updated)
+        ? formatLocalDateTime(launch.last_updated, { hour12 })
         : null;
-    const tZero = formatLocalDateTime(launch.net);
+    const tZero = formatLocalDateTime(launch.net, { hour12 });
     const showNetTime = isNetPreciseEnough(launch.net_precision);
     const netCaption = getNetPrecisionCaption(launch.net_precision);
     const showWindow = hasLaunchWindow(launch.window_start, launch.window_end);
-    const windowStart = showWindow ? formatLocalTime(launch.window_start) : null;
-    const windowEnd = showWindow ? formatLocalTime(launch.window_end) : null;
+    const windowStart = showWindow ? formatLocalTime(launch.window_start, { hour12 }) : null;
+    const windowEnd = showWindow ? formatLocalTime(launch.window_end, { hour12 }) : null;
 
     const missionType = getMissionTypeLabel(launch.mission?.type);
     const missionOrbit = getMissionOrbitLabel(launch.mission?.orbit);
@@ -226,6 +228,7 @@ export default function LaunchCard({
                     missionOrbit={missionOrbit}
                     description={getMissionBrief(launch.mission?.description)}
                     phase={launchTime.phase}
+                    hour12={hour12}
                 />
             </motion.div>
 

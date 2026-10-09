@@ -9,6 +9,7 @@ import { transitions, travel } from "./lib/motionTokens";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
 import { useLaunchFeed } from "./hooks/useLaunchFeed";
 import { useSysClock } from "./hooks/useSysClock";
+import { useHourCycle } from "./hooks/useHourCycle";
 import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
@@ -39,7 +40,8 @@ function GlobeSlot() {
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
-  const sysClock = useSysClock();
+  const { cycle, hour12, setCycle } = useHourCycle();
+  const sysClock = useSysClock(hour12);
 
   const compactMotion = useCompactMotion();
   const shortBand = useShortViewportBand();
@@ -74,7 +76,12 @@ export default function App() {
         }`}
       >
 
-        <ConsoleHeader sysClock={sysClock} shortBand={shortBand} />
+        <ConsoleHeader
+          sysClock={sysClock}
+          shortBand={shortBand}
+          hourCycle={cycle}
+          onHourCycle={setCycle}
+        />
 
         {/* PANELS WRAPPER */}
         <div
@@ -95,6 +102,7 @@ export default function App() {
             feedLive={feedLive}
             isBooting={isBooting}
             shortBand={shortBand}
+            hour12={hour12}
           />
 
           {/* Desktop hero. Hidden below lg so the stacked console stays queue + card. */}
@@ -116,7 +124,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -cardEnterY }}
                   transition={transitions.soft}
                 >
-                  <LaunchCard launch={activeLaunch} />
+                  <LaunchCard launch={activeLaunch} hour12={hour12} />
                 </motion.div>
               ) : (
                 <motion.div

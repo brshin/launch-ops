@@ -54,22 +54,27 @@ export function formatLocalDate(
 
 export function formatLocalTime(
   input: string | Date,
-  options: { includeSeconds?: boolean } = {}
+  options: { includeSeconds?: boolean; hour12?: boolean } = {}
 ): string {
-  const { includeSeconds = false } = options;
-  return toDate(input).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    ...(includeSeconds ? { second: '2-digit' as const } : {}),
-    hour12: false,
+  const { includeSeconds = false, hour12 = false } = options;
+  const formatted = toDate(input).toLocaleTimeString(hour12 ? "en-US" : [], {
+    hour: hour12 ? "numeric" : "2-digit",
+    minute: "2-digit",
+    ...(includeSeconds ? { second: "2-digit" as const } : {}),
+    hour12,
   });
+  // en-US puts a narrow no-break space before AM/PM. A normal space measures more predictably.
+  return hour12 ? formatted.replace(/\u202f/g, " ") : formatted;
 }
 
 export function formatLocalDateTime(
   input: string | Date,
-  options: { includeYear?: boolean; includeSeconds?: boolean } = {}
+  options: { includeYear?: boolean; includeSeconds?: boolean; hour12?: boolean } = {}
 ): { date: string; time: string; label: string } {
   const date = formatLocalDate(input, { includeYear: options.includeYear });
-  const time = formatLocalTime(input, { includeSeconds: options.includeSeconds });
+  const time = formatLocalTime(input, {
+    includeSeconds: options.includeSeconds,
+    hour12: options.hour12,
+  });
   return { date, time, label: `${date} · ${time}` };
 }

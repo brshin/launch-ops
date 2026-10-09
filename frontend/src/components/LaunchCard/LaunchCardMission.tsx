@@ -40,6 +40,7 @@ interface LaunchCardMissionProps {
   missionOrbit: string | null;
   description: string;
   phase: LaunchTimePhase;
+  hour12: boolean;
 }
 
 /**
@@ -61,6 +62,7 @@ export function LaunchCardMission({
   missionOrbit,
   description,
   phase,
+  hour12,
 }: LaunchCardMissionProps) {
   const { place, site } = formatPadPlace(padLocation);
   const sameName = site?.trim().toLowerCase() === padName.trim().toLowerCase();
@@ -81,12 +83,18 @@ export function LaunchCardMission({
         <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           T-Zero Target
         </h3>
-        <p className="text-xs sm:text-sm lg:text-[11px] xl:text-[13px] text-slate-100 font-mono tracking-wider lg:tracking-wide tabular-nums">
+        <p
+          className={`text-slate-100 font-mono tabular-nums ${
+            hour12
+              ? "text-xs sm:text-[13px] lg:text-[11px] xl:text-xs tracking-normal whitespace-nowrap"
+              : "text-xs sm:text-sm lg:text-[11px] xl:text-[13px] tracking-wider lg:tracking-wide"
+          }`}
+        >
           <span>{tZero.date}</span>
           {showNetTime ? (
             <>
               <span className="mx-1.5 text-slate-600">·</span>
-              <span>{tZero.time}</span>
+              <span className="whitespace-nowrap">{tZero.time}</span>
             </>
           ) : null}
         </p>
