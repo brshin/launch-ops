@@ -137,7 +137,7 @@ export function LaunchQueue({
         }`}
       >
         <h2
-          className={`text-cyan-600 font-mono uppercase min-w-0 truncate density-ease ${
+          className={`text-cyan-500 font-mono uppercase min-w-0 truncate density-ease ${
             shortBand === "short"
               ? "tracking-[0.15em] text-[9px] lg:tracking-[0.25em] lg:text-xs"
               : shortBand === "mid"
@@ -253,7 +253,7 @@ export function LaunchQueue({
 
                 <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
                   <span
-                    className="min-w-0 flex-1 font-mono text-[10px] md:text-[11px] leading-tight uppercase tracking-wide truncate text-[oklch(0.76_0.034_255)]"
+                    className="min-w-0 flex-1 font-mono text-[10px] md:text-[11px] leading-tight uppercase tracking-wide truncate text-cyan-600"
                   >
                     {getLaunchTitle(launch)}
                   </span>
