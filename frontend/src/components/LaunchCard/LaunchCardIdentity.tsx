@@ -21,38 +21,77 @@ type LocalDateTime = {
 
 function getStatusColors(status: string) {
   switch (status) {
-    case "Success":
-    case "In Flight":
     case "Go":
       return {
-        dot: "bg-cyan-400",
-        glow: "shadow-[0_0_5px_#22d3ee]",
-        text: "text-cyan-300",
-        borderHover: "hover:border-cyan-500/80 active:border-cyan-500/80",
+        dot: "bg-emerald-400",
+        glow: "shadow-[0_0_5px_#34d399]",
+        text: "text-emerald-300",
+        frame:
+          "border-emerald-800/70 hover:border-emerald-400/80 active:border-emerald-400/80 hover:bg-emerald-950/50 active:bg-emerald-950/50",
+      };
+    case "In Flight":
+      return {
+        dot: "bg-sky-400",
+        glow: "shadow-[0_0_5px_#38bdf8]",
+        text: "text-sky-300",
+        frame:
+          "border-sky-800/70 hover:border-sky-400/80 active:border-sky-400/80 hover:bg-sky-950/50 active:bg-sky-950/50",
+      };
+    case "Success":
+      return {
+        dot: "bg-green-500",
+        glow: "shadow-[0_0_5px_#22c55e]",
+        text: "text-green-400",
+        frame:
+          "border-green-800/70 hover:border-green-500/80 active:border-green-500/80 hover:bg-green-950/50 active:bg-green-950/50",
       };
     case "Hold":
+      return {
+        dot: "bg-orange-400",
+        glow: "shadow-[0_0_5px_#fb923c]",
+        text: "text-orange-300",
+        frame:
+          "border-orange-800/70 hover:border-orange-400/80 active:border-orange-400/80 hover:bg-orange-950/40 active:bg-orange-950/40",
+      };
     case "TBD":
+      return {
+        dot: "bg-yellow-400",
+        glow: "shadow-[0_0_5px_#facc15]",
+        text: "text-yellow-300",
+        frame:
+          "border-yellow-800/70 hover:border-yellow-400/80 active:border-yellow-400/80 hover:bg-yellow-950/40 active:bg-yellow-950/40",
+      };
     case "TBC":
       return {
-        dot: "bg-amber-400",
-        glow: "shadow-[0_0_5px_#fbbf24]",
-        text: "text-amber-300",
-        borderHover: "hover:border-amber-500/80 active:border-amber-500/80",
+        dot: "bg-violet-400",
+        glow: "shadow-[0_0_5px_#a78bfa]",
+        text: "text-violet-300",
+        frame:
+          "border-violet-800/70 hover:border-violet-400/80 active:border-violet-400/80 hover:bg-violet-950/50 active:bg-violet-950/50",
       };
     case "Failure":
-    case "Partial Failure":
       return {
         dot: "bg-red-500",
         glow: "shadow-[0_0_5px_#ef4444]",
         text: "text-red-400",
-        borderHover: "hover:border-red-500/80 active:border-red-500/80",
+        frame:
+          "border-red-800/70 hover:border-red-500/80 active:border-red-500/80 hover:bg-red-950/40 active:bg-red-950/40",
+      };
+    case "Partial Failure":
+      return {
+        dot: "bg-rose-400",
+        glow: "shadow-[0_0_5px_#fb7185]",
+        text: "text-rose-300",
+        frame:
+          "border-rose-800/70 hover:border-rose-400/80 active:border-rose-400/80 hover:bg-rose-950/40 active:bg-rose-950/40",
       };
     default:
       return {
         dot: "bg-slate-400",
         glow: "shadow-[0_0_5px_#94a3b8]",
         text: "text-slate-300",
-        borderHover: "hover:border-slate-500/80 active:border-slate-500/80",
+        frame:
+          "border-slate-700/70 hover:border-slate-400/80 active:border-slate-400/80 hover:bg-slate-900/60 active:bg-slate-900/60",
       };
   }
 }
@@ -121,7 +160,7 @@ export function LaunchCardIdentity({
 
         {/* Narrow stack only: status beside title */}
         <div
-          className={`flex sm:hidden items-center gap-2 shrink-0 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
+          className={`flex sm:hidden items-center gap-2 shrink-0 bg-[#020617]/80 border rounded-sm backdrop-blur-sm cursor-help transition-all duration-300 density-ease ${statusColors.frame} ${chrome.statusPill}`}
         >
           <span className="relative flex h-2 w-2">
             <span
@@ -138,7 +177,7 @@ export function LaunchCardIdentity({
         className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 density-ease ${chrome.statusCol}`}
       >
         <div
-          className={`hidden sm:flex items-center gap-2 sm:gap-3 lg:gap-1.5 xl:gap-2 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm cursor-help hover:bg-cyan-950/60 active:bg-cyan-950/60 ${statusColors.borderHover} transition-all duration-300 density-ease ${chrome.statusPill}`}
+          className={`hidden sm:flex items-center gap-2 sm:gap-3 lg:gap-1.5 xl:gap-2 bg-[#020617]/80 border rounded-sm backdrop-blur-sm cursor-help transition-all duration-300 density-ease ${statusColors.frame} ${chrome.statusPill}`}
         >
           <span className="relative flex h-2 w-2">
             <span
