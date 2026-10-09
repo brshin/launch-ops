@@ -71,7 +71,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
           </span>
         </h1>
         <p
-          className={`font-mono text-cyan-400 uppercase opacity-80 leading-none ${
+          className={`font-mono text-cyan-600 uppercase leading-none ${
             shortBand === "short"
               ? "hidden lg:block text-[10px] tracking-[0.3em] mt-1"
               : shortBand === "mid"
@@ -96,8 +96,8 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
         {/* Below desktop: time stays on one line; a long zone wraps under it */}
         <div className="flex lg:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
           <div className="flex items-baseline gap-x-2">
-            <span className="text-[9px] tracking-[0.2em] text-cyan-500 shrink-0">Sys</span>
-            <span className="text-[11px] sm:text-xs tracking-[0.14em] text-cyan-100 tabular-nums whitespace-nowrap shrink-0">
+            <span className="text-[9px] tracking-[0.2em] text-cyan-600 shrink-0">Sys</span>
+            <span className="text-[11px] sm:text-xs tracking-[0.14em] text-slate-100 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.time ?? "—:—:—"}
             </span>
             <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
@@ -105,7 +105,7 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
             </span>
           </div>
           <span
-            className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-300"
+            className="flex min-w-0 max-w-full items-baseline gap-x-1 text-[9px] text-cyan-500"
             title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
           >
             <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
@@ -115,16 +115,16 @@ export function ConsoleHeader({ sysClock, shortBand }: ConsoleHeaderProps) {
         {/* Desktop: compact two-line block, still short */}
         <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5 xl:gap-1">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[9px] xl:text-[10px] tracking-[0.3em] text-cyan-500 shrink-0">Sys Time</span>
+            <span className="text-[9px] xl:text-[10px] tracking-[0.3em] text-cyan-600 shrink-0">Sys Time</span>
             <span
-              className="max-w-[16rem] truncate text-[9px] xl:text-[11px] tracking-[0.14em] text-cyan-300"
+              className="max-w-[16rem] truncate text-[9px] xl:text-[11px] tracking-[0.14em] text-cyan-500"
               title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
             >
               {sysClock ? `${sysClock.zone} · ${sysClock.offset}` : "—"}
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-sm xl:text-base tracking-[0.18em] text-cyan-100 tabular-nums">
+            <span className="text-sm xl:text-base tracking-[0.18em] text-slate-100 tabular-nums">
               {sysClock?.time ?? "INITIALIZING..."}
             </span>
             <span className="text-xs xl:text-sm tracking-[0.18em] text-cyan-300 tabular-nums">

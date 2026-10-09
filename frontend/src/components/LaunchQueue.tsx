@@ -21,7 +21,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const queueChipBase =
   "shrink-0 text-[9px] md:text-[10px] leading-tight font-mono uppercase tracking-wider tabular-nums";
 
-const streamChipClass = `${queueChipBase} text-cyan-300 font-bold [text-shadow:0_0_8px_rgba(34,211,238,0.75)]`;
+const streamChipClass = `${queueChipBase} text-sky-300 font-bold [text-shadow:0_0_8px_rgba(56,189,248,0.75)]`;
 
 function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
   switch (phase) {
@@ -137,7 +137,7 @@ export function LaunchQueue({
         }`}
       >
         <h2
-          className={`text-cyan-400 font-mono uppercase min-w-0 truncate density-ease ${
+          className={`text-cyan-600 font-mono uppercase min-w-0 truncate density-ease ${
             shortBand === "short"
               ? "tracking-[0.15em] text-[9px] lg:tracking-[0.25em] lg:text-xs"
               : shortBand === "mid"
@@ -230,12 +230,12 @@ export function LaunchQueue({
                 </AnimatePresence>
 
                 <div className="flex items-baseline justify-between gap-1.5 w-full min-w-0">
-                  <span className="min-w-0 truncate text-[9px] md:text-[10px] leading-tight font-mono text-cyan-500 tracking-[0.15em] tabular-nums group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+                  <span className="min-w-0 truncate text-[9px] md:text-[10px] leading-tight font-mono text-slate-100 tracking-[0.15em] tabular-nums group-hover:text-white group-active:text-white transition-colors">
                     {formatLocalDateTime(launch.net, { includeYear: false }).label}
                   </span>
                   <span className="flex items-baseline gap-1.5 shrink-0">
                     {showNext && (
-                      <span className="hidden lg:inline text-[8px] font-mono text-cyan-400 uppercase tracking-[0.2em]">
+                      <span className="hidden lg:inline text-[8px] font-mono text-cyan-600 uppercase tracking-[0.2em]">
                         NEXT
                       </span>
                     )}
@@ -253,13 +253,13 @@ export function LaunchQueue({
 
                 <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
                   <span
-                    className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide sm:tracking-wider lg:tracking-widest truncate transition-colors ${selected ? "text-cyan-100 font-bold" : "text-slate-300 group-hover:text-cyan-50 group-active:text-cyan-50"}`}
+                    className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide sm:tracking-wider lg:tracking-widest truncate text-slate-300 transition-colors group-hover:text-slate-200 group-active:text-slate-200 ${selected ? "font-bold" : ""}`}
                   >
                     {getLaunchTitle(launch)}
                   </span>
                   {provider && (
                     <span
-                      className={`shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] transition-colors ${selected ? "text-cyan-500" : "text-cyan-600 group-hover:text-cyan-500 group-active:text-cyan-500"}`}
+                      className="shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] text-zinc-500 transition-colors group-hover:text-zinc-400 group-active:text-zinc-400"
                     >
                       {provider}
                     </span>
