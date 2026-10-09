@@ -11,14 +11,44 @@ export function HourCycleFade({
   cycle,
   className,
   children,
+  calm = false,
+  reserve,
 }: {
   cycle: string;
   className?: string;
   children: ReactNode;
+  /** Opacity only, stacked, so neighbors in a tight box do not shift. */
+  calm?: boolean;
+  /** Wider face kept in the layout. Uses `className`, so pass the wider tracking there. */
+  reserve?: string;
 }) {
   const reduceMotion = useReducedMotion();
   if (reduceMotion) {
     return <span className={className}>{children}</span>;
+  }
+
+  if (calm) {
+    return (
+      <span className="inline-grid align-baseline">
+        {reserve ? (
+          <span className={`invisible col-start-1 row-start-1 ${className ?? ""}`} aria-hidden>
+            {reserve}
+          </span>
+        ) : null}
+        <AnimatePresence initial={false}>
+          <motion.span
+            key={cycle}
+            className={`col-start-1 row-start-1 ${className ?? ""}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={glide}
+          >
+            {children}
+          </motion.span>
+        </AnimatePresence>
+      </span>
+    );
   }
 
   return (

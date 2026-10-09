@@ -25,54 +25,41 @@ interface ConsoleHeaderProps {
   onHourCycle: (cycle: HourCycle) => void;
 }
 
-const hourCycleGlide = { type: "spring", stiffness: 460, damping: 38, mass: 0.7 } as const;
+/** 12-hour faces keep AM/PM nearer the seconds. The reserved slot stays wide, so the date does not move. */
+function ClockReadout({ time }: { time: string }) {
+  const match = /^(.+?\d)\s+([AP]M)$/.exec(time);
+  if (!match) return <>{time}</>;
+  return (
+    <span className="inline-flex items-baseline">
+      <span>{match[1]}</span>
+      <span className="ml-[0.22em]">{match[2]}</span>
+    </span>
+  );
+}
 
 function HourCycleControl({
   cycle,
   onChange,
-  layoutId,
   className = "",
 }: {
   cycle: HourCycle;
   onChange: (cycle: HourCycle) => void;
-  layoutId: string;
   className?: string;
 }) {
+  const next: HourCycle = cycle === "12" ? "24" : "12";
   return (
-    <div
-      role="group"
-      aria-label="Time format"
-      className={`relative shrink-0 grid-cols-2 rounded-sm border border-cyan-800/70 bg-black/40 p-px ${className}`}
+    <button
+      type="button"
+      aria-label={
+        cycle === "12" ? "12-hour time, switch to 24-hour" : "24-hour time, switch to 12-hour"
+      }
+      onClick={() => onChange(next)}
+      className={`shrink-0 cursor-pointer touch-manipulation px-1 py-1 -my-1 font-mono text-[9px] uppercase leading-none tracking-[0.14em] text-cyan-600 transition-colors duration-300 hover:text-cyan-300 ${className}`}
     >
-      {(["24", "12"] as const).map((option) => {
-        const active = cycle === option;
-        return (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={active}
-            aria-label={option === "24" ? "24-hour time" : "12-hour time"}
-            onClick={() => onChange(option)}
-            className="group relative z-10 cursor-pointer touch-manipulation px-1.5 py-1 font-mono text-[9px] leading-none tracking-[0.08em]"
-          >
-            {active && (
-              <motion.span
-                layoutId={layoutId}
-                className="absolute inset-0 rounded-[1px] bg-cyan-400/15 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.5),0_0_10px_rgba(34,211,238,0.18)]"
-                transition={hourCycleGlide}
-              />
-            )}
-            <span
-              className={`relative transition-colors duration-300 ${
-                active ? "font-medium text-slate-100" : "text-cyan-700 group-hover:text-cyan-400"
-              }`}
-            >
-              {option}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+      <HourCycleFade calm cycle={cycle}>
+        {cycle}h
+      </HourCycleFade>
+    </button>
   );
 }
 
@@ -154,16 +141,17 @@ export function ConsoleHeader({
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
         </span>
         {/* Below desktop: time stays on one line; a long zone wraps under it */}
-        <div className="flex lg:hidden flex-col font-mono uppercase leading-none gap-0.5">
+        <div className="flex lg:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
           <div className="flex items-baseline gap-x-2">
             <span className="text-[9px] tracking-[0.2em] text-cyan-600 shrink-0">Sys</span>
+            <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="max-[359px]:hidden" />
             <HourCycleFade
+              calm
+              reserve="00:00:00 PM"
               cycle={hourCycle}
-              className={`inline-block text-[11px] sm:text-xs text-slate-100 tabular-nums whitespace-nowrap ${
-                hourCycle === "12" ? "tracking-[0.04em]" : "tracking-[0.14em]"
-              }`}
+              className="inline-block text-[11px] sm:text-xs text-slate-100 tabular-nums whitespace-nowrap tracking-[0.04em]"
             >
-              {sysClock?.time ?? "—:—:—"}
+              <ClockReadout time={sysClock?.time ?? "—:—:—"} />
             </HourCycleFade>
             <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.date ?? "—"}
@@ -177,18 +165,16 @@ export function ConsoleHeader({
               <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
               {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
             </span>
-            <HourCycleControl
-              cycle={hourCycle}
-              onChange={onHourCycle}
-              layoutId="hour-cycle-phone"
-              className="grid lg:hidden"
-            />
+            <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="min-[360px]:hidden" />
           </span>
         </div>
         {/* Desktop: compact two-line block, still short */}
         <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5 xl:gap-1">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[9px] xl:text-[10px] tracking-[0.3em] text-cyan-600 shrink-0">Sys Time</span>
+            <span className="flex items-baseline gap-1.5 shrink-0">
+              <span className="text-[9px] xl:text-[10px] tracking-[0.3em] text-cyan-600">Sys Time</span>
+              <HourCycleControl cycle={hourCycle} onChange={onHourCycle} />
+            </span>
             <span
               className="max-w-[16rem] truncate text-[9px] xl:text-[11px] tracking-[0.14em] text-cyan-500"
               title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
@@ -198,24 +184,18 @@ export function ConsoleHeader({
           </div>
           <div className="flex items-baseline gap-2">
             <HourCycleFade
+              calm
+              reserve="00:00:00 PM"
               cycle={hourCycle}
-              className={`inline-block text-sm xl:text-base text-slate-100 tabular-nums ${
-                hourCycle === "12" ? "tracking-[0.08em]" : "tracking-[0.18em]"
-              }`}
+              className="inline-block text-sm xl:text-base text-slate-100 tabular-nums tracking-[0.18em]"
             >
-              {sysClock?.time ?? "INITIALIZING..."}
+              <ClockReadout time={sysClock?.time ?? "INITIALIZING..."} />
             </HourCycleFade>
             <span className="text-xs xl:text-sm tracking-[0.18em] text-cyan-300 tabular-nums">
               {sysClock?.date ?? "—"}
             </span>
           </div>
         </div>
-        <HourCycleControl
-          cycle={hourCycle}
-          onChange={onHourCycle}
-          layoutId="hour-cycle-desk"
-          className="hidden lg:grid"
-        />
       </motion.div>
       </div>
     </motion.header>
