@@ -230,7 +230,7 @@ export function LaunchQueue({
                 </AnimatePresence>
 
                 <div className="flex items-baseline justify-between gap-1.5 w-full min-w-0">
-                  <span className={`min-w-0 truncate text-[10px] md:text-[11px] leading-tight font-mono tracking-[0.12em] tabular-nums ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}>
+                  <span className={`min-w-0 truncate text-xs leading-tight font-mono tracking-[0.12em] tabular-nums ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}>
                     {formatLocalDateTime(launch.net, { includeYear: false }).label}
                   </span>
                   <span className="flex items-baseline gap-1.5 shrink-0">
@@ -253,13 +253,13 @@ export function LaunchQueue({
 
                 <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
                   <span
-                    className="min-w-0 flex-1 font-mono text-[10px] md:text-[11px] leading-tight uppercase tracking-wide truncate text-cyan-600"
+                    className="min-w-0 flex-1 font-mono text-xs leading-tight uppercase tracking-wide truncate text-cyan-600"
                   >
                     {getLaunchTitle(launch)}
                   </span>
                   {provider && (
                     <span
-                      className="shrink-0 text-[9px] font-mono uppercase tracking-wider truncate max-w-[40%] text-zinc-500 transition-colors group-hover:text-zinc-400 group-active:text-zinc-400"
+                      className="shrink-0 text-[10px] font-mono uppercase tracking-wider truncate max-w-[40%] text-zinc-500 transition-colors group-hover:text-zinc-400 group-active:text-zinc-400"
                     >
                       {provider}
                     </span>
