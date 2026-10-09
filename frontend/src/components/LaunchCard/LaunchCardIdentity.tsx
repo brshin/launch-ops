@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CountdownFailureLabel,
   CountdownHoldLabel,
@@ -7,6 +7,7 @@ import {
 import { HourCycleFade } from "../HourCycleFade";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import type { LaunchTime } from "../../utils/launchTime";
+import { prepareAgencyMark } from "../../utils/agencyMarkImage";
 import type { MissionParty } from "../../utils/launchTitle";
 
 type CountdownParts = {
@@ -99,32 +100,39 @@ function getStatusColors(status: string) {
   }
 }
 
-/** Square mark on a light plate. A failed image leaves the name. */
+/** Insignia beside the name. A failed image leaves the name. */
 function PartyMark({ url }: { url: string }) {
-  const [phase, setPhase] = useState<"wait" | "show" | "hide">("wait");
-  if (phase === "hide") return null;
+  const [src, setSrc] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    setHidden(false);
+    setSrc(null);
+    prepareAgencyMark(url).then((next) => {
+      if (cancel) return;
+      if (!next) setHidden(true);
+      else setSrc(next);
+    });
+    return () => {
+      cancel = true;
+    };
+  }, [url]);
+
+  if (hidden) return null;
 
   return (
-    <span
-      className={`inline-flex size-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-white p-px ${
-        phase === "show" ? "" : "invisible"
-      }`}
-    >
-      <img
-        src={url}
-        alt=""
-        draggable={false}
-        className="size-full object-contain"
-        onLoad={() => setPhase("show")}
-        onError={() => setPhase("hide")}
-      />
+    <span className={`inline-flex size-8 shrink-0 items-center justify-center ${src ? "" : "invisible"}`}>
+      {src ? (
+        <img src={src} alt="" draggable={false} className="size-full object-contain" />
+      ) : null}
     </span>
   );
 }
 
 function PartyName({ label, markUrl }: { label: string; markUrl?: string | null }) {
   return (
-    <span className="inline-flex max-w-full items-start gap-1">
+    <span className="inline-flex max-w-full items-center gap-1.5">
       {markUrl ? <PartyMark url={markUrl} /> : null}
       <span className="min-w-0">{label}</span>
     </span>
