@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getLaunchTime, isNetPreciseEnough } from "./launchTime";
+import { getLaunchTime, hasLaunchWindow, isNetPreciseEnough } from "./launchTime";
 
 const NOW = Date.parse("2026-08-19T12:00:00.000Z");
 const MINUTE = 60_000;
@@ -21,8 +21,22 @@ describe("isNetPreciseEnough", () => {
     expect(isNetPreciseEnough({ abbrev: "DAY" })).toBe(false);
     expect(isNetPreciseEnough({ name: "Week" })).toBe(false);
     expect(isNetPreciseEnough({ abbrev: "MON" })).toBe(false);
+    expect(isNetPreciseEnough({ abbrev: "M", name: "Month" })).toBe(false);
     expect(isNetPreciseEnough({ abbrev: "hour" })).toBe(true);
+    expect(isNetPreciseEnough({ abbrev: "HR" })).toBe(true);
     expect(isNetPreciseEnough({ abbrev: "MIN" })).toBe(true);
+  });
+});
+
+describe("hasLaunchWindow", () => {
+  it("keeps a real range and hides an instant", () => {
+    expect(
+      hasLaunchWindow("2026-10-12T06:00:00Z", "2026-10-12T10:00:00Z"),
+    ).toBe(true);
+    expect(
+      hasLaunchWindow("2026-10-10T07:29:00Z", "2026-10-10T07:29:00Z"),
+    ).toBe(false);
+    expect(hasLaunchWindow(null, null)).toBe(false);
   });
 });
 

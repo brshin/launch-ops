@@ -40,16 +40,30 @@ function toMs(input: string | Date | number): number {
   return (input instanceof Date ? input : new Date(input)).getTime();
 }
 
-function precisionAbbrev(precision?: NetPrecision | null): string {
-  return (precision?.abbrev || precision?.name || "").trim().toUpperCase();
+function precisionTokens(precision?: NetPrecision | null): string[] {
+  return [precision?.abbrev, precision?.name]
+    .map((value) => (value || "").trim().toUpperCase())
+    .filter(Boolean);
 }
 
 export function isNetPreciseEnough(
   precision?: NetPrecision | null,
 ): boolean {
-  const token = precisionAbbrev(precision);
-  if (!token) return true;
-  return !COARSE_PRECISION.has(token);
+  const tokens = precisionTokens(precision);
+  if (tokens.length === 0) return true;
+  return !tokens.some((token) => COARSE_PRECISION.has(token));
+}
+
+/** A launch window is a range. An instant, or a missing bound, is not one. */
+export function hasLaunchWindow(
+  start?: string | null,
+  end?: string | null,
+): boolean {
+  if (!start || !end) return false;
+  const open = new Date(start).getTime();
+  const close = new Date(end).getTime();
+  if (Number.isNaN(open) || Number.isNaN(close)) return false;
+  return open !== close;
 }
 
 function formatRelativeChip(msUntilNet: number): string {

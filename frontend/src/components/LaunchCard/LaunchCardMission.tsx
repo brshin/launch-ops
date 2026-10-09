@@ -13,7 +13,7 @@ interface LaunchCardMissionProps {
   cardVariants: Variants;
   sectionVariants: Variants;
   tZero: LocalDateTime;
-  localOffsetLabel: string;
+  showNetTime: boolean;
   windowStart: string | null;
   windowEnd: string | null;
   padName: string;
@@ -32,7 +32,7 @@ export function LaunchCardMission({
   cardVariants,
   sectionVariants,
   tZero,
-  localOffsetLabel,
+  showNetTime,
   windowStart,
   windowEnd,
   padName,
@@ -57,30 +57,28 @@ export function LaunchCardMission({
         className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
-            T-Zero Target
-          </h3>
-          <span
-            className="text-[9px] font-mono text-cyan-500 uppercase tracking-wider shrink-0"
-            title="Times shown in your local timezone"
-          >
-            {localOffsetLabel}
-          </span>
-        </div>
+        <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+          T-Zero Target
+        </h3>
         <p className="text-xs sm:text-sm lg:text-[11px] xl:text-[13px] text-cyan-50 font-mono tracking-wider lg:tracking-wide tabular-nums">
           <span>{tZero.date}</span>
-          <span className="mx-1.5 text-cyan-700">·</span>
-          <span>{tZero.time}</span>
+          {showNetTime ? (
+            <>
+              <span className="mx-1.5 text-cyan-700">·</span>
+              <span>{tZero.time}</span>
+            </>
+          ) : null}
         </p>
-        <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
-          <span className="mr-1.5">Window</span>
-          <span className="tabular-nums tracking-normal">
-            {windowStart ?? "TBA"}
-            {" – "}
-            {windowEnd ?? "TBA"}
-          </span>
-        </p>
+        {windowStart && windowEnd ? (
+          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+            <span className="mr-1.5">Window</span>
+            <span className="tabular-nums tracking-normal">
+              {windowStart}
+              {" – "}
+              {windowEnd}
+            </span>
+          </p>
+        ) : null}
       </motion.div>
       <motion.div
         variants={sectionVariants}

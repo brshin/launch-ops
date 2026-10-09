@@ -18,9 +18,8 @@ import { useShortViewportBand } from "../../hooks/useShortViewportBand";
 import {
     formatLocalDateTime,
     formatLocalTime,
-    getLocalUtcOffsetLabel,
 } from "../../utils/localTime";
-import { getLaunchTime } from "../../utils/launchTime";
+import { getLaunchTime, hasLaunchWindow, isNetPreciseEnough } from "../../utils/launchTime";
 import { pickWatchTarget } from "../../utils/watchTarget";
 
 interface LaunchCardProps {
@@ -117,13 +116,10 @@ export default function LaunchCard({
         ? formatLocalDateTime(launch.last_updated)
         : null;
     const tZero = formatLocalDateTime(launch.net);
-    const localOffsetLabel = getLocalUtcOffsetLabel();
-    const windowStart = launch.window_start
-        ? formatLocalTime(launch.window_start)
-        : null;
-    const windowEnd = launch.window_end
-        ? formatLocalTime(launch.window_end)
-        : null;
+    const showNetTime = isNetPreciseEnough(launch.net_precision);
+    const showWindow = hasLaunchWindow(launch.window_start, launch.window_end);
+    const windowStart = showWindow ? formatLocalTime(launch.window_start) : null;
+    const windowEnd = showWindow ? formatLocalTime(launch.window_end) : null;
 
     const missionType = getMissionTypeLabel(launch.mission?.type);
     const missionOrbit = getMissionOrbitLabel(launch.mission?.orbit);
@@ -208,7 +204,7 @@ export default function LaunchCard({
                     cardVariants={cardVariants}
                     sectionVariants={sectionVariants}
                     tZero={tZero}
-                    localOffsetLabel={localOffsetLabel}
+                    showNetTime={showNetTime}
                     windowStart={windowStart}
                     windowEnd={windowEnd}
                     padName={launch.pad?.name || "TBA"}
