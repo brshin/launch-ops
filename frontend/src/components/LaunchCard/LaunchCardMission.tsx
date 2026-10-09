@@ -50,11 +50,11 @@ export function LaunchCardMission({
       layout="size"
       variants={cardVariants}
       transition={transitions.soft}
-      className={`w-full h-auto self-start max-lg:shrink-0 lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden grid grid-cols-1 sm:grid-cols-2 content-start items-start lg:grid-rows-[auto_minmax(0,1fr)] density-ease ${chrome.metaGap}`}
+      className={`w-full h-auto self-start max-lg:shrink-0 lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden grid grid-cols-1 sm:grid-cols-2 content-start items-stretch lg:grid-rows-[auto_minmax(0,1fr)] density-ease ${chrome.metaGap}`}
     >
       <motion.div
         variants={sectionVariants}
-        className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
+        className={`h-full bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
         <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
@@ -82,7 +82,7 @@ export function LaunchCardMission({
       </motion.div>
       <motion.div
         variants={sectionVariants}
-        className={`bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 flex flex-col justify-center density-ease ${chrome.metaPad}`}
+        className={`h-full bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 density-ease ${chrome.metaPad}`}
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
         <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
