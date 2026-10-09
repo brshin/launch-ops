@@ -208,7 +208,7 @@ export function LaunchQueue({
                 onClick={() => {
                   if (launch.apiId) onSelect(launch.apiId);
                 }}
-                className={`shrink-0 snap-start w-[11rem] sm:w-[12.5rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-[colors,opacity] duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
+                className={`shrink-0 snap-start w-[14rem] lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-[colors,opacity] duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
                   selected
                     ? "bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]"
                     : isFocus
