@@ -225,6 +225,7 @@ export default function LaunchCard({
                     missionType={missionType}
                     missionOrbit={missionOrbit}
                     description={getMissionBrief(launch.mission?.description)}
+                    phase={launchTime.phase}
                 />
             </motion.div>
 

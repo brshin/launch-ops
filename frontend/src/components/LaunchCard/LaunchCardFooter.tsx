@@ -15,18 +15,18 @@ interface LaunchCardFooterProps {
 export function LaunchCardFooter({ lastUpdated }: LaunchCardFooterProps) {
   return (
     <span
-      className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-cyan-500"
+      className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-cyan-600"
       title="When the launch provider last updated this record (local time)"
     >
       <span className="tracking-[0.25em]">Last Updated</span>
       {lastUpdated ? (
-        <span className="flex items-baseline gap-1.5 text-cyan-400 tabular-nums tracking-[0.15em]">
+        <span className="flex items-baseline gap-1.5 text-cyan-600 tabular-nums tracking-[0.15em]">
           <span>{lastUpdated.date}</span>
-          <span className="text-cyan-700">·</span>
+          <span className="text-cyan-800">·</span>
           <span>{lastUpdated.time}</span>
         </span>
       ) : (
-        <span className="text-cyan-700 tracking-[0.15em]">—</span>
+        <span className="text-cyan-800 tracking-[0.15em]">—</span>
       )}
     </span>
   );

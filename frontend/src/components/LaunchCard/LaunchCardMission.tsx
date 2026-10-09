@@ -2,6 +2,23 @@ import { motion, type Variants } from "framer-motion";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import { transitions } from "../../lib/motionTokens";
 import { formatPadPlace } from "../../utils/padPlace";
+import type { LaunchTimePhase } from "../../utils/launchTime";
+
+/** The tile tick follows the clock: T− cyan, T+ emerald, hold amber, fail red. */
+function tZeroTickClass(phase: LaunchTimePhase): string {
+  switch (phase) {
+    case "live":
+    case "elapsed":
+      return "bg-emerald-800 group-hover:bg-emerald-400 group-active:bg-emerald-400";
+    case "hold":
+    case "provisional":
+      return "bg-amber-800 group-hover:bg-amber-400 group-active:bg-amber-400";
+    case "failed":
+      return "bg-red-800 group-hover:bg-red-500 group-active:bg-red-500";
+    default:
+      return "bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400";
+  }
+}
 
 type LocalDateTime = {
   date: string;
@@ -22,6 +39,7 @@ interface LaunchCardMissionProps {
   missionType: string | null;
   missionOrbit: string | null;
   description: string;
+  phase: LaunchTimePhase;
 }
 
 /**
@@ -42,6 +60,7 @@ export function LaunchCardMission({
   missionType,
   missionOrbit,
   description,
+  phase,
 }: LaunchCardMissionProps) {
   const { place, site } = formatPadPlace(padLocation);
   const sameName = site?.trim().toLowerCase() === padName.trim().toLowerCase();
@@ -58,21 +77,21 @@ export function LaunchCardMission({
         variants={sectionVariants}
         className={`h-full bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
       >
-        <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors"></div>
-        <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+        <div className={`absolute left-0 top-0 w-[2px] h-full transition-colors ${tZeroTickClass(phase)}`}></div>
+        <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           T-Zero Target
         </h3>
-        <p className="text-xs sm:text-sm lg:text-[11px] xl:text-[13px] text-cyan-50 font-mono tracking-wider lg:tracking-wide tabular-nums">
+        <p className="text-xs sm:text-sm lg:text-[11px] xl:text-[13px] text-slate-100 font-mono tracking-wider lg:tracking-wide tabular-nums">
           <span>{tZero.date}</span>
           {showNetTime ? (
             <>
-              <span className="mx-1.5 text-cyan-700">·</span>
+              <span className="mx-1.5 text-slate-600">·</span>
               <span>{tZero.time}</span>
             </>
           ) : null}
         </p>
         {windowStart && windowEnd ? (
-          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             <span className="mr-1.5">Window</span>
             <span className="tabular-nums tracking-normal">
               {windowStart}
@@ -81,7 +100,7 @@ export function LaunchCardMission({
             </span>
           </p>
         ) : netCaption ? (
-          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             {netCaption}
           </p>
         ) : null}
@@ -91,13 +110,13 @@ export function LaunchCardMission({
         className={`h-full bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 density-ease ${chrome.metaPad}`}
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
-        <h3 className="text-[9px] text-cyan-500 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+        <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           Launch Site
         </h3>
-        <p className="text-[11px] sm:text-xs text-cyan-50 font-mono uppercase tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
+        <p className="text-[11px] sm:text-xs text-slate-100 font-mono uppercase tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
           {place}
         </p>
-        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-500 font-mono tracking-wide break-words leading-snug group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-600 font-mono tracking-wide break-words leading-snug group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           {detail}
         </p>
       </motion.div>
@@ -109,15 +128,15 @@ export function LaunchCardMission({
         <div
           className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 density-ease ${chrome.briefHead}`}
         >
-          <h3 className="text-[10px] sm:text-xs text-cyan-500 uppercase font-mono tracking-[0.15em] leading-tight shrink-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+          <h3 className="text-[10px] sm:text-xs text-cyan-600 uppercase font-mono tracking-[0.15em] leading-tight shrink-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             Mission Brief
           </h3>
           {(missionType || missionOrbit) && (
-            <p className="min-w-0 text-right text-[9px] font-mono text-cyan-500 uppercase tracking-wider leading-snug">
+            <p className="min-w-0 text-right text-[9px] font-mono text-cyan-600 uppercase tracking-wider leading-snug">
               {missionType ? <span className="whitespace-nowrap">{missionType}</span> : null}
               {missionType && missionOrbit ? (
                 <span className="whitespace-nowrap">
-                  <span className="mx-1.5 text-cyan-700">·</span>
+                  <span className="mx-1.5 text-cyan-800">·</span>
                   {missionOrbit}
                 </span>
               ) : (
@@ -127,7 +146,7 @@ export function LaunchCardMission({
           )}
         </div>
         <p
-          className="text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-cyan-50 group-active:text-cyan-50 transition-colors break-words lg:min-h-0 lg:flex-1 lg:overflow-y-auto console-scrollbar console-scrollbar-y"
+          className="text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-slate-100 group-active:text-slate-100 transition-colors break-words lg:min-h-0 lg:flex-1 lg:overflow-y-auto console-scrollbar console-scrollbar-y"
         >
           {description}
         </p>

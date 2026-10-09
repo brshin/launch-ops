@@ -280,16 +280,16 @@ export function LaunchCardVisual({
         {watchTarget?.live && !showPlayer && (
           <motion.div
             key="stream-live"
-            className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/80 border border-cyan-800/60 rounded-sm backdrop-blur-sm px-2.5 py-1"
+            className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex items-center gap-1.5 bg-[#020617]/80 border border-sky-800/70 rounded-sm backdrop-blur-sm px-2.5 py-1"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={transitions.soft}
           >
             <span className="relative flex h-1.5 w-1.5">
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-400 shadow-[0_0_6px_#38bdf8]"></span>
             </span>
-            <span className="text-[9px] font-mono uppercase tracking-[0.28em] text-cyan-300">
+            <span className="text-[9px] font-mono uppercase tracking-[0.28em] text-sky-300">
               STREAM LIVE
             </span>
           </motion.div>

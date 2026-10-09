@@ -136,23 +136,23 @@ export function LaunchCardIdentity({
       <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full sm:contents">
         <div className="group cursor-default min-w-0 flex-1">
           <p
-            className={`font-mono text-cyan-500 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}
+            className={`font-mono text-cyan-600 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}
           >
             {providerName}
             {customers.map((customer) => (
               <span key={customer}>
-                <span className="mx-1.5 text-cyan-700">·</span>
+                <span className="mx-1.5 text-cyan-800">·</span>
                 {customer}
               </span>
             ))}
           </p>
           <h2
-            className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-cyan-50 break-words density-ease ${chrome.title}`}
+            className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-white break-words density-ease ${chrome.title}`}
           >
             {title}
           </h2>
           {showRocketSubtitle && showRocket && (
-            <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-300 break-words">
+            <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-600 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words">
               {rocketName}
             </p>
           )}
