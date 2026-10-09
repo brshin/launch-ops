@@ -253,7 +253,7 @@ export function LaunchQueue({
 
                 <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
                   <span
-                    className="min-w-0 flex-1 font-mono text-[10px] md:text-[11px] leading-tight uppercase tracking-wide truncate text-slate-400"
+                    className="min-w-0 flex-1 font-mono text-[10px] md:text-[11px] leading-tight uppercase tracking-wide truncate text-[oklch(0.76_0.034_255)]"
                   >
                     {getLaunchTitle(launch)}
                   </span>
