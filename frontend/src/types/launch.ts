@@ -27,6 +27,8 @@ export interface LaunchServiceProvider {
     name: string;
     abbrev: string;
     type: Type;
+    logo?: Logo | null;
+    social_logo?: SocialLogo | null;
 }
 
 export interface Family {

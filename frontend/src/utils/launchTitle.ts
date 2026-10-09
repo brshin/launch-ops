@@ -18,14 +18,39 @@ function sameParty(a?: string | null, b?: string | null): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
+type MarkSource = {
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+} | null;
+
+/**
+ * Square social mark first. The wide wordmark is the fallback.
+ * Thumbnail over the full image, so the card does not download a hero file.
+ */
+export function agencyMarkUrl(party?: {
+  logo?: MarkSource;
+  social_logo?: MarkSource;
+} | null): string | null {
+  for (const mark of [party?.social_logo, party?.logo]) {
+    const url = mark?.thumbnail_url?.trim() || mark?.image_url?.trim();
+    if (url) return url;
+  }
+  return null;
+}
+
+export type MissionParty = {
+  label: string;
+  markUrl: string | null;
+};
+
 /**
  * Mission customers, excluding the launch provider.
  * Starlink stays "SpaceX"; Crew-13 gains NASA, CSA, and ROSCOSMOS.
  */
-export function getMissionCustomers(launch: Launch): string[] {
+export function getMissionCustomers(launch: Launch): MissionParty[] {
   const provider = launch.launch_service_provider;
   const seen = new Set<string>();
-  const customers: string[] = [];
+  const customers: MissionParty[] = [];
 
   for (const agency of launch.mission?.agencies ?? []) {
     const label = agency.abbrev?.trim() || agency.name?.trim();
@@ -39,7 +64,7 @@ export function getMissionCustomers(launch: Launch): string[] {
     const key = label.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    customers.push(label);
+    customers.push({ label, markUrl: agencyMarkUrl(agency) });
   }
 
   return customers;

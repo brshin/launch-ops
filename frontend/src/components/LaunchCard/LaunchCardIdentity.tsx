@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   CountdownFailureLabel,
   CountdownHoldLabel,
@@ -6,6 +7,7 @@ import {
 import { HourCycleFade } from "../HourCycleFade";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import type { LaunchTime } from "../../utils/launchTime";
+import type { MissionParty } from "../../utils/launchTitle";
 
 type CountdownParts = {
   difference: number;
@@ -97,10 +99,43 @@ function getStatusColors(status: string) {
   }
 }
 
+/** Square mark on a light plate. A failed image leaves the name. */
+function PartyMark({ url }: { url: string }) {
+  const [phase, setPhase] = useState<"wait" | "show" | "hide">("wait");
+  if (phase === "hide") return null;
+
+  return (
+    <span
+      className={`inline-flex size-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-white p-px ${
+        phase === "show" ? "" : "invisible"
+      }`}
+    >
+      <img
+        src={url}
+        alt=""
+        draggable={false}
+        className="size-full object-contain"
+        onLoad={() => setPhase("show")}
+        onError={() => setPhase("hide")}
+      />
+    </span>
+  );
+}
+
+function PartyName({ label, markUrl }: { label: string; markUrl?: string | null }) {
+  return (
+    <span className="inline-flex max-w-full items-start gap-1">
+      {markUrl ? <PartyMark url={markUrl} /> : null}
+      <span className="min-w-0">{label}</span>
+    </span>
+  );
+}
+
 interface LaunchCardIdentityProps {
   chrome: DensityChrome;
   providerName: string;
-  customers: string[];
+  providerMarkUrl: string | null;
+  customers: MissionParty[];
   title: string;
   rocketName: string | null;
   showRocketSubtitle: boolean;
@@ -120,6 +155,7 @@ interface LaunchCardIdentityProps {
 export function LaunchCardIdentity({
   chrome,
   providerName,
+  providerMarkUrl,
   customers,
   title,
   rocketName,
@@ -139,13 +175,13 @@ export function LaunchCardIdentity({
       <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full sm:contents">
         <div className="group cursor-default min-w-0 flex-1">
           <p
-            className={`font-mono text-cyan-600 uppercase transition-all group-hover:text-cyan-400 break-words density-ease ${chrome.provider}`}
+            className={`flex flex-wrap items-center font-mono text-cyan-600 uppercase transition-all group-hover:text-cyan-400 density-ease ${chrome.provider}`}
           >
-            {providerName}
+            <PartyName label={providerName} markUrl={providerMarkUrl} />
             {customers.map((customer) => (
-              <span key={customer}>
+              <span key={customer.label} className="inline-flex items-center whitespace-nowrap">
                 <span className="mx-1.5 text-cyan-800">·</span>
-                {customer}
+                <PartyName label={customer.label} markUrl={customer.markUrl} />
               </span>
             ))}
           </p>

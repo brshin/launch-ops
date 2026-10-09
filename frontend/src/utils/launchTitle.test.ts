@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Launch } from "../types/launch";
 import {
+  agencyMarkUrl,
   getLaunchTitle,
   getMissionBrief,
   getMissionCustomers,
@@ -130,7 +131,11 @@ describe("getMissionCustomers", () => {
       },
     } as Launch;
 
-    expect(getMissionCustomers(crew)).toEqual(["CSA", "NASA", "RFSA"]);
+    expect(getMissionCustomers(crew)).toEqual([
+      { label: "CSA", markUrl: null },
+      { label: "NASA", markUrl: null },
+      { label: "RFSA", markUrl: null },
+    ]);
   });
 
   it("returns nothing when the only agency is the provider, or the list is empty", () => {
@@ -145,5 +150,40 @@ describe("getMissionCustomers", () => {
 
     expect(getMissionCustomers(starlink)).toEqual([]);
     expect(getMissionCustomers(empty)).toEqual([]);
+  });
+
+  it("keeps a customer mark, preferring the social thumbnail", () => {
+    const crs = {
+      launch_service_provider: { name: "SpaceX", abbrev: "SpX" },
+      mission: {
+        agencies: [
+          {
+            abbrev: "NASA",
+            name: "National Aeronautics and Space Administration",
+            social_logo: { thumbnail_url: "https://cdn.example/nasa-social.jpg", image_url: "https://cdn.example/nasa-social-full.jpg" },
+            logo: { thumbnail_url: "https://cdn.example/nasa-logo.png" },
+          },
+        ],
+      },
+    } as Launch;
+
+    expect(getMissionCustomers(crs)).toEqual([
+      { label: "NASA", markUrl: "https://cdn.example/nasa-social.jpg" },
+    ]);
+  });
+});
+
+describe("agencyMarkUrl", () => {
+  it("falls back to the wordmark when there is no social mark", () => {
+    expect(
+      agencyMarkUrl({
+        logo: { thumbnail_url: "https://cdn.example/sda.jpg", image_url: "https://cdn.example/sda-full.jpg" },
+      }),
+    ).toBe("https://cdn.example/sda.jpg");
+  });
+
+  it("returns null when neither mark has a url", () => {
+    expect(agencyMarkUrl(null)).toBeNull();
+    expect(agencyMarkUrl({ social_logo: { thumbnail_url: "  " }, logo: null })).toBeNull();
   });
 });

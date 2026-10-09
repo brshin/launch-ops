@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
-import { getLaunchTitle, getMissionBrief, getMissionCustomers, getMissionOrbitLabel, getMissionTypeLabel, getRocketName } from "../../utils/launchTitle";
+import { agencyMarkUrl, getLaunchTitle, getMissionBrief, getMissionCustomers, getMissionOrbitLabel, getMissionTypeLabel, getRocketName } from "../../utils/launchTitle";
 import { transitions, travel } from "../../lib/motionTokens";
 import { densityChrome } from "../../lib/cardDensityChrome";
 import { LaunchCardFooter } from "./LaunchCardFooter";
@@ -158,6 +158,7 @@ export default function LaunchCard({
                 <LaunchCardIdentity
                     chrome={chrome}
                     providerName={launch.launch_service_provider?.name || "UNKNOWN"}
+                    providerMarkUrl={agencyMarkUrl(launch.launch_service_provider)}
                     customers={getMissionCustomers(launch)}
                     title={title}
                     rocketName={rocketName}
