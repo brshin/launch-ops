@@ -100,7 +100,7 @@ export function ConsoleHeader({
 
   return (
     <motion.header
-      className={`w-full flex justify-between items-center gap-2 sm:gap-3 border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
+      className={`w-full flex justify-between items-center gap-2 sm:gap-3 max-[399px]:flex-col max-[399px]:items-stretch border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
         shortBand === "short"
           ? "mb-1.5 pb-1.5 lg:mb-3 lg:pb-2.5"
           : shortBand === "mid"
@@ -145,7 +145,7 @@ export function ConsoleHeader({
         </p>
       </div>
 
-      <div className="flex min-w-0 flex-1 justify-end">
+      <div className="flex min-w-0 flex-1 justify-end max-[399px]:w-full max-[399px]:flex-none">
       <motion.div
         className="flex w-max max-w-full min-w-0 items-center gap-1.5 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2 py-1 sm:px-3 sm:py-1.5 xl:px-3.5 xl:py-2 rounded-sm backdrop-blur-md"
         variants={bootSysClockVariants}
@@ -167,7 +167,7 @@ export function ConsoleHeader({
               title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
             >
               <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
-              {sysClock ? <span className="hidden min-[360px]:inline shrink-0">· {sysClock.offset}</span> : null}
+              {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
             </span>
           </div>
           <div className="flex items-baseline gap-2">
@@ -179,7 +179,7 @@ export function ConsoleHeader({
             >
               <ClockReadout time={sysClock?.time ?? "—:—:—"} compactSeconds />
             </HourCycleFade>
-            <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
+            <span className="text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.date ?? "—"}
             </span>
           </div>

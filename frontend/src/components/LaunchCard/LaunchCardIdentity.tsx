@@ -3,6 +3,7 @@ import {
   CountdownHoldLabel,
   TickingCountdown,
 } from "../CountdownReadout";
+import { HourCycleFade } from "../HourCycleFade";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import type { LaunchTime } from "../../utils/launchTime";
 
@@ -108,6 +109,7 @@ interface LaunchCardIdentityProps {
   launchTime: LaunchTime;
   showProvisional: boolean;
   tZero: LocalDateTime;
+  hour12: boolean;
   time: CountdownParts;
 }
 
@@ -127,6 +129,7 @@ export function LaunchCardIdentity({
   launchTime,
   showProvisional,
   tZero,
+  hour12,
   time,
 }: LaunchCardIdentityProps) {
   const statusColors = getStatusColors(status);
@@ -202,9 +205,11 @@ export function LaunchCardIdentity({
                 Net · Provisional
               </span>
               <span className="text-base sm:text-lg md:text-xl lg:text-base xl:text-lg font-mono font-bold text-slate-300 tracking-wider sm:tracking-widest lg:tracking-wider tabular-nums">
-                <span>{tZero.date}</span>
-                <span className="mx-1.5 text-slate-600">·</span>
-                <span>{tZero.time}</span>
+                <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block">
+                  <span>{tZero.date}</span>
+                  <span className="mx-1.5 text-slate-600">·</span>
+                  <span className="whitespace-nowrap">{tZero.time}</span>
+                </HourCycleFade>
               </span>
             </div>
           ) : (

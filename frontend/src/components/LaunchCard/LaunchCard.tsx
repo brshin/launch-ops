@@ -167,6 +167,7 @@ export default function LaunchCard({
                     launchTime={launchTime}
                     showProvisional={showProvisional}
                     tZero={tZero}
+                    hour12={hour12}
                     time={time}
                 />
             </motion.div>
