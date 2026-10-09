@@ -230,7 +230,7 @@ export function LaunchQueue({
                 </AnimatePresence>
 
                 <div className="flex items-baseline justify-between gap-1.5 w-full min-w-0">
-                  <span className="min-w-0 truncate text-[9px] md:text-[10px] leading-tight font-mono text-slate-100 tracking-[0.15em] tabular-nums group-hover:text-white group-active:text-white transition-colors">
+                  <span className={`min-w-0 truncate text-[10px] md:text-[11px] leading-tight font-mono tracking-[0.12em] tabular-nums ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}>
                     {formatLocalDateTime(launch.net, { includeYear: false }).label}
                   </span>
                   <span className="flex items-baseline gap-1.5 shrink-0">
@@ -253,7 +253,7 @@ export function LaunchQueue({
 
                 <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
                   <span
-                    className={`min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide sm:tracking-wider lg:tracking-widest truncate text-slate-300 transition-colors group-hover:text-slate-200 group-active:text-slate-200 ${selected ? "font-bold" : ""}`}
+                    className="min-w-0 flex-1 font-mono text-[10px] md:text-[11px] leading-tight uppercase tracking-wide truncate text-slate-400"
                   >
                     {getLaunchTitle(launch)}
                   </span>
