@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { HourCycleFade } from "./HourCycleFade";
 import {
   createBootHeaderVariants,
   createBootSysClockVariants,
@@ -24,20 +25,24 @@ interface ConsoleHeaderProps {
   onHourCycle: (cycle: HourCycle) => void;
 }
 
+const hourCycleGlide = { type: "spring", stiffness: 460, damping: 38, mass: 0.7 } as const;
+
 function HourCycleControl({
   cycle,
   onChange,
+  layoutId,
   className = "",
 }: {
   cycle: HourCycle;
   onChange: (cycle: HourCycle) => void;
+  layoutId: string;
   className?: string;
 }) {
   return (
     <div
       role="group"
       aria-label="Time format"
-      className={`flex shrink-0 items-stretch overflow-clip rounded-sm border border-cyan-800/70 ${className}`}
+      className={`relative shrink-0 grid-cols-2 rounded-sm border border-cyan-800/70 bg-black/40 p-px ${className}`}
     >
       {(["24", "12"] as const).map((option) => {
         const active = cycle === option;
@@ -48,15 +53,22 @@ function HourCycleControl({
             aria-pressed={active}
             aria-label={option === "24" ? "24-hour time" : "12-hour time"}
             onClick={() => onChange(option)}
-            className={`cursor-pointer touch-manipulation px-1.5 py-1 font-mono text-[9px] leading-none tracking-[0.08em] transition-colors ${
-              option === "12" ? "border-l border-cyan-800/70" : ""
-            } ${
-              active
-                ? "bg-cyan-950 font-medium text-slate-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.45)]"
-                : "text-cyan-700 hover:text-cyan-400 active:text-cyan-400"
-            }`}
+            className="group relative z-10 cursor-pointer touch-manipulation px-1.5 py-1 font-mono text-[9px] leading-none tracking-[0.08em]"
           >
-            {option}
+            {active && (
+              <motion.span
+                layoutId={layoutId}
+                className="absolute inset-0 rounded-[1px] bg-cyan-400/15 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.5),0_0_10px_rgba(34,211,238,0.18)]"
+                transition={hourCycleGlide}
+              />
+            )}
+            <span
+              className={`relative transition-colors duration-300 ${
+                active ? "font-medium text-slate-100" : "text-cyan-700 group-hover:text-cyan-400"
+              }`}
+            >
+              {option}
+            </span>
           </button>
         );
       })}
@@ -145,13 +157,14 @@ export function ConsoleHeader({
         <div className="flex lg:hidden flex-col font-mono uppercase leading-none gap-0.5">
           <div className="flex items-baseline gap-x-2">
             <span className="text-[9px] tracking-[0.2em] text-cyan-600 shrink-0">Sys</span>
-            <span
-              className={`text-[11px] sm:text-xs text-slate-100 tabular-nums whitespace-nowrap shrink-0 ${
+            <HourCycleFade
+              cycle={hourCycle}
+              className={`inline-block text-[11px] sm:text-xs text-slate-100 tabular-nums whitespace-nowrap ${
                 hourCycle === "12" ? "tracking-[0.04em]" : "tracking-[0.14em]"
               }`}
             >
               {sysClock?.time ?? "—:—:—"}
-            </span>
+            </HourCycleFade>
             <span className="hidden sm:inline text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.date ?? "—"}
             </span>
@@ -164,7 +177,12 @@ export function ConsoleHeader({
               <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
               {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
             </span>
-            <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="lg:hidden" />
+            <HourCycleControl
+              cycle={hourCycle}
+              onChange={onHourCycle}
+              layoutId="hour-cycle-phone"
+              className="grid lg:hidden"
+            />
           </span>
         </div>
         {/* Desktop: compact two-line block, still short */}
@@ -179,19 +197,25 @@ export function ConsoleHeader({
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span
-              className={`text-sm xl:text-base text-slate-100 tabular-nums ${
+            <HourCycleFade
+              cycle={hourCycle}
+              className={`inline-block text-sm xl:text-base text-slate-100 tabular-nums ${
                 hourCycle === "12" ? "tracking-[0.08em]" : "tracking-[0.18em]"
               }`}
             >
               {sysClock?.time ?? "INITIALIZING..."}
-            </span>
+            </HourCycleFade>
             <span className="text-xs xl:text-sm tracking-[0.18em] text-cyan-300 tabular-nums">
               {sysClock?.date ?? "—"}
             </span>
           </div>
         </div>
-        <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className="hidden lg:flex" />
+        <HourCycleControl
+          cycle={hourCycle}
+          onChange={onHourCycle}
+          layoutId="hour-cycle-desk"
+          className="hidden lg:grid"
+        />
       </motion.div>
       </div>
     </motion.header>

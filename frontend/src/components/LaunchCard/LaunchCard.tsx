@@ -236,7 +236,7 @@ export default function LaunchCard({
                 variants={sectionVariants}
                 className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[9px] font-mono uppercase tracking-[0.2em] density-ease ${chrome.footer}`}
             >
-                <LaunchCardFooter lastUpdated={lastUpdated} />
+                <LaunchCardFooter lastUpdated={lastUpdated} hour12={hour12} />
             </motion.div>
             </div>
             

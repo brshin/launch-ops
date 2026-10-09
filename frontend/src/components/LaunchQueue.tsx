@@ -15,6 +15,7 @@ import {
 import { useCompactMotion } from "../hooks/useCompactMotion";
 import type { ShortViewportBand } from "../hooks/useShortViewportBand";
 import { formatLocalDateTime } from "../utils/localTime";
+import { HourCycleFade } from "./HourCycleFade";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -210,7 +211,7 @@ export function LaunchQueue({
                 onClick={() => {
                   if (launch.apiId) onSelect(launch.apiId);
                 }}
-                className={`shrink-0 snap-start lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-[colors,opacity] duration-300 flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
+                className={`shrink-0 snap-start lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-[width,colors,opacity] duration-300 ease-out flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
                   hour12 ? "w-[17.5rem]" : "w-[14rem]"
                 } ${
                   selected
@@ -234,9 +235,12 @@ export function LaunchQueue({
                 </AnimatePresence>
 
                 <div className="flex items-baseline justify-between gap-1.5 w-full min-w-0">
-                  <span className={`min-w-0 truncate text-xs leading-tight font-mono tabular-nums ${hour12 ? "tracking-[0.04em]" : "tracking-[0.12em]"} ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}>
+                  <HourCycleFade
+                    cycle={hour12 ? "12" : "24"}
+                    className={`inline-block min-w-0 max-w-full truncate text-xs leading-tight font-mono tabular-nums ${hour12 ? "tracking-[0.04em]" : "tracking-[0.12em]"} ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}
+                  >
                     {formatLocalDateTime(launch.net, { includeYear: false, hour12 }).label}
-                  </span>
+                  </HourCycleFade>
                   <span className="flex items-baseline gap-1.5 shrink-0">
                     {showNext && (
                       <span className="hidden lg:inline text-[8px] font-mono text-cyan-600 uppercase tracking-[0.2em]">

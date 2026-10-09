@@ -2,6 +2,7 @@ import { motion, type Variants } from "framer-motion";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import { transitions } from "../../lib/motionTokens";
 import { formatPadPlace } from "../../utils/padPlace";
+import { HourCycleFade } from "../HourCycleFade";
 import type { LaunchTimePhase } from "../../utils/launchTime";
 
 /** The tile tick follows the clock: T− cyan, T+ emerald, hold amber, fail red. */
@@ -83,29 +84,32 @@ export function LaunchCardMission({
         <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           T-Zero Target
         </h3>
-        <p
-          className={`text-slate-100 font-mono tabular-nums ${
-            hour12
-              ? "text-xs sm:text-[13px] lg:text-[11px] xl:text-xs tracking-normal whitespace-nowrap"
-              : "text-xs sm:text-sm lg:text-[11px] xl:text-[13px] tracking-wider lg:tracking-wide"
-          }`}
-        >
-          <span>{tZero.date}</span>
-          {showNetTime ? (
-            <>
-              <span className="mx-1.5 text-slate-600">·</span>
-              <span className="whitespace-nowrap">{tZero.time}</span>
-            </>
-          ) : null}
+        <p className="text-slate-100 font-mono tabular-nums">
+          <HourCycleFade
+            cycle={hour12 ? "12" : "24"}
+            className={`inline-block max-w-full ${
+              hour12
+                ? "text-xs sm:text-[13px] lg:text-[11px] xl:text-xs tracking-normal whitespace-nowrap"
+                : "text-xs sm:text-sm lg:text-[11px] xl:text-[13px] tracking-wider lg:tracking-wide"
+            }`}
+          >
+            <span>{tZero.date}</span>
+            {showNetTime ? (
+              <>
+                <span className="mx-1.5 text-slate-600">·</span>
+                <span className="whitespace-nowrap">{tZero.time}</span>
+              </>
+            ) : null}
+          </HourCycleFade>
         </p>
         {windowStart && windowEnd ? (
           <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             <span className="mr-1.5">Window</span>
-            <span className="tabular-nums tracking-normal">
+            <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block tabular-nums tracking-normal">
               {windowStart}
               {" – "}
               {windowEnd}
-            </span>
+            </HourCycleFade>
           </p>
         ) : netCaption ? (
           <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
