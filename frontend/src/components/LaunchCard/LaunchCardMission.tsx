@@ -14,6 +14,7 @@ interface LaunchCardMissionProps {
   sectionVariants: Variants;
   tZero: LocalDateTime;
   showNetTime: boolean;
+  netCaption: string | null;
   windowStart: string | null;
   windowEnd: string | null;
   padName: string;
@@ -33,6 +34,7 @@ export function LaunchCardMission({
   sectionVariants,
   tZero,
   showNetTime,
+  netCaption,
   windowStart,
   windowEnd,
   padName,
@@ -77,6 +79,10 @@ export function LaunchCardMission({
               {" – "}
               {windowEnd}
             </span>
+          </p>
+        ) : netCaption ? (
+          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-500 uppercase tracking-wide group-hover:text-cyan-300 group-active:text-cyan-300 transition-colors">
+            {netCaption}
           </p>
         ) : null}
       </motion.div>

@@ -25,6 +25,7 @@ const COARSE_PRECISION = new Set([
   "DAY",
   "WK",
   "WEEK",
+  "M",
   "MON",
   "MONTH",
   "QTR",
@@ -64,6 +65,33 @@ export function hasLaunchWindow(
   const close = new Date(end).getTime();
   if (Number.isNaN(open) || Number.isNaN(close)) return false;
   return open !== close;
+}
+
+const PRECISION_CAPTIONS: Record<string, string> = {
+  DAY: "Day only",
+  WK: "This week",
+  WEEK: "This week",
+  M: "This month",
+  MON: "This month",
+  MONTH: "This month",
+  QTR: "This quarter",
+  QUARTER: "This quarter",
+  YR: "This year",
+  YEAR: "This year",
+  DEC: "This decade",
+  DECADE: "This decade",
+};
+
+/** Quiet line for a target coarser than an hour. Precise times stay unlabeled. */
+export function getNetPrecisionCaption(
+  precision?: NetPrecision | null,
+): string | null {
+  if (isNetPreciseEnough(precision)) return null;
+  for (const token of precisionTokens(precision)) {
+    const caption = PRECISION_CAPTIONS[token];
+    if (caption) return caption;
+  }
+  return "Date only";
 }
 
 function formatRelativeChip(msUntilNet: number): string {

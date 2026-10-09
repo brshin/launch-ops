@@ -19,7 +19,7 @@ import {
     formatLocalDateTime,
     formatLocalTime,
 } from "../../utils/localTime";
-import { getLaunchTime, hasLaunchWindow, isNetPreciseEnough } from "../../utils/launchTime";
+import { getLaunchTime, getNetPrecisionCaption, hasLaunchWindow, isNetPreciseEnough } from "../../utils/launchTime";
 import { pickWatchTarget } from "../../utils/watchTarget";
 
 interface LaunchCardProps {
@@ -117,6 +117,7 @@ export default function LaunchCard({
         : null;
     const tZero = formatLocalDateTime(launch.net);
     const showNetTime = isNetPreciseEnough(launch.net_precision);
+    const netCaption = getNetPrecisionCaption(launch.net_precision);
     const showWindow = hasLaunchWindow(launch.window_start, launch.window_end);
     const windowStart = showWindow ? formatLocalTime(launch.window_start) : null;
     const windowEnd = showWindow ? formatLocalTime(launch.window_end) : null;
@@ -205,6 +206,7 @@ export default function LaunchCard({
                     sectionVariants={sectionVariants}
                     tZero={tZero}
                     showNetTime={showNetTime}
+                    netCaption={netCaption}
                     windowStart={windowStart}
                     windowEnd={windowEnd}
                     padName={launch.pad?.name || "TBA"}

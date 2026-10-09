@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getLaunchTime, hasLaunchWindow, isNetPreciseEnough } from "./launchTime";
+import { getLaunchTime, getNetPrecisionCaption, hasLaunchWindow, isNetPreciseEnough } from "./launchTime";
 
 const NOW = Date.parse("2026-08-19T12:00:00.000Z");
 const MINUTE = 60_000;
@@ -25,6 +25,15 @@ describe("isNetPreciseEnough", () => {
     expect(isNetPreciseEnough({ abbrev: "hour" })).toBe(true);
     expect(isNetPreciseEnough({ abbrev: "HR" })).toBe(true);
     expect(isNetPreciseEnough({ abbrev: "MIN" })).toBe(true);
+  });
+});
+
+describe("getNetPrecisionCaption", () => {
+  it("names a coarse target and stays quiet when the clock is real", () => {
+    expect(getNetPrecisionCaption({ abbrev: "DAY" })).toBe("Day only");
+    expect(getNetPrecisionCaption({ abbrev: "M", name: "Month" })).toBe("This month");
+    expect(getNetPrecisionCaption({ abbrev: "MIN" })).toBeNull();
+    expect(getNetPrecisionCaption({ abbrev: "HR" })).toBeNull();
   });
 });
 
