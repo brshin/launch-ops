@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { motion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
 import { getLaunchTitle, getMissionBrief, getMissionCustomers, getMissionOrbitLabel, getMissionTypeLabel, getRocketName } from "../../utils/launchTitle";
 import { transitions, travel } from "../../lib/motionTokens";
@@ -41,6 +41,7 @@ export default function LaunchCard({
     launch,
 }: LaunchCardProps) {
     const rootRef = useRef<HTMLDivElement>(null);
+    const reduceMotion = useReducedMotion();
     const compactMotion = useCompactMotion();
     const shortBand = useShortViewportBand();
     const cardBand = useCardDensityBand(rootRef, compactMotion);
@@ -135,7 +136,13 @@ export default function LaunchCard({
             animate="show"
         >
             
-            <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent shadow-[0_0_10px_#22d3ee]"></div>
+            <motion.div
+                className="card-hairline absolute top-0 left-12 right-12 h-[1px]"
+                style={{ originX: 0 }}
+                initial={reduceMotion ? false : { scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={transitions.soft}
+            />
 
             {/* Identity + status/countdown
                 Narrow stack (<sm): status top-right beside title; countdown below.

@@ -85,9 +85,39 @@ body,
   transition-timing-function: ease;
 }
 
+/* Dim gleam traveling the card's top hairline. The line itself draws in via Framer. */
+.card-hairline {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(34, 211, 238, 0.2),
+    rgba(34, 211, 238, 0.75),
+    rgba(34, 211, 238, 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: card-hairline 10s linear 0.35s infinite;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent);
+}
+
+@keyframes card-hairline {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .density-ease {
     transition: none;
+  }
+
+  .card-hairline {
+    animation: none;
+    background-position: 50% 0;
   }
 }
 
