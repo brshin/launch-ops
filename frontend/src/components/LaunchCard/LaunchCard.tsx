@@ -137,7 +137,7 @@ export default function LaunchCard({
         >
             
             <motion.div
-                className="card-hairline absolute top-0 left-12 right-12 h-[1px] overflow-hidden"
+                className="card-hairline absolute top-0 left-12 right-12 h-3 overflow-hidden"
                 style={{ originX: 0 }}
                 initial={reduceMotion ? false : { scaleX: 0 }}
                 animate={{ scaleX: 1 }}

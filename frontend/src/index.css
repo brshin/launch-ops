@@ -93,6 +93,9 @@ body,
     rgba(34, 211, 238, 0.4),
     transparent
   );
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: top;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent);
 }
@@ -100,15 +103,16 @@ body,
 .card-hairline-gleam {
   position: absolute;
   top: 0;
-  bottom: 0;
   left: 0;
+  height: 1px;
   width: 42%;
   background-image: linear-gradient(
     90deg,
     transparent,
-    rgba(34, 211, 238, 0.85),
+    rgb(34, 211, 238),
     transparent
   );
+  box-shadow: 0 3px 6px rgba(34, 211, 238, 0.7);
   animation: card-hairline-gleam 10s linear 0.4s infinite backwards;
 }
 
