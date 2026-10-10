@@ -199,14 +199,14 @@ function OrientedGlobe() {
 
 /**
  * The one earth canvas. The desktop hero mounts it at up to 2x.
- * The phone band is small, so it can mount the same canvas at up to 3x.
+ * The phone band is small, so it always draws at 3x, even on a 2x screen.
  * Selection does not rebuild it, because the shell owns the mount.
  */
 export default function GlobePanel({ maxDpr = 2 }: { maxDpr?: number }) {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
       <Canvas
-        dpr={[1, maxDpr]}
+        dpr={maxDpr > 2 ? maxDpr : [1, maxDpr]}
         flat
         frameloop="always"
         gl={async (props) => {

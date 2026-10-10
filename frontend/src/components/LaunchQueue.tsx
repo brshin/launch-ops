@@ -212,7 +212,7 @@ export function LaunchQueue({
                   if (launch.apiId) onSelect(launch.apiId);
                 }}
                 className={`shrink-0 snap-start lg:w-full min-h-10 md:min-h-11 text-left py-1.5 px-2.5 md:py-2.5 md:px-3 lg:py-3 lg:px-4 rounded-lg border transition-[width,colors,opacity] duration-300 ease-out flex flex-col justify-center gap-0 md:gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
-                  hour12 ? "w-[15.5rem] md:w-[17.5rem]" : "w-[13rem] md:w-[14rem]"
+                  hour12 ? "w-[14rem] md:w-[17.5rem]" : "w-[13rem] md:w-[14rem]"
                 } ${
                   selected
                     ? "bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]"
