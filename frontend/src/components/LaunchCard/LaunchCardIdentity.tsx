@@ -23,6 +23,46 @@ type LocalDateTime = {
   time: string;
 };
 
+/** Keep a hyphenated token intact once the title column can hold it. */
+function Hyphenated({ text }: { text: string }) {
+  return text.split(/(\s+)/).map((part, index) =>
+    part.includes("-") ? (
+      <span key={index} className="@[10.5rem]:whitespace-nowrap">
+        {part}
+      </span>
+    ) : (
+      <span key={index}>{part}</span>
+    ),
+  );
+}
+
+/**
+ * A parenthetical stays on the name's line only when the whole title fits.
+ * Otherwise the `(…)` drops as its own block and the name wraps on its own.
+ */
+function TitleWords({ title }: { title: string }) {
+  const chunks = title.split(/(\([^)]*\))/);
+  if (chunks.length === 1) return <Hyphenated text={title} />;
+
+  return chunks.map((chunk, index) => {
+    const trimmed = chunk.trim();
+    if (!trimmed) return null;
+    const isParen = trimmed.startsWith("(");
+    const spaceBefore =
+      index > 0 && (/\s$/.test(chunks[index - 1] ?? "") || /^\s/.test(chunk));
+    return (
+      <span key={index}>
+        {spaceBefore ? " " : null}
+        <span
+          className={`inline-block max-w-full ${isParen ? "" : "tracking-[-0.02em]"}`}
+        >
+          <Hyphenated text={trimmed} />
+        </span>
+      </span>
+    );
+  });
+}
+
 function getStatusColors(status: string) {
   switch (status) {
     case "Go":
@@ -191,32 +231,30 @@ export function LaunchCardIdentity({
 
   const heading = (
     <h2
-      className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-white break-words density-ease ${chrome.title}`}
+      className={`@container font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-white break-words density-ease ${chrome.title}`}
     >
-      {title}
+      <TitleWords title={title} />
     </h2>
   );
 
   const rocket = showRocketSubtitle && showRocket ? (
-    <p className={`lc-rocket text-[10px] sm:text-xs font-mono text-cyan-600 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words ${showProvisional ? "" : "mt-1"}`}>
+    <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-600 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words">
       {rocketName}
     </p>
   ) : null;
 
   const netReadout = (
-    <div className="flex flex-col items-end text-right leading-tight">
-      <span className="whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.14em] text-amber-500/90">
+    <div className="flex w-full min-w-0 flex-col items-start gap-1 sm:w-auto sm:items-end">
+      <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums text-slate-200 sm:text-[11px]">
+        <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block">
+          <span>{tZero.date}</span>
+          <span className="mx-1.5 text-slate-600">·</span>
+          <span>{tZero.time}</span>
+        </HourCycleFade>
+      </span>
+      <span className="whitespace-nowrap font-mono text-[10px] uppercase leading-none tracking-[0.16em] text-amber-500/90">
         Net · Provisional
       </span>
-      <span className="mt-0.5 whitespace-nowrap font-mono text-[11px] font-bold tabular-nums text-slate-200 sm:text-xs">
-        {tZero.date}
-      </span>
-      <HourCycleFade
-        cycle={hour12 ? "12" : "24"}
-        className="whitespace-nowrap font-mono text-[11px] font-bold tabular-nums text-slate-300 sm:text-xs"
-      >
-        {tZero.time}
-      </HourCycleFade>
     </div>
   );
 
@@ -234,20 +272,6 @@ export function LaunchCardIdentity({
       </span>
     </div>
   );
-
-  if (showProvisional) {
-    return (
-      <>
-        {parties}
-        <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1 sm:basis-full sm:gap-x-3">
-          <div className="group min-w-0">{heading}</div>
-          {statusPill("flex self-start")}
-          <div className="min-w-0 self-center">{rocket}</div>
-          <div className="self-center">{netReadout}</div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
@@ -268,7 +292,9 @@ export function LaunchCardIdentity({
         {statusPill("hidden sm:flex")}
 
         <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 lg:px-0 min-w-0">
-          {launchTime.phase === "hold" ? (
+          {showProvisional ? (
+            netReadout
+          ) : launchTime.phase === "hold" ? (
             <CountdownHoldLabel />
           ) : launchTime.phase === "failed" ? (
             <CountdownFailureLabel />

@@ -25,7 +25,7 @@ export const densityChrome: Record<CardDensity, DensityChrome> = {
     provider:
       "text-[10px] sm:text-[11px] tracking-[0.04em] sm:tracking-[0.06em] leading-snug",
     title:
-      "text-lg sm:text-xl lg:text-lg tracking-normal sm:tracking-[0.12em] lg:tracking-[0.1em]",
+      "text-lg sm:text-xl lg:text-[15px] xl:text-[15px] tracking-normal sm:tracking-[0.04em] lg:tracking-normal",
     statusCol: "gap-1.5 sm:gap-3 lg:gap-2",
     statusPill: "px-3 py-2 sm:px-5 sm:py-2.5 lg:px-2 lg:py-1.5 xl:px-3 min-h-9 lg:min-h-8",
     panelsGap: "gap-3 sm:gap-4 lg:gap-3",
@@ -38,7 +38,7 @@ export const densityChrome: Record<CardDensity, DensityChrome> = {
     rootPad: "p-2.5 sm:p-3",
     identity: "mb-2",
     provider: "text-[10px] tracking-[0.04em] leading-snug",
-    title: "text-[17px] sm:text-lg tracking-normal sm:tracking-[0.11em]",
+    title: "text-[17px] sm:text-lg tracking-normal sm:tracking-[0.04em]",
     statusCol: "gap-1 sm:gap-2",
     statusPill: "px-2.5 py-1.5 sm:px-4 sm:py-2 min-h-8 sm:min-h-9",
     panelsGap: "gap-2.5 sm:gap-3.5",
