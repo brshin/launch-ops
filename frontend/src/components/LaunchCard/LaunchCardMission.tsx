@@ -1,4 +1,5 @@
 import { motion, type Variants } from "framer-motion";
+import { useFitLine } from "../../hooks/useFitLine";
 import type { DensityChrome } from "../../lib/cardDensityChrome";
 import { transitions } from "../../lib/motionTokens";
 import { formatPadPlace } from "../../utils/padPlace";
@@ -67,7 +68,8 @@ export function LaunchCardMission({
 }: LaunchCardMissionProps) {
   const { place, site } = formatPadPlace(padLocation);
   const sameName = site?.trim().toLowerCase() === padName.trim().toLowerCase();
-  const detail = site && !sameName ? `${site} · ${padName}` : padName;
+  const placeRef = useFitLine(place);
+  const siteRef = useFitLine(site && !sameName ? `${site} ${padName}` : padName);
 
   return (
     <motion.div
@@ -84,28 +86,28 @@ export function LaunchCardMission({
         <h3 className="text-[10px] text-cyan-600 uppercase font-mono tracking-[0.16em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors lg:text-[9px] lg:tracking-[0.2em]">
           T-Zero Target
         </h3>
-        <p className="min-w-0 text-slate-100 font-mono tabular-nums">
+        <p className="min-w-0 font-mono tabular-nums leading-none text-slate-100">
           <HourCycleFade
             cycle={hour12 ? "12" : "24"}
-            className={`inline-block max-w-full ${
+            className={`block max-w-full leading-snug ${
               hour12
                 ? "text-[11px] sm:text-xs lg:text-[11px] xl:text-xs tracking-normal lg:whitespace-nowrap"
                 : "text-[11px] sm:text-xs lg:text-[11px] xl:text-[13px] tracking-wide lg:tracking-wide"
             }`}
           >
-            <span className="block lg:inline">{tZero.date}</span>
+            <span className="whitespace-nowrap">{tZero.date}</span>
             {showNetTime ? (
-              <>
-                <span className="mx-1.5 hidden text-slate-600 lg:inline">·</span>
-                <span className="block whitespace-nowrap lg:inline">{tZero.time}</span>
-              </>
+              <span className="whitespace-nowrap">
+                <span className="mx-1.5 text-slate-600">·</span>
+                {tZero.time}
+              </span>
             ) : null}
           </HourCycleFade>
         </p>
         {windowStart && windowEnd ? (
-          <p className="mt-1 sm:mt-1.5 text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+          <p className="mt-1 sm:mt-1.5 max-[359px]:whitespace-normal whitespace-nowrap text-[9px] font-mono font-light text-cyan-600 uppercase tracking-normal group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors lg:whitespace-normal lg:text-[10px] lg:tracking-wide">
             <span className="mr-1.5">Window</span>
-            <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block tabular-nums tracking-normal">
+            <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline max-[359px]:whitespace-normal whitespace-nowrap tabular-nums tracking-normal">
               {windowStart}
               {" – "}
               {windowEnd}
@@ -125,11 +127,24 @@ export function LaunchCardMission({
         <h3 className="text-[10px] text-cyan-600 uppercase font-mono tracking-[0.16em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors lg:text-[9px] lg:tracking-[0.2em]">
           Launch Site
         </h3>
-        <p className="text-[11px] sm:text-xs lg:text-[11px] xl:text-xs text-slate-100 font-mono uppercase tracking-[0.04em] sm:tracking-[0.08em] lg:tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
+        <p
+          ref={placeRef}
+          className="min-w-0 text-[11px] sm:text-xs lg:text-[11px] xl:text-xs text-slate-100 font-mono uppercase tracking-[0.04em] sm:tracking-[0.08em] lg:tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors"
+        >
           {place}
         </p>
-        <p className="mt-1 text-[10px] text-cyan-600 font-mono tracking-normal sm:tracking-wide break-words leading-snug group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
-          {detail}
+        <p
+          ref={siteRef}
+          className="mt-1 min-w-0 text-[10px] text-cyan-600 font-mono tracking-normal sm:tracking-wide break-words leading-snug group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors"
+        >
+          {site && !sameName ? (
+            <>
+              {site}
+              <span className="hidden md:inline"> · {padName}</span>
+            </>
+          ) : (
+            padName
+          )}
         </p>
       </motion.div>
 
