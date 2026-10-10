@@ -132,9 +132,9 @@ function PartyMark({ url }: { url: string }) {
 
 function PartyName({ label, markUrl }: { label: string; markUrl?: string | null }) {
   return (
-    <span className="inline-flex max-w-full items-center gap-1.5">
+    <span className="flex w-max max-w-full shrink-0 items-center gap-2">
       {markUrl ? <PartyMark url={markUrl} /> : null}
-      <span className="min-w-0">{label}</span>
+      <span className="min-w-0 text-balance">{label}</span>
     </span>
   );
 }
@@ -178,84 +178,100 @@ export function LaunchCardIdentity({
 }: LaunchCardIdentityProps) {
   const statusColors = getStatusColors(status);
 
+  const parties = (
+    <div
+      className={`flex w-full min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-cyan-600 uppercase sm:basis-full density-ease ${chrome.provider}`}
+    >
+      <PartyName label={providerName} markUrl={providerMarkUrl} />
+      {customers.map((customer) => (
+        <PartyName key={customer.label} label={customer.label} markUrl={customer.markUrl} />
+      ))}
+    </div>
+  );
+
+  const heading = (
+    <h2
+      className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-white break-words density-ease ${chrome.title}`}
+    >
+      {title}
+    </h2>
+  );
+
+  const rocket = showRocketSubtitle && showRocket ? (
+    <p className={`lc-rocket text-[10px] sm:text-xs font-mono text-cyan-600 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words ${showProvisional ? "" : "mt-1"}`}>
+      {rocketName}
+    </p>
+  ) : null;
+
+  const netReadout = (
+    <div className="flex flex-col items-end text-right leading-tight">
+      <span className="whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.14em] text-amber-500/90">
+        Net · Provisional
+      </span>
+      <span className="mt-0.5 whitespace-nowrap font-mono text-[11px] font-bold tabular-nums text-slate-200 sm:text-xs">
+        {tZero.date}
+      </span>
+      <HourCycleFade
+        cycle={hour12 ? "12" : "24"}
+        className="whitespace-nowrap font-mono text-[11px] font-bold tabular-nums text-slate-300 sm:text-xs"
+      >
+        {tZero.time}
+      </HourCycleFade>
+    </div>
+  );
+
+  const statusPill = (className: string) => (
+    <div
+      className={`items-center gap-2 shrink-0 bg-[#020617]/80 border rounded-sm backdrop-blur-sm cursor-help transition-all duration-300 density-ease ${statusColors.frame} ${chrome.statusPill} ${className}`}
+    >
+      <span className="relative flex h-2 w-2">
+        <span
+          className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}
+        ></span>
+      </span>
+      <span className={`text-[10px] font-mono uppercase tracking-wider sm:tracking-widest lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
+        Status: {status || "Unk"}
+      </span>
+    </div>
+  );
+
+  if (showProvisional) {
+    return (
+      <>
+        {parties}
+        <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1 sm:basis-full sm:gap-x-3">
+          <div className="group min-w-0">{heading}</div>
+          {statusPill("flex self-start")}
+          <div className="min-w-0 self-center">{rocket}</div>
+          <div className="self-center">{netReadout}</div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full sm:contents">
+      {parties}
+      <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full sm:contents sm:w-auto sm:flex-1">
         <div className="group cursor-default min-w-0 flex-1">
-          <p
-            className={`flex flex-wrap items-center font-mono text-cyan-600 uppercase transition-all group-hover:text-cyan-400 density-ease ${chrome.provider}`}
-          >
-            <PartyName label={providerName} markUrl={providerMarkUrl} />
-            {customers.map((customer) => (
-              <span key={customer.label} className="inline-flex items-center whitespace-nowrap">
-                <span className="mx-1.5 text-cyan-800">·</span>
-                <PartyName label={customer.label} markUrl={customer.markUrl} />
-              </span>
-            ))}
-          </p>
-          <h2
-            className={`font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-white break-words density-ease ${chrome.title}`}
-          >
-            {title}
-          </h2>
-          {showRocketSubtitle && showRocket && (
-            <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-600 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words">
-              {rocketName}
-            </p>
-          )}
+          {heading}
+          {rocket}
         </div>
 
         {/* Narrow stack only: status beside title */}
-        <div
-          className={`flex sm:hidden items-center gap-2 shrink-0 bg-[#020617]/80 border rounded-sm backdrop-blur-sm cursor-help transition-all duration-300 density-ease ${statusColors.frame} ${chrome.statusPill}`}
-        >
-          <span className="relative flex h-2 w-2">
-            <span
-              className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}
-            ></span>
-          </span>
-          <span className={`text-[10px] font-mono uppercase tracking-wider ${statusColors.text}`}>
-            Status: {status || "Unk"}
-          </span>
-        </div>
+        {statusPill("flex sm:hidden")}
       </div>
 
       <div
         className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 density-ease ${chrome.statusCol}`}
       >
-        <div
-          className={`hidden sm:flex items-center gap-2 sm:gap-3 lg:gap-1.5 xl:gap-2 bg-[#020617]/80 border rounded-sm backdrop-blur-sm cursor-help transition-all duration-300 density-ease ${statusColors.frame} ${chrome.statusPill}`}
-        >
-          <span className="relative flex h-2 w-2">
-            <span
-              className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}
-            ></span>
-          </span>
-          <span
-            className={`text-[10px] font-mono uppercase tracking-wider sm:tracking-widest lg:tracking-wider xl:tracking-widest ${statusColors.text}`}
-          >
-            Status: {status || "Unk"}
-          </span>
-        </div>
+        {statusPill("hidden sm:flex")}
 
         <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 lg:px-0 min-w-0">
           {launchTime.phase === "hold" ? (
             <CountdownHoldLabel />
           ) : launchTime.phase === "failed" ? (
             <CountdownFailureLabel />
-          ) : showProvisional ? (
-            <div className="flex flex-col items-start sm:items-end gap-0.5">
-              <span className="text-[10px] font-mono text-amber-500/90 uppercase tracking-[0.3em]">
-                Net · Provisional
-              </span>
-              <span className="text-base sm:text-lg md:text-xl lg:text-base xl:text-lg font-mono font-bold text-slate-300 tracking-wider sm:tracking-widest lg:tracking-wider tabular-nums">
-                <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block">
-                  <span>{tZero.date}</span>
-                  <span className="mx-1.5 text-slate-600">·</span>
-                  <span className="whitespace-nowrap">{tZero.time}</span>
-                </HourCycleFade>
-              </span>
-            </div>
           ) : (
             <TickingCountdown
               days={time.days}

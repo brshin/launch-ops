@@ -153,7 +153,7 @@ export default function LaunchCard({
                 Wider stack (sm+) + desktop: status + countdown right column (unchanged). */}
             <motion.div
                 variants={sectionVariants}
-                className={`flex flex-col gap-1.5 sm:gap-0 sm:flex-row sm:justify-between sm:items-start shrink-0 density-ease ${chrome.identity}`}
+                className={`flex flex-col gap-x-2 gap-y-1 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-x-3 sm:gap-y-1.5 shrink-0 density-ease ${chrome.identity}`}
             >
                 <LaunchCardIdentity
                     chrome={chrome}
