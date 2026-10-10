@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard/LaunchCard';
 import { Starfield } from './components/Starfield';
@@ -45,6 +45,7 @@ export default function App() {
 
   const compactMotion = useCompactMotion();
   const shortBand = useShortViewportBand();
+  const [watching, setWatching] = useState(false);
   useConsoleScrollbarActivity();
   const cardEnterY = compactMotion ? travel.compact.cardY : travel.desktop.cardY;
 
@@ -140,7 +141,11 @@ export default function App() {
             )}
 
           {/* Mission inspector. Narrow on desktop so the globe keeps the center. */}
-          <div className="flex w-full min-h-0 flex-1 flex-col overflow-hidden md:h-full md:w-[22.5rem] md:flex-none md:shrink-0 xl:w-[26rem] console-scrollbar console-scrollbar-y">
+          <div className={`flex w-full min-h-0 flex-1 flex-col overflow-hidden transition-[width] duration-300 ease-out md:h-full md:flex-none md:shrink-0 console-scrollbar console-scrollbar-y ${
+            watching
+              ? "md:w-[min(100%,34rem)] lg:w-[36rem] xl:w-[40rem]"
+              : "md:w-[22.5rem] xl:w-[26rem]"
+          }`}>
             <AnimatePresence mode="wait">
               {showLaunchCard && activeLaunch ? (
                 <motion.div
@@ -151,7 +156,11 @@ export default function App() {
                   exit={{ opacity: 0, y: -cardEnterY }}
                   transition={transitions.soft}
                 >
-                  <LaunchCard launch={activeLaunch} hour12={hour12} />
+                  <LaunchCard
+                    launch={activeLaunch}
+                    hour12={hour12}
+                    onWatchingChange={setWatching}
+                  />
                 </motion.div>
               ) : (
                 <motion.div

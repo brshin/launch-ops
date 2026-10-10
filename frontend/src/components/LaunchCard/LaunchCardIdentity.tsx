@@ -220,7 +220,7 @@ export function LaunchCardIdentity({
 
   const parties = (
     <div
-      className={`flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 font-mono text-cyan-600 uppercase lg:gap-x-4 lg:gap-y-1.5 lg:basis-full density-ease ${chrome.provider}`}
+      className={`flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-cyan-600 uppercase lg:gap-x-4 lg:gap-y-1.5 lg:basis-full density-ease ${chrome.provider}`}
     >
       <PartyName label={providerName} markUrl={providerMarkUrl} />
       {customers.map((customer) => (
@@ -231,14 +231,14 @@ export function LaunchCardIdentity({
 
   const heading = (
     <h2
-      className={`@container font-mono font-bold text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-white break-words density-ease ${chrome.title}`}
+      className={`@container font-mono font-bold leading-tight text-slate-100 uppercase text-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all group-hover:text-white break-words density-ease lg:leading-normal ${chrome.title}`}
     >
       <TitleWords title={title} />
     </h2>
   );
 
   const rocket = showRocketSubtitle && showRocket ? (
-    <p className="lc-rocket mt-1 text-[10px] lg:text-xs font-mono text-cyan-600 uppercase tracking-[0.12em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words">
+    <p className="lc-rocket mt-0.5 text-[10px] lg:mt-1 lg:text-xs font-mono text-cyan-600 uppercase tracking-[0.12em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words">
       {rocketName}
     </p>
   ) : null;
@@ -267,7 +267,7 @@ export function LaunchCardIdentity({
           className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}
         ></span>
       </span>
-      <span className={`text-[10px] font-mono uppercase tracking-wider lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
+      <span className={`text-[10px] font-mono uppercase leading-none tracking-wider lg:leading-normal lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
         Status: {status || "Unk"}
       </span>
     </div>
@@ -276,14 +276,16 @@ export function LaunchCardIdentity({
   return (
     <>
       {parties}
-      <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full lg:contents lg:w-auto lg:flex-1">
-        <div className="group cursor-default min-w-0 flex-1">
+      <div className="relative flex w-full min-w-0 items-start lg:contents lg:w-auto lg:flex-1">
+        <div className="group min-w-0 flex-1 max-lg:pr-[8.5rem]">
           {heading}
           {rocket}
         </div>
 
-        {/* Narrow stack only: status beside title */}
-        {statusPill("flex lg:hidden")}
+        {/* Out of flow so the pill's padding does not push the countdown down. */}
+        <div className="absolute right-0 top-0 lg:hidden">
+          {statusPill("flex")}
+        </div>
       </div>
 
       <div

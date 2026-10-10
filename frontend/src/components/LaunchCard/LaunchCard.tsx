@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Launch } from "../../types/launch";
 import { agencyMarkUrl, getLaunchTitle, getMissionBrief, getMissionCustomers, getMissionOrbitLabel, getMissionTypeLabel, getRocketName } from "../../utils/launchTitle";
@@ -25,6 +25,7 @@ import { pickWatchTarget } from "../../utils/watchTarget";
 interface LaunchCardProps {
     launch: Launch;
     hour12: boolean;
+    onWatchingChange?: (watching: boolean) => void;
 }
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
@@ -41,6 +42,7 @@ const cardVariants: Variants = {
 export default function LaunchCard({
     launch,
     hour12,
+    onWatchingChange,
 }: LaunchCardProps) {
     const rootRef = useRef<HTMLDivElement>(null);
     const reduceMotion = useReducedMotion();
@@ -95,6 +97,11 @@ export default function LaunchCard({
             !feedDismissed &&
             (userPlaying || watchTarget.mode === "live"),
     );
+
+    useEffect(() => {
+        onWatchingChange?.(playing);
+        return () => onWatchingChange?.(false);
+    }, [onWatchingChange, playing]);
 
     const status = launch.status.abbrev;
     const launchTime = getLaunchTime({
@@ -188,10 +195,10 @@ export default function LaunchCard({
                     layout="size"
                     variants={sectionVariants}
                     transition={transitions.soft}
-                    className={`relative w-full aspect-[16/10] shrink-0 rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
+                    className={`relative w-full shrink-0 rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
                         playing
-                            ? "max-h-24 sm:max-h-32 lg:max-h-48 cursor-default"
-                            : `${shortBand === "short" ? "max-h-16" : "max-h-20 sm:max-h-28"} lg:max-h-36 ${
+                            ? "aspect-video max-h-[min(52dvh,28rem)] cursor-default"
+                            : `aspect-[16/10] ${shortBand === "short" ? "max-h-16" : "max-h-20 sm:max-h-28"} lg:max-h-36 ${
                                 watchTarget ? "cursor-pointer" : "cursor-crosshair"
                               }`
                     }`}
@@ -236,7 +243,7 @@ export default function LaunchCard({
 
             <motion.div
                 variants={sectionVariants}
-                className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[9px] font-mono uppercase tracking-[0.2em] density-ease ${chrome.footer}`}
+                className={`border-t border-cyan-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 shrink-0 text-[10px] font-mono uppercase tracking-[0.16em] density-ease lg:text-[9px] lg:tracking-[0.2em] ${chrome.footer}`}
             >
                 <LaunchCardFooter lastUpdated={lastUpdated} hour12={hour12} />
             </motion.div>

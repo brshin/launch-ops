@@ -81,7 +81,7 @@ export function LaunchCardMission({
         className={`h-full min-w-0 bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
       >
         <div className={`absolute left-0 top-0 w-[2px] h-full transition-colors ${tZeroTickClass(phase)}`}></div>
-        <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+        <h3 className="text-[10px] text-cyan-600 uppercase font-mono tracking-[0.16em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors lg:text-[9px] lg:tracking-[0.2em]">
           T-Zero Target
         </h3>
         <p className="min-w-0 text-slate-100 font-mono tabular-nums">
@@ -103,7 +103,7 @@ export function LaunchCardMission({
           </HourCycleFade>
         </p>
         {windowStart && windowEnd ? (
-          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+          <p className="mt-1 sm:mt-1.5 text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             <span className="mr-1.5">Window</span>
             <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block tabular-nums tracking-normal">
               {windowStart}
@@ -112,7 +112,7 @@ export function LaunchCardMission({
             </HourCycleFade>
           </p>
         ) : netCaption ? (
-          <p className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+          <p className="mt-1 sm:mt-1.5 text-[10px] font-mono font-light text-cyan-600 uppercase tracking-wide group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             {netCaption}
           </p>
         ) : null}
@@ -122,13 +122,13 @@ export function LaunchCardMission({
         className={`h-full min-w-0 bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative density-ease ${chrome.metaPad}`}
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
-        <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+        <h3 className="text-[10px] text-cyan-600 uppercase font-mono tracking-[0.16em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors lg:text-[9px] lg:tracking-[0.2em]">
           Launch Site
         </h3>
         <p className="text-[11px] sm:text-xs lg:text-[11px] xl:text-xs text-slate-100 font-mono uppercase tracking-[0.04em] sm:tracking-[0.08em] lg:tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
           {place}
         </p>
-        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-600 font-mono tracking-normal sm:tracking-wide break-words leading-snug group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+        <p className="mt-1 text-[10px] text-cyan-600 font-mono tracking-normal sm:tracking-wide break-words leading-snug group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           {detail}
         </p>
       </motion.div>
@@ -144,7 +144,7 @@ export function LaunchCardMission({
             Mission Brief
           </h3>
           {(missionType || missionOrbit) && (
-            <p className="min-w-0 text-[9px] font-mono text-cyan-600 uppercase tracking-wide leading-snug lg:text-right lg:tracking-wider">
+            <p className="min-w-0 text-[10px] font-mono text-cyan-600 uppercase tracking-wide leading-snug lg:text-right lg:text-[9px] lg:tracking-wider">
               {missionType ? <span className="lg:whitespace-nowrap">{missionType}</span> : null}
               {missionType && missionOrbit ? (
                 <span className="lg:whitespace-nowrap">
@@ -158,7 +158,7 @@ export function LaunchCardMission({
           )}
         </div>
         <p
-          className="min-h-0 flex-1 overflow-y-auto text-[12px] sm:text-[13px] text-slate-300 leading-snug sm:leading-relaxed font-mono group-hover:text-slate-100 group-active:text-slate-100 transition-colors break-words console-scrollbar console-scrollbar-y"
+          className="min-h-0 flex-1 overflow-y-auto text-[13px] text-slate-300 leading-normal sm:leading-relaxed font-mono group-hover:text-slate-100 group-active:text-slate-100 transition-colors break-words console-scrollbar console-scrollbar-y"
         >
           {description}
         </p>
