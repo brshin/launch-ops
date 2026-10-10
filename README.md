@@ -8,6 +8,13 @@ Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/) 
 
 ---
 
+## Versions
+
+- **1.0** — Launch queue, mission card, countdown, and in-app webcast.
+- **1.1** — Current release. Adds a 12- and 24-hour clock, status colors, customers and agency marks, coarse NET handling, fitted mission titles, Earth on every screen size, a locked console, and a webcast that grows to 16:9.
+
+---
+
 ## Features
 
 - **Watch** — YouTube embeds in the camera pane (Watch / Replay / Close; live webcasts auto-open). While it plays, the pane is 16:9. From `md` up the card widens (`34rem`, `36rem` at `lg`, `40rem` at `xl`) so the picture can be watched; below `md` it grows inside the full-width card. X and other URLs open in a new tab (`Watch on X`, `Open webcast`). Queue **`STREAM`** replaces `T−` / `T+` / `NET TBD` while a webcast is live; **`LIVE` stays for In Flight**
