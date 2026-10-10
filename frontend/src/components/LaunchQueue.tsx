@@ -136,7 +136,7 @@ export function LaunchQueue({
             ? "px-2 py-1 lg:p-4"
             : shortBand === "mid"
               ? "px-2.5 py-1.5 lg:p-4"
-              : "px-3 py-2 lg:p-4"
+              : "px-2.5 py-1.5 md:px-3 md:py-2 lg:p-4"
         }`}
       >
         <h2
@@ -166,10 +166,10 @@ export function LaunchQueue({
           ref={queueScrollRef}
           className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain density-ease ${
             shortBand === "short"
-              ? "gap-1.5 p-1.5 max-lg:pr-7 lg:gap-2 lg:p-3"
+              ? "gap-1 p-1 max-lg:pr-6 lg:gap-2 lg:p-3"
               : shortBand === "mid"
                 ? "gap-1.5 p-2 max-lg:pr-7 lg:gap-2 lg:p-3"
-                : "gap-2 p-2.5 max-lg:pr-8 lg:p-3"
+                : "gap-1.5 p-2 max-md:pr-6 md:gap-2 md:p-2.5 md:max-lg:pr-8 lg:p-3"
           }`}
           variants={bootQueueListVariants}
           initial="hidden"
@@ -211,8 +211,8 @@ export function LaunchQueue({
                 onClick={() => {
                   if (launch.apiId) onSelect(launch.apiId);
                 }}
-                className={`shrink-0 snap-start lg:w-full min-h-11 text-left py-2.5 px-3 lg:py-3 lg:px-4 rounded-lg border transition-[width,colors,opacity] duration-300 ease-out flex flex-col justify-center gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
-                  hour12 ? "w-[17.5rem]" : "w-[14rem]"
+                className={`shrink-0 snap-start lg:w-full min-h-10 md:min-h-11 text-left py-1.5 px-2.5 md:py-2.5 md:px-3 lg:py-3 lg:px-4 rounded-lg border transition-[width,colors,opacity] duration-300 ease-out flex flex-col justify-center gap-0 md:gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
+                  hour12 ? "w-[15.5rem] md:w-[17.5rem]" : "w-[13rem] md:w-[14rem]"
                 } ${
                   selected
                     ? "bg-cyan-950/40 border-cyan-500/60 shadow-[inset_0_0_15px_rgba(34,211,238,0.15)]"
@@ -237,7 +237,7 @@ export function LaunchQueue({
                 <div className="flex items-baseline justify-between gap-1.5 w-full min-w-0">
                   <HourCycleFade
                     cycle={hour12 ? "12" : "24"}
-                    className={`inline-block min-w-0 max-w-full truncate text-xs leading-tight font-mono tabular-nums ${hour12 ? "tracking-[0.04em]" : "tracking-[0.12em]"} ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}
+                    className={`inline-block min-w-0 max-w-full truncate text-[11px] md:text-xs leading-tight font-mono tabular-nums ${hour12 ? "tracking-[0.04em]" : "tracking-[0.12em]"} ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}
                   >
                     {formatLocalDateTime(launch.net, { includeYear: false, hour12 }).label}
                   </HourCycleFade>
@@ -261,7 +261,7 @@ export function LaunchQueue({
 
                 <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
                   <span
-                    className="min-w-0 flex-1 font-mono text-xs leading-tight uppercase tracking-wide truncate text-cyan-600"
+                    className="min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide truncate text-cyan-600"
                   >
                     {getLaunchTitle(launch)}
                   </span>

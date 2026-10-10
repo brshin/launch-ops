@@ -124,10 +124,10 @@ export default function App() {
               <div
                 className={`relative w-full shrink-0 md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-1 ${
                   shortBand === "short"
-                    ? "h-16"
+                    ? "h-20"
                     : shortBand === "mid"
-                      ? "h-[5rem]"
-                      : "h-[6.25rem]"
+                      ? "h-[5.5rem]"
+                      : "h-[7.25rem]"
                 }`}
               >
                 <GlobeSlot maxDpr={2} />
