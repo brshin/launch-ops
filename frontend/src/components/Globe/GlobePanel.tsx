@@ -198,8 +198,8 @@ function OrientedGlobe() {
 }
 
 /**
- * The one earth canvas. The desktop hero mounts it full height.
- * The phone band can mount it instead, at a lower pixel density.
+ * The one earth canvas. The desktop hero mounts it at up to 2x.
+ * The phone band is small, so it can mount the same canvas at up to 3x.
  * Selection does not rebuild it, because the shell owns the mount.
  */
 export default function GlobePanel({ maxDpr = 2 }: { maxDpr?: number }) {

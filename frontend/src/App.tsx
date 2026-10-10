@@ -130,7 +130,7 @@ export default function App() {
                       : "h-[7.25rem]"
                 }`}
               >
-                <GlobeSlot maxDpr={2} />
+                <GlobeSlot maxDpr={3} />
               </div>
             )}
 
