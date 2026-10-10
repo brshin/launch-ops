@@ -100,7 +100,7 @@ export function ConsoleHeader({
 
   return (
     <motion.header
-      className={`w-full flex justify-between items-center gap-2 sm:gap-3 max-[399px]:flex-col max-[399px]:items-stretch border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
+      className={`w-full flex justify-between items-center gap-2 sm:gap-3 max-[359px]:flex-col max-[359px]:items-stretch border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
         shortBand === "short"
           ? "mb-1.5 pb-1.5 lg:mb-3 lg:pb-2.5"
           : shortBand === "mid"
@@ -115,10 +115,10 @@ export function ConsoleHeader({
         <h1
           className={`font-bold text-slate-100 uppercase leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] density-ease ${
             shortBand === "short"
-              ? "text-xl tracking-[0.1em] lg:text-3xl lg:tracking-[0.16em]"
+              ? "text-xl tracking-[0.06em] min-[400px]:tracking-[0.1em] lg:text-3xl lg:tracking-[0.16em]"
               : shortBand === "mid"
-                ? "text-[1.35rem] sm:text-[1.65rem] tracking-[0.11em] sm:tracking-[0.14em] lg:text-3xl lg:tracking-[0.16em]"
-                : "text-2xl sm:text-3xl tracking-[0.06em] sm:tracking-[0.16em]"
+                ? "text-xl min-[400px]:text-[1.35rem] sm:text-[1.65rem] tracking-[0.06em] min-[400px]:tracking-[0.11em] sm:tracking-[0.14em] lg:text-3xl lg:tracking-[0.16em]"
+                : "text-xl min-[400px]:text-2xl sm:text-3xl tracking-[0.06em] sm:tracking-[0.16em]"
           }`}
         >
           Launch
@@ -145,7 +145,7 @@ export function ConsoleHeader({
         </p>
       </div>
 
-      <div className="flex min-w-0 flex-1 justify-end max-[399px]:w-full max-[399px]:flex-none">
+      <div className="flex min-w-0 justify-start max-[359px]:w-full max-[359px]:flex-none min-[360px]:flex-1 min-[360px]:justify-end">
       <motion.div
         className="flex w-max max-w-full min-w-0 items-center gap-1.5 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2 py-1 sm:px-3 sm:py-1.5 xl:px-3.5 xl:py-2 rounded-sm backdrop-blur-md"
         variants={bootSysClockVariants}
