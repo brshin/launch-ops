@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCompactMotion } from "../../hooks/useCompactMotion";
 import {
   CountdownFailureLabel,
   CountdownHoldLabel,
@@ -37,8 +38,66 @@ function Hyphenated({ text }: { text: string }) {
 }
 
 /**
- * A parenthetical stays on the name's line only when the whole title fits.
- * Otherwise the `(…)` drops as its own block and the name wraps on its own.
+ * Below lg the title column is narrow. A short parenthetical stays.
+ * One that cannot fit that column on a single line is dropped, so it does
+ * not wrap into extra title rows. Desktop keeps the full title.
+ */
+function TitleParen({ text, spaceBefore }: { text: string; spaceBefore: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const compact = useCompactMotion();
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const title = node.closest("h2");
+    if (!title) return;
+
+    let frame = 0;
+    const fit = () => {
+      const el = ref.current;
+      const heading = el?.closest("h2");
+      if (!el || !heading) return;
+      if (!compact) {
+        el.hidden = false;
+        return;
+      }
+      const available = heading.clientWidth;
+      if (available < 8) return;
+      const style = getComputedStyle(heading);
+      const probe = document.createElement("span");
+      probe.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font:${style.font};letter-spacing:${style.letterSpacing};text-transform:${style.textTransform}`;
+      probe.textContent = text;
+      document.body.appendChild(probe);
+      const overflows = probe.getBoundingClientRect().width > available + 1;
+      probe.remove();
+      if (el.hidden !== overflows) el.hidden = overflows;
+    };
+
+    fit();
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fit);
+    });
+    ro.observe(title);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+    };
+  }, [compact, text]);
+
+  return (
+    <span ref={ref}>
+      {spaceBefore ? " " : null}
+      <span className="inline-block max-w-full">
+        <Hyphenated text={text} />
+      </span>
+    </span>
+  );
+}
+
+/**
+ * A parenthetical stays with the name. Below lg, a parenthetical that would
+ * wrap on its own is left off the title.
  */
 function TitleWords({ title }: { title: string }) {
   const chunks = title.split(/(\([^)]*\))/);
@@ -50,12 +109,13 @@ function TitleWords({ title }: { title: string }) {
     const isParen = trimmed.startsWith("(");
     const spaceBefore =
       index > 0 && (/\s$/.test(chunks[index - 1] ?? "") || /^\s/.test(chunk));
+    if (isParen) {
+      return <TitleParen key={index} text={trimmed} spaceBefore={spaceBefore} />;
+    }
     return (
       <span key={index}>
         {spaceBefore ? " " : null}
-        <span
-          className={`inline-block max-w-full ${isParen ? "" : "tracking-[-0.02em]"}`}
-        >
+        <span className="inline-block max-w-full tracking-[-0.02em]">
           <Hyphenated text={trimmed} />
         </span>
       </span>
