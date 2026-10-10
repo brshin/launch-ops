@@ -132,7 +132,7 @@ export default function LaunchCard({
         <motion.div
             ref={rootRef}
             data-density={density}
-            className={`launch-card w-full flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-clip max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0 density-ease ${chrome.rootPad}`}
+            className={`launch-card flex h-full min-h-0 w-full flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-clip density-ease ${chrome.rootPad}`}
             variants={cardVariants}
             initial="hidden"
             animate="show"
@@ -149,11 +149,11 @@ export default function LaunchCard({
             </motion.div>
 
             {/* Identity + status/countdown
-                Narrow stack (<sm): status top-right beside title; countdown below.
-                Wider stack (sm+) + desktop: status + countdown right column (unchanged). */}
+                Below lg the card is a narrow column: status sits beside the title, countdown underneath.
+                lg+ keeps the inspector's right-hand status column. */}
             <motion.div
                 variants={sectionVariants}
-                className={`flex flex-col gap-x-2 gap-y-1 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-x-3 sm:gap-y-1.5 shrink-0 density-ease ${chrome.identity}`}
+                className={`flex flex-col gap-x-2 gap-y-1 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-x-3 lg:gap-y-1.5 shrink-0 density-ease ${chrome.identity}`}
             >
                 <LaunchCardIdentity
                     chrome={chrome}
@@ -178,11 +178,11 @@ export default function LaunchCard({
               collapse. On desktop the mission region is what scrolls.
             */}
             <div
-                className="flex flex-col min-h-0 max-lg:flex-none max-lg:overflow-visible lg:flex-1 lg:overflow-hidden"
+                className="flex min-h-0 flex-1 flex-col overflow-hidden"
             >
             <motion.div
                 variants={cardVariants}
-                className={`flex flex-col min-h-0 max-lg:flex-none lg:flex-1 lg:min-h-0 lg:overflow-hidden density-ease ${chrome.panelsGap}`}
+                className={`flex min-h-0 flex-1 flex-col overflow-hidden density-ease ${chrome.panelsGap}`}
             >
                 <motion.div
                     layout="size"
@@ -190,10 +190,10 @@ export default function LaunchCard({
                     transition={transitions.soft}
                     className={`relative w-full aspect-[16/10] shrink-0 rounded-lg border border-cyan-900/60 overflow-clip bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${
                         playing
-                            ? "max-h-[min(50dvh,22rem)] sm:max-h-[min(52dvh,24rem)] lg:max-h-48 cursor-default"
-                            : watchTarget
-                              ? "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:max-h-36 cursor-pointer"
-                              : "max-h-[min(40dvh,13.5rem)] sm:max-h-[min(42dvh,15rem)] lg:max-h-36 cursor-crosshair"
+                            ? "max-h-24 sm:max-h-32 lg:max-h-48 cursor-default"
+                            : `${shortBand === "short" ? "max-h-16" : "max-h-20 sm:max-h-28"} lg:max-h-36 ${
+                                watchTarget ? "cursor-pointer" : "cursor-crosshair"
+                              }`
                     }`}
                 >
                     <LaunchCardVisual

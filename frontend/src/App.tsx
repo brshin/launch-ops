@@ -16,7 +16,7 @@ import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity
 
 const GlobePanel = lazy(() => import("./components/Globe/GlobePanel"));
 
-function GlobeSlot() {
+function GlobeSlot({ maxDpr }: { maxDpr?: number }) {
   return (
     <div className="relative h-full min-h-0 w-full">
       <div
@@ -32,7 +32,7 @@ function GlobeSlot() {
           </div>
         }
       >
-        <GlobePanel />
+        <GlobePanel maxDpr={maxDpr} />
       </Suspense>
     </div>
   );
@@ -83,9 +83,9 @@ export default function App() {
           onHourCycle={setCycle}
         />
 
-        {/* PANELS WRAPPER */}
+        {/* PANELS WRAPPER. The console stays locked. Nothing scrolls the page. */}
         <div
-          className={`flex-1 flex flex-col lg:flex-row min-h-0 w-full relative z-10 density-ease ${
+          className={`console-scrollbar console-scrollbar-y relative z-10 flex w-full min-h-0 flex-1 flex-col overflow-hidden lg:flex-row density-ease ${
             shortBand === "short"
               ? "gap-1.5 lg:gap-5"
               : shortBand === "mid"
@@ -105,20 +105,47 @@ export default function App() {
             hour12={hour12}
           />
 
-          {/* Desktop hero. Hidden below lg so the stacked console stays queue + card. */}
-          {!compactMotion && (
-            <div className="relative hidden min-h-0 min-w-0 flex-1 lg:block">
-              <GlobeSlot />
-            </div>
-          )}
+          {/*
+            Below md the earth is a short band and the card fills the rest.
+            From md until lg the earth is the left column and the card keeps its width.
+            lg:contents hands both back to the desktop row, unchanged.
+          */}
+          <div
+            className={`flex w-full min-h-0 flex-1 flex-col overflow-hidden md:flex-row lg:contents ${
+              shortBand === "short"
+                ? "gap-1.5 md:gap-4"
+                : shortBand === "mid"
+                  ? "gap-2 md:gap-4"
+                  : "gap-3 sm:gap-4 md:gap-6"
+            }`}
+          >
+            {compactMotion && (
+              <div
+                className={`relative w-full shrink-0 md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-1 ${
+                  shortBand === "short"
+                    ? "h-16"
+                    : shortBand === "mid"
+                      ? "h-[5rem]"
+                      : "h-[6.25rem]"
+                }`}
+              >
+                <GlobeSlot maxDpr={1.25} />
+              </div>
+            )}
+
+            {!compactMotion && (
+              <div className="relative hidden min-h-0 min-w-0 flex-1 lg:block">
+                <GlobeSlot />
+              </div>
+            )}
 
           {/* Mission inspector. Narrow on desktop so the globe keeps the center. */}
-          <div className="flex-1 w-full lg:flex-none lg:w-[22.5rem] xl:w-[26rem] lg:shrink-0 lg:h-full min-h-0 flex flex-col max-lg:min-h-0 max-lg:overflow-y-auto max-lg:overscroll-y-contain console-scrollbar console-scrollbar-y">
+          <div className="flex w-full min-h-0 flex-1 flex-col overflow-hidden md:h-full md:w-[22.5rem] md:flex-none md:shrink-0 xl:w-[26rem] console-scrollbar console-scrollbar-y">
             <AnimatePresence mode="wait">
               {showLaunchCard && activeLaunch ? (
                 <motion.div
                   key={activeLaunch.apiId}
-                  className="w-full flex flex-col max-lg:h-auto max-lg:shrink-0 lg:h-full lg:min-h-0"
+                  className="flex h-full min-h-0 w-full flex-col"
                   initial={{ opacity: 0, y: cardEnterY }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -cardEnterY }}
@@ -152,6 +179,7 @@ export default function App() {
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
           </div>
         
         </div>

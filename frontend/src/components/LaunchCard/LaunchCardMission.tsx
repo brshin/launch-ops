@@ -74,30 +74,30 @@ export function LaunchCardMission({
       layout="size"
       variants={cardVariants}
       transition={transitions.soft}
-      className={`w-full h-auto self-start max-lg:shrink-0 lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden grid grid-cols-1 sm:grid-cols-2 content-start items-stretch lg:grid-rows-[auto_minmax(0,1fr)] density-ease ${chrome.metaGap}`}
+      className={`grid h-full min-h-0 w-full flex-1 grid-cols-2 content-start items-stretch overflow-hidden grid-rows-[auto_minmax(4.5rem,1fr)] density-ease ${chrome.metaGap}`}
     >
       <motion.div
         variants={sectionVariants}
-        className={`h-full bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
+        className={`h-full min-w-0 bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative overflow-clip density-ease ${chrome.metaPad}`}
       >
         <div className={`absolute left-0 top-0 w-[2px] h-full transition-colors ${tZeroTickClass(phase)}`}></div>
         <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           T-Zero Target
         </h3>
-        <p className="text-slate-100 font-mono tabular-nums">
+        <p className="min-w-0 text-slate-100 font-mono tabular-nums">
           <HourCycleFade
             cycle={hour12 ? "12" : "24"}
             className={`inline-block max-w-full ${
               hour12
-                ? "text-xs sm:text-[13px] lg:text-[11px] xl:text-xs tracking-normal whitespace-nowrap"
-                : "text-xs sm:text-sm lg:text-[11px] xl:text-[13px] tracking-wider lg:tracking-wide"
+                ? "text-[11px] sm:text-xs lg:text-[11px] xl:text-xs tracking-normal lg:whitespace-nowrap"
+                : "text-[11px] sm:text-xs lg:text-[11px] xl:text-[13px] tracking-wide lg:tracking-wide"
             }`}
           >
-            <span>{tZero.date}</span>
+            <span className="block lg:inline">{tZero.date}</span>
             {showNetTime ? (
               <>
-                <span className="mx-1.5 text-slate-600">·</span>
-                <span className="whitespace-nowrap">{tZero.time}</span>
+                <span className="mx-1.5 hidden text-slate-600 lg:inline">·</span>
+                <span className="block whitespace-nowrap lg:inline">{tZero.time}</span>
               </>
             ) : null}
           </HourCycleFade>
@@ -119,35 +119,35 @@ export function LaunchCardMission({
       </motion.div>
       <motion.div
         variants={sectionVariants}
-        className={`h-full bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative min-w-0 density-ease ${chrome.metaPad}`}
+        className={`h-full min-w-0 bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative density-ease ${chrome.metaPad}`}
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
         <h3 className="text-[9px] text-cyan-600 uppercase font-mono tracking-[0.2em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           Launch Site
         </h3>
-        <p className="text-[11px] sm:text-xs text-slate-100 font-mono uppercase tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
+        <p className="text-[11px] sm:text-xs lg:text-[11px] xl:text-xs text-slate-100 font-mono uppercase tracking-[0.04em] sm:tracking-[0.08em] lg:tracking-[0.12em] break-words leading-snug group-hover:text-white group-active:text-white transition-colors">
           {place}
         </p>
-        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-600 font-mono tracking-wide break-words leading-snug group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+        <p className="mt-1 text-[9px] sm:text-[10px] text-cyan-600 font-mono tracking-normal sm:tracking-wide break-words leading-snug group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
           {detail}
         </p>
       </motion.div>
 
       <motion.div
         variants={sectionVariants}
-        className={`sm:col-span-2 w-full h-auto self-start lg:h-full lg:min-h-0 lg:self-stretch flex flex-col bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative density-ease ${chrome.metaPad}`}
+        className={`col-span-2 flex h-full min-h-0 w-full min-w-0 flex-col self-stretch bg-black/40 border border-cyan-900/50 rounded-lg overflow-clip hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative density-ease ${chrome.metaPad}`}
       >
         <div
-          className={`flex justify-between items-center border-b border-cyan-900/50 shrink-0 gap-2 sm:gap-3 density-ease ${chrome.briefHead}`}
+          className={`flex flex-wrap items-baseline justify-between border-b border-cyan-900/50 shrink-0 gap-x-2 gap-y-0.5 sm:gap-x-3 density-ease ${chrome.briefHead}`}
         >
-          <h3 className="text-[10px] sm:text-xs text-cyan-600 uppercase font-mono tracking-[0.15em] leading-tight shrink-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
+          <h3 className="text-[10px] sm:text-xs text-cyan-600 uppercase font-mono tracking-[0.12em] sm:tracking-[0.15em] leading-tight shrink-0 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors">
             Mission Brief
           </h3>
           {(missionType || missionOrbit) && (
-            <p className="min-w-0 text-right text-[9px] font-mono text-cyan-600 uppercase tracking-wider leading-snug">
-              {missionType ? <span className="whitespace-nowrap">{missionType}</span> : null}
+            <p className="min-w-0 text-[9px] font-mono text-cyan-600 uppercase tracking-wide leading-snug lg:text-right lg:tracking-wider">
+              {missionType ? <span className="lg:whitespace-nowrap">{missionType}</span> : null}
               {missionType && missionOrbit ? (
-                <span className="whitespace-nowrap">
+                <span className="lg:whitespace-nowrap">
                   <span className="mx-1.5 text-cyan-800">·</span>
                   {missionOrbit}
                 </span>
@@ -158,7 +158,7 @@ export function LaunchCardMission({
           )}
         </div>
         <p
-          className="text-[12px] sm:text-[13px] text-slate-300 leading-relaxed font-mono group-hover:text-slate-100 group-active:text-slate-100 transition-colors break-words lg:min-h-0 lg:flex-1 lg:overflow-y-auto console-scrollbar console-scrollbar-y"
+          className="min-h-0 flex-1 overflow-y-auto text-[12px] sm:text-[13px] text-slate-300 leading-snug sm:leading-relaxed font-mono group-hover:text-slate-100 group-active:text-slate-100 transition-colors break-words console-scrollbar console-scrollbar-y"
         >
           {description}
         </p>

@@ -162,7 +162,7 @@ function PartyMark({ url }: { url: string }) {
   if (hidden) return null;
 
   return (
-    <span className={`inline-flex size-8 shrink-0 items-center justify-center ${src ? "" : "invisible"}`}>
+    <span className={`inline-flex size-6 shrink-0 items-center justify-center sm:size-8 ${src ? "" : "invisible"}`}>
       {src ? (
         <img src={src} alt="" draggable={false} className="size-full object-contain" />
       ) : null}
@@ -220,7 +220,7 @@ export function LaunchCardIdentity({
 
   const parties = (
     <div
-      className={`flex w-full min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-cyan-600 uppercase sm:basis-full density-ease ${chrome.provider}`}
+      className={`flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 font-mono text-cyan-600 uppercase lg:gap-x-4 lg:gap-y-1.5 lg:basis-full density-ease ${chrome.provider}`}
     >
       <PartyName label={providerName} markUrl={providerMarkUrl} />
       {customers.map((customer) => (
@@ -238,13 +238,13 @@ export function LaunchCardIdentity({
   );
 
   const rocket = showRocketSubtitle && showRocket ? (
-    <p className="lc-rocket mt-1 text-[10px] sm:text-xs font-mono text-cyan-600 uppercase tracking-[0.15em] sm:tracking-[0.2em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words">
+    <p className="lc-rocket mt-1 text-[10px] lg:text-xs font-mono text-cyan-600 uppercase tracking-[0.12em] lg:tracking-[0.22em] transition-colors group-hover:text-cyan-400 break-words">
       {rocketName}
     </p>
   ) : null;
 
   const netReadout = (
-    <div className="flex w-full min-w-0 flex-col items-start gap-1 sm:w-auto sm:items-end">
+    <div className="flex w-full min-w-0 flex-col items-start gap-1 lg:w-auto lg:items-end">
       <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums text-slate-200 sm:text-[11px]">
         <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block">
           <span>{tZero.date}</span>
@@ -267,7 +267,7 @@ export function LaunchCardIdentity({
           className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}
         ></span>
       </span>
-      <span className={`text-[10px] font-mono uppercase tracking-wider sm:tracking-widest lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
+      <span className={`text-[10px] font-mono uppercase tracking-wider lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
         Status: {status || "Unk"}
       </span>
     </div>
@@ -276,20 +276,20 @@ export function LaunchCardIdentity({
   return (
     <>
       {parties}
-      <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full sm:contents sm:w-auto sm:flex-1">
+      <div className="flex flex-row justify-between items-start gap-2 min-w-0 w-full lg:contents lg:w-auto lg:flex-1">
         <div className="group cursor-default min-w-0 flex-1">
           {heading}
           {rocket}
         </div>
 
         {/* Narrow stack only: status beside title */}
-        {statusPill("flex sm:hidden")}
+        {statusPill("flex lg:hidden")}
       </div>
 
       <div
-        className={`flex flex-col items-start sm:items-end w-full sm:w-auto shrink-0 density-ease ${chrome.statusCol}`}
+        className={`flex flex-col items-start lg:items-end w-full lg:w-auto shrink-0 density-ease ${chrome.statusCol}`}
       >
-        {statusPill("hidden sm:flex")}
+        {statusPill("hidden lg:flex")}
 
         <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 lg:px-0 min-w-0">
           {showProvisional ? (

@@ -198,14 +198,15 @@ function OrientedGlobe() {
 }
 
 /**
- * Desktop hero globe. Owns the only canvas.
- * Mounted from the shell, outside the launch-keyed card, so selection does not rebuild it.
+ * The one earth canvas. The desktop hero mounts it full height.
+ * The phone band can mount it instead, at a lower pixel density.
+ * Selection does not rebuild it, because the shell owns the mount.
  */
-export default function GlobePanel() {
+export default function GlobePanel({ maxDpr = 2 }: { maxDpr?: number }) {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
       <Canvas
-        dpr={[1, 2]}
+        dpr={[1, maxDpr]}
         flat
         frameloop="always"
         gl={async (props) => {

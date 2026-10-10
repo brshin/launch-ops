@@ -20,15 +20,15 @@ export type DensityChrome = {
  */
 export const densityChrome: Record<CardDensity, DensityChrome> = {
   roomy: {
-    rootPad: "p-3 sm:p-4 lg:p-3.5",
-    identity: "mb-2.5 sm:mb-3 lg:mb-3",
+    rootPad: "p-2.5 sm:p-3 lg:p-3.5",
+    identity: "mb-2 sm:mb-2.5 lg:mb-3",
     provider:
       "text-[10px] sm:text-[11px] tracking-[0.04em] sm:tracking-[0.06em] leading-snug",
     title:
-      "text-lg sm:text-xl lg:text-[15px] xl:text-[15px] tracking-normal sm:tracking-[0.04em] lg:tracking-normal",
+      "text-[15px] lg:text-[15px] xl:text-[15px] tracking-normal lg:tracking-normal",
     statusCol: "gap-1.5 sm:gap-3 lg:gap-2",
-    statusPill: "px-3 py-2 sm:px-5 sm:py-2.5 lg:px-2 lg:py-1.5 xl:px-3 min-h-9 lg:min-h-8",
-    panelsGap: "gap-3 sm:gap-4 lg:gap-3",
+    statusPill: "px-3 py-1.5 lg:px-2 lg:py-1.5 xl:px-3 min-h-8 lg:min-h-8",
+    panelsGap: "gap-2 sm:gap-3 lg:gap-3",
     metaGap: "gap-2 sm:gap-3 lg:gap-2",
     metaPad: "p-2.5 sm:p-3 lg:p-2.5",
     briefHead: "mb-2 lg:mb-1.5 pb-2 lg:pb-1.5",
@@ -38,9 +38,9 @@ export const densityChrome: Record<CardDensity, DensityChrome> = {
     rootPad: "p-2.5 sm:p-3",
     identity: "mb-2",
     provider: "text-[10px] tracking-[0.04em] leading-snug",
-    title: "text-[17px] sm:text-lg tracking-normal sm:tracking-[0.04em]",
+    title: "text-[15px] tracking-normal",
     statusCol: "gap-1 sm:gap-2",
-    statusPill: "px-2.5 py-1.5 sm:px-4 sm:py-2 min-h-8 sm:min-h-9",
+    statusPill: "px-2.5 py-1.5 min-h-8",
     panelsGap: "gap-2.5 sm:gap-3.5",
     metaGap: "gap-1.5 sm:gap-2.5",
     metaPad: "p-2 sm:p-2.5",
@@ -51,7 +51,7 @@ export const densityChrome: Record<CardDensity, DensityChrome> = {
     rootPad: "p-2 sm:p-2.5",
     identity: "mb-1.5",
     provider: "text-[10px] tracking-[0.02em] leading-snug",
-    title: "text-base tracking-[0.08em]",
+    title: "text-[14px] tracking-normal",
     statusCol: "gap-1",
     statusPill: "px-2.5 py-1 min-h-8",
     panelsGap: "gap-2",
