@@ -277,6 +277,25 @@ export function LaunchCardIdentity({
   time,
 }: LaunchCardIdentityProps) {
   const statusColors = getStatusColors(status);
+  const compact = useCompactMotion();
+  const phonePillRef = useRef<HTMLDivElement>(null);
+  const [titleGap, setTitleGap] = useState(0);
+
+  useLayoutEffect(() => {
+    const pill = phonePillRef.current;
+    if (!pill || !compact) {
+      setTitleGap(0);
+      return;
+    }
+    const measure = () => {
+      const width = pill.getBoundingClientRect().width;
+      setTitleGap(width > 0 ? Math.ceil(width + 10) : 0);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(pill);
+    return () => ro.disconnect();
+  }, [compact, status]);
 
   const parties = (
     <div
@@ -327,7 +346,7 @@ export function LaunchCardIdentity({
           className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}
         ></span>
       </span>
-      <span className={`text-[10px] font-mono uppercase leading-none tracking-wider lg:leading-normal lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
+      <span className={`max-lg:whitespace-nowrap text-[10px] font-mono uppercase leading-none tracking-wider lg:leading-normal lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
         Status: {status || "Unk"}
       </span>
     </div>
@@ -337,13 +356,16 @@ export function LaunchCardIdentity({
     <>
       {parties}
       <div className="relative flex w-full min-w-0 items-start lg:contents lg:w-auto lg:flex-1">
-        <div className="group min-w-0 flex-1 max-lg:pr-[8.5rem]">
+        <div
+          className="group min-w-0 flex-1"
+          style={compact && titleGap > 0 ? { paddingRight: titleGap } : undefined}
+        >
           {heading}
           {rocket}
         </div>
 
         {/* Out of flow so the pill's padding does not push the countdown down. */}
-        <div className="absolute right-0 top-0 lg:hidden">
+        <div ref={phonePillRef} className="absolute right-0 top-0 lg:hidden">
           {statusPill("flex")}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
+import { useCompactMotion } from "../../hooks/useCompactMotion";
 import { transitions } from "../../lib/motionTokens";
 import { youtubeVideoId, type WatchTarget } from "../../utils/watchTarget";
 import {
@@ -61,9 +62,11 @@ function openOutbound(url: string) {
  */
 function YoutubePlayerMount({
   videoId,
+  muted,
   playerRef,
 }: {
   videoId: string;
+  muted: boolean;
   playerRef: { current: YtPlayer | null };
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,7 +81,7 @@ function YoutubePlayerMount({
     container.replaceChildren(host);
 
     let cancelled = false;
-    createYoutubePlayer(host, videoId)
+    createYoutubePlayer(host, videoId, { muted })
       .then((player) => {
         if (cancelled) {
           try {
@@ -105,7 +108,7 @@ function YoutubePlayerMount({
       }
       container.replaceChildren();
     };
-  }, [playerRef, videoId]);
+  }, [muted, playerRef, videoId]);
 
   return (
     <div
@@ -137,6 +140,7 @@ export function LaunchCardVisual({
     [compactTravel],
   );
 
+  const compact = useCompactMotion();
   const showPlayer = Boolean(playing && watchTarget?.embedUrl);
   const showHudFx = !showPlayer;
   const canEmbed = Boolean(watchTarget?.embedUrl);
@@ -231,7 +235,7 @@ export function LaunchCardVisual({
             exit={{ opacity: 0 }}
             transition={transitions.soft}
           >
-            <YoutubePlayerMount videoId={videoId} playerRef={playerRef} />
+            <YoutubePlayerMount videoId={videoId} muted={compact} playerRef={playerRef} />
           </motion.div>
         )}
 

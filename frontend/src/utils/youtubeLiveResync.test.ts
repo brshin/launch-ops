@@ -5,6 +5,7 @@ import {
   YT_BUFFERING,
   YT_PLAYING,
   planLiveResync,
+  youtubePlayerVars,
 } from "./youtubeLiveResync";
 
 const PAUSED = 2;
@@ -62,5 +63,19 @@ describe("planLiveResync", () => {
         delaySec: 12,
       }),
     ).toBe("play-seek");
+  });
+});
+
+describe("youtubePlayerVars", () => {
+  it("keeps desktop autoplay unmuted", () => {
+    expect(youtubePlayerVars("http://localhost:5173")).toMatchObject({
+      autoplay: 1,
+      playsinline: 1,
+    });
+    expect(youtubePlayerVars("http://localhost:5173").mute).toBeUndefined();
+  });
+
+  it("mutes below lg so a phone can start the live embed", () => {
+    expect(youtubePlayerVars("http://localhost:5173", true).mute).toBe(1);
   });
 });

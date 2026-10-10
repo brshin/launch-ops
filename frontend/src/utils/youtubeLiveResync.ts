@@ -12,6 +12,7 @@ export type LiveResyncPlan = "skip" | "play" | "seek" | "play-seek";
 
 export type YtPlayer = {
   playVideo: () => void;
+  mute: () => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
   getPlayerState: () => number;
   getCurrentTime: () => number;
@@ -19,11 +20,24 @@ export type YtPlayer = {
   destroy: () => void;
 };
 
+/** Desktop starts with sound. Below lg, mute so a phone can autoplay. */
+export function youtubePlayerVars(origin: string, muted = false): YtPlayerVars {
+  return {
+    autoplay: 1,
+    rel: 0,
+    modestbranding: 1,
+    playsinline: 1,
+    origin,
+    ...(muted ? { mute: 1 as const } : {}),
+  };
+}
+
 type YtPlayerVars = {
   autoplay?: 0 | 1;
   rel?: 0 | 1;
   modestbranding?: 0 | 1;
   playsinline?: 0 | 1;
+  mute?: 0 | 1;
   origin?: string;
 };
 
@@ -123,7 +137,9 @@ export function loadYoutubeIframeApi(): Promise<void> {
 export function createYoutubePlayer(
   host: HTMLElement,
   videoId: string,
+  options?: { muted?: boolean },
 ): Promise<YtPlayer> {
+  const muted = Boolean(options?.muted);
   return loadYoutubeIframeApi().then(
     () =>
       new Promise((resolve, reject) => {
@@ -137,15 +153,19 @@ export function createYoutubePlayer(
           videoId,
           width: "100%",
           height: "100%",
-          playerVars: {
-            autoplay: 1,
-            rel: 0,
-            modestbranding: 1,
-            playsinline: 1,
-            origin: window.location.origin,
-          },
+          playerVars: youtubePlayerVars(window.location.origin, muted),
           events: {
-            onReady: (event) => resolve(event.target),
+            onReady: (event) => {
+              if (muted) {
+                try {
+                  event.target.mute();
+                  event.target.playVideo();
+                } catch {
+                  /* autoplay still starts from playerVars when this throws */
+                }
+              }
+              resolve(event.target);
+            },
           },
         });
         void player;
