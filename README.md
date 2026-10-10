@@ -10,20 +10,20 @@ Data is fetched from [The Space Devs Launch Library](https://thespacedevs.com/) 
 
 ## Features
 
-- **Watch** — YouTube embeds in the camera pane (Watch / Replay / Close; live webcasts auto-open). X and other URLs open in a new tab (`Watch on X`, `Open webcast`). Queue **`STREAM`** replaces `T−` / `T+` / `NET TBD` while a webcast is live; **`LIVE` stays for In Flight**
+- **Watch** — YouTube embeds in the camera pane (Watch / Replay / Close; live webcasts auto-open). While it plays, the pane is 16:9. From `md` up the card widens (`34rem`, `36rem` at `lg`, `40rem` at `xl`) so the picture can be watched; below `md` it grows inside the full-width card. X and other URLs open in a new tab (`Watch on X`, `Open webcast`). Queue **`STREAM`** replaces `T−` / `T+` / `NET TBD` while a webcast is live; **`LIVE` stays for In Flight**
 - **Launch Queue** — upcoming launches with local NET (`09 OCT · 12:25 PM`, or `09 OCT · 12:25` in 24-hour). The clock follows Sys Time. The relative chip stays a duration (`T− 21 min`, `T+ 12 min`, `LIVE`, `HOLD`, `NET TBD`, `STREAM`). Provider abbreviation, dimmed past rows, and a `NEXT` marker on the in-flight or soonest upcoming launch (sidebar). Selection is by launch `apiId` (sticky across live cache refreshes) and defaults to in-flight or next NET
-- **Mission detail panel** — provider, mission customers when they are not the provider, mission/rocket titles, a status pill with its own color per status (`docs/status-colors.png`), T− (cyan countdown) vs T+ (emerald elapsed) as `D:HH:MM:SS`, and provisional NET for TBD/TBC or coarse `net_precision` (day/month and coarser — no fake minute countdown)
+- **Mission detail panel** — provider and mission customers (customers only when they are not the provider), each beside an agency mark. The mark prefers the square social logo and falls back to the wordmark; a solid white or black field is punched out, and a failed image leaves the name. Mission and rocket titles. A parenthetical stays on the mission name’s line only when the whole title fits; otherwise it drops under the name. A status pill with its own color per status (`docs/status-colors.png`). On the stacked card the pill sits on the title’s first line and does not push the countdown down. T− (cyan countdown) vs T+ (emerald elapsed) as `D:HH:MM:SS`, and provisional NET for TBD/TBC or coarse `net_precision` (day/month and coarser — no fake minute countdown)
 - **T-Zero and launch site** — local date, plus a clock when NET is precise to the hour. That clock follows Sys Time (12-hour or 24-hour). Coarser targets hide the time and say how rough they are (`Day only`, `This month`). A real window replaces that caption. The offset stays on Sys Time, not on this tile. Launch Site leads with the place; a US state expands only for `{site}, {ST}, USA`. The site and pad sit on the line under it
 - **Mission Brief** — description, with type and orbit as plain names on the title row. Unknown metadata is hidden. Placeholder copy (`Details TBD`) becomes `No public payload details yet.`
 - **Live Feed indicator** — Socket.IO connect/disconnect status in the queue header (event flash on link change)
 - **Last Updated** — provider `last_updated` as a local date and time, in the same hour cycle as Sys Time. The zone stays on Sys Time
 - **Sys Time** — local clock with the shared zone name and offset (`Pacific · UTC-7`), not a reference city (San Jose stays Pacific, not Los Angeles). Half-hour zones use `UTC+5:30`. A `12h` / `24h` label beside Sys Time switches every clock face. It defaults to 12-hour and is remembered on the device. Seconds sit a step under the hours and minutes. Phone uses the same two lines as desktop: label and zone, then the time and date. Under 400px the clock drops onto its own row so that date still fits beside the time. At `xl` (1280px) the desktop clock steps up one size
-- **Earth** — desktop-only globe between the queue and the launch card (`lg`, 1024px and up). Day and night follow real solar time. The earth spins on its poles, and the sun turns with it, so local time stays put. No orbit controls and no pad markers. Below `lg` the canvas is not mounted
+- **Earth** — one globe. On a phone it is a short band above the card. From `md` until `lg` it is the left column beside a `22.5rem` card. At `lg+` it is the desktop hero between the queue and the card. Day and night follow real solar time. The earth spins on its poles, and the sun turns with it, so local time stays put. No orbit controls and no pad markers. The phone band mounts the same canvas at a lower pixel density
 - **HUD motion** — Framer Motion cold-load boot, launch-selection crossfade, ticking T− urgency vs calm T+, and a dimmed spinning starfield behind the globe
 - **Live UI updates** — when the worker refreshes the cache, Redis Pub/Sub notifies the server, which emits the new payload to connected Socket.IO clients
 - **Cached API** — `GET /launches` reads Redis first, then MongoDB on a cache miss
 - **Scheduled ingestion** — cron worker polls Launch Library every 5 minutes, upserts MongoDB, writes Redis, and publishes a cache-update message
-- **Responsive UI** — locked `dvh` console with safe-area insets. Below `lg`: horizontal queue and stacked detail, no globe. At `lg+`: queue sidebar (320px), globe, and a narrower stacked mission card (`22.5rem`, `26rem` at `xl`)
+- **Responsive UI** — locked `dvh` console with safe-area insets. Nothing scrolls the page; a long brief scrolls inside the card. Below `md`: horizontal queue, short earth band, card fills the rest. From `md` until `lg`: queue on top, earth left, card `22.5rem`. At `lg+`: queue sidebar (320px), globe, and the mission card (`22.5rem`, `26rem` at `xl`)
 
 ### Watch ranking
 
@@ -70,7 +70,7 @@ Launch Library API  (?mode=detailed)
 
 The worker is required by `server.js`, so it runs in the same Node process as the API.
 
-On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed`, `useHourCycle`, and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `GlobePanel`, `LaunchCard`). `GlobePanel` is lazy-loaded and mounted only at `lg+`. It sits outside the `apiId`-keyed card motion, so selecting a launch does not remount the canvas. `solarAttitude` places the day/night terminator from UTC; a slow polar spin is added to both the earth and the sun so continents turn while local time stays put. `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, `useCountdown` (the card's 1s T−/T+ tick — owned by LaunchCard, not App), derived copy, watch playing state, and Framer stagger. The card is always stacked. Presentational regions are `LaunchCardIdentity` (titles, customers, status/countdown), `LaunchCardVisual` (HUD still, Watch/Close, YouTube IFrame API host), `LaunchCardMission` (T-Zero, launch site, brief), and `LaunchCardFooter` (last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, pad place, T−/T+ chips, default selection, local time, hour cycle, zone name, solar attitude, watch target, and live-player resync) with contract tests.
+On the frontend, `App.tsx` is the console **shell**: it calls `useLaunchFeed`, `useHourCycle`, and `useSysClock`, derives `selectedIndex`, and composes UI regions (`Starfield`, `ConsoleHeader`, `LaunchQueue`, `GlobePanel`, `LaunchCard`). `GlobePanel` is lazy-loaded. The shell mounts the one canvas — the phone band below `lg`, otherwise the desktop hero — outside the `apiId`-keyed card motion, so selecting a launch does not remount it. `solarAttitude` places the day/night terminator from UTC; a slow polar spin is added to both the earth and the sun so continents turn while local time stays put. `LaunchCard` is the mission-panel **orchestrator** under `components/LaunchCard/`: density, `useCountdown` (the card's 1s T−/T+ tick — owned by LaunchCard, not App), derived copy, watch playing state, and Framer stagger. The card is always stacked. Presentational regions are `LaunchCardIdentity` (titles, customers, status/countdown), `LaunchCardVisual` (HUD still, Watch/Close, YouTube IFrame API host), `LaunchCardMission` (T-Zero, launch site, brief), and `LaunchCardFooter` (last updated). Density spacing/type tokens live in `lib/cardDensityChrome.ts`. Shared domain helpers live under `utils/` (titles, pad place, T−/T+ chips, default selection, local time, hour cycle, zone name, solar attitude, watch target, and live-player resync) with contract tests.
 
 ---
 
@@ -122,7 +122,7 @@ launch-ops/
 │   │   ├── components/
 │   │   │   ├── Starfield.tsx         # Ambient space background
 │   │   │   ├── Globe/
-│   │   │   │   └── GlobePanel.tsx    # Desktop earth (solar time, polar spin)
+│   │   │   │   └── GlobePanel.tsx    # Earth canvas (solar time, polar spin)
 │   │   │   ├── ConsoleHeader.tsx     # Brand + Sys Time (zone · offset, 12h/24h)
 │   │   │   ├── HourCycleFade.tsx     # Crossfade when the hour cycle changes
 │   │   │   ├── LaunchQueue.tsx       # Horizontal strip / sidebar queue (+ STREAM)
@@ -140,7 +140,7 @@ launch-ops/
 │   │   │   ├── useHourCycle.ts                # 12h/24h choice, including other tabs
 │   │   │   ├── useCountdown.ts                # LaunchCard 1s T−/T+ tick
 │   │   │   ├── useConsoleBoot.ts              # Cold-load boot window
-│   │   │   ├── useCompactMotion.ts            # Below-lg: no globe, lighter motion
+│   │   │   ├── useCompactMotion.ts            # Below-lg motion; gates the phone earth
 │   │   │   ├── useShortViewportBand.ts        # Short/mid/roomy height bands
 │   │   │   ├── useCardDensityBand.ts          # LaunchCard stacked density
 │   │   │   └── useConsoleScrollbarActivity.ts # Show thumbs while scrolling
@@ -151,8 +151,9 @@ launch-ops/
 │   │   ├── types/
 │   │   │   └── launch.ts             # Frontend launch types
 │   │   ├── utils/
-│   │   │   ├── launchTitle.ts        # Mission/rocket title helpers
+│   │   │   ├── launchTitle.ts        # Mission/rocket titles, customers, mark URLs
 │   │   │   ├── launchTitle.test.ts
+│   │   │   ├── agencyMarkImage.ts    # Punch a solid field out of an agency mark
 │   │   │   ├── launchTime.ts         # Relative T−/T+ chips and NET precision honesty
 │   │   │   ├── launchTime.test.ts
 │   │   │   ├── queueFocus.ts         # Default queue selection (live, else next NET)
@@ -253,7 +254,7 @@ cd frontend && npm run build && npm run preview
 
 ### 5. Tests
 
-Contract tests for queue chips/phases, titles, pad place, default selection, watch ranking, live-player resync, solar attitude, local zone names, hour cycle, and Launch Library → `apiId` / webcast field mapping. No Redis or Mongo required.
+Contract tests for queue chips/phases, titles, agency marks, pad place, default selection, watch ranking, live-player resync, solar attitude, local zone names, hour cycle, and Launch Library → `apiId` / webcast field mapping. No Redis or Mongo required.
 
 ```bash
 cd frontend && npm test
