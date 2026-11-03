@@ -179,7 +179,7 @@ export function ConsoleHeader({
             >
               <ClockReadout time={sysClock?.time ?? "—:—:—"} compactSeconds />
             </HourCycleFade>
-            <span className="text-[9px] tracking-[0.15em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
+            <span className="text-[11px] sm:text-xs font-medium tracking-[0.08em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
               {sysClock?.date ?? "—"}
             </span>
           </div>
@@ -207,7 +207,7 @@ export function ConsoleHeader({
             >
               <ClockReadout time={sysClock?.time ?? "INITIALIZING..."} compactSeconds />
             </HourCycleFade>
-            <span className="text-xs xl:text-sm tracking-[0.18em] text-cyan-300 tabular-nums">
+            <span className="text-sm xl:text-base font-medium tracking-[0.12em] text-cyan-300 tabular-nums">
               {sysClock?.date ?? "—"}
             </span>
           </div>

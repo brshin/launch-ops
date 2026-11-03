@@ -86,7 +86,7 @@ export function LaunchCardMission({
         <h3 className="text-[10px] text-cyan-600 uppercase font-mono tracking-[0.16em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors lg:text-[9px] lg:tracking-[0.2em]">
           T-Zero Target
         </h3>
-        <p className="min-w-0 font-mono tabular-nums leading-none text-slate-100">
+        <p className="min-w-0 font-mono tabular-nums leading-none">
           <HourCycleFade
             cycle={hour12 ? "12" : "24"}
             className={`block max-w-full leading-snug ${
@@ -95,9 +95,9 @@ export function LaunchCardMission({
                 : "text-[11px] sm:text-xs lg:text-[11px] xl:text-[13px] tracking-wide lg:tracking-wide"
             }`}
           >
-            <span className="whitespace-nowrap">{tZero.date}</span>
+            <span className="whitespace-nowrap font-medium text-slate-50">{tZero.date}</span>
             {showNetTime ? (
-              <span className="whitespace-nowrap">
+              <span className="whitespace-nowrap text-slate-300">
                 <span className="mx-1.5 text-slate-600">·</span>
                 {tZero.time}
               </span>
