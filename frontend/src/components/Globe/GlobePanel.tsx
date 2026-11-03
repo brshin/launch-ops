@@ -161,7 +161,15 @@ function FrameCamera() {
   return null;
 }
 
-function OrientedGlobe() {
+/** Fires once Earth textures have resolved inside the Suspense boundary. */
+function EarthReady({ onReady }: { onReady?: () => void }) {
+  useLayoutEffect(() => {
+    onReady?.();
+  }, [onReady]);
+  return null;
+}
+
+function OrientedGlobe({ onReady }: { onReady?: () => void }) {
   const group = useRef<Group>(null);
   const light = useRef<DirectionalLight>(null);
   const spin = useRef(0);
@@ -191,6 +199,7 @@ function OrientedGlobe() {
       <group ref={group}>
         <Suspense fallback={null}>
           <Earth />
+          <EarthReady onReady={onReady} />
         </Suspense>
       </group>
     </>
@@ -202,7 +211,13 @@ function OrientedGlobe() {
  * The phone band is small, so it always draws at 3x, even on a 2x screen.
  * Selection does not rebuild it, because the shell owns the mount.
  */
-export default function GlobePanel({ maxDpr = 2 }: { maxDpr?: number }) {
+export default function GlobePanel({
+  maxDpr = 2,
+  onReady,
+}: {
+  maxDpr?: number;
+  onReady?: () => void;
+}) {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
       <Canvas
@@ -225,7 +240,7 @@ export default function GlobePanel({ maxDpr = 2 }: { maxDpr?: number }) {
         }}
       >
         <FrameCamera />
-        <OrientedGlobe />
+        <OrientedGlobe onReady={onReady} />
       </Canvas>
     </div>
   );

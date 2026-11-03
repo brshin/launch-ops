@@ -80,3 +80,23 @@ export function createBootQueueItemVariants(compact = false): Variants {
     },
   };
 }
+
+/**
+ * Globe hero entrance — slower than panel chrome, starts once Earth is ready.
+ * Scale is subtle so the canvas does not read as a UI pop-in.
+ */
+export function createBootGlobeVariants(compact = false): Variants {
+  return {
+    hidden: { opacity: 0, scale: compact ? 0.94 : 0.9 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        // Slight settle after textures resolve so the reveal feels staged.
+        delay: compact ? 0.08 : 0.14,
+        duration: compact ? 0.65 : 0.95,
+        ease: "easeOut",
+      },
+    },
+  };
+}

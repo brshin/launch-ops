@@ -1,9 +1,10 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard/LaunchCard';
 import { Starfield } from './components/Starfield';
 import { ConsoleHeader } from './components/ConsoleHeader';
 import { LaunchQueue } from './components/LaunchQueue';
+import { GlobeSlot } from './components/Globe/GlobeSlot';
 import { findQueueFocusIndex } from "./utils/queueFocus";
 import { transitions, travel } from "./lib/motionTokens";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
@@ -14,30 +15,6 @@ import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
-
-const GlobePanel = lazy(() => import("./components/Globe/GlobePanel"));
-
-function GlobeSlot({ maxDpr }: { maxDpr?: number }) {
-  return (
-    <div className="relative h-full min-h-0 w-full">
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[min(72%,30rem)] aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/10 blur-3xl"
-        aria-hidden
-      />
-      <Suspense
-        fallback={
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan-700">
-              Aligning globe
-            </p>
-          </div>
-        }
-      >
-        <GlobePanel maxDpr={maxDpr} />
-      </Suspense>
-    </div>
-  );
-}
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
