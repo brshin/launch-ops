@@ -123,6 +123,14 @@ export function LaunchQueue({
     };
   }, [launches, queueRevealed, syncQueueEdges]);
 
+  // Keep the active row in the strip / sidebar after click or arrow select.
+  useEffect(() => {
+    const root = queueScrollRef.current;
+    if (!root) return;
+    const selected = root.querySelector<HTMLElement>('[data-queue-selected="true"]');
+    selected?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  }, [selectedIndex]);
+
   return (
     <motion.div
       className="w-full lg:w-[320px] h-auto shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-clip"
@@ -208,6 +216,7 @@ export function LaunchQueue({
                 type="button"
                 variants={bootQueueItemVariants}
                 whileTap={{ scale: 0.98 }}
+                data-queue-selected={selected ? "true" : undefined}
                 onClick={() => {
                   if (launch.apiId) onSelect(launch.apiId);
                 }}

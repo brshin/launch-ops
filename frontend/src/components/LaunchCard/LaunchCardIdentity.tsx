@@ -324,11 +324,11 @@ export function LaunchCardIdentity({
 
   const netReadout = (
     <div className="flex w-full min-w-0 flex-col items-start gap-1 lg:w-auto lg:items-end">
-      <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums text-slate-200 sm:text-[11px]">
+      <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums sm:text-[11px]">
         <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block">
-          <span>{tZero.date}</span>
+          <span className="text-slate-50">{tZero.date}</span>
           <span className="mx-1.5 text-slate-600">·</span>
-          <span>{tZero.time}</span>
+          <span className="text-slate-300">{tZero.time}</span>
         </HourCycleFade>
       </span>
       <span className="whitespace-nowrap font-mono text-[10px] uppercase leading-none tracking-[0.16em] text-amber-500/90">

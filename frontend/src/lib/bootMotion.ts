@@ -80,3 +80,25 @@ export function createBootQueueItemVariants(compact = false): Variants {
     },
   };
 }
+
+/**
+ * Globe hero entrance — slower than panel chrome, starts once Earth is ready.
+ * Opacity + light Y only: CSS scale breaks R3F sizing (getBoundingClientRect
+ * shrinks the canvas, so it sits left until a real window resize).
+ */
+export function createBootGlobeVariants(compact = false): Variants {
+  const y = compact ? 6 : 10;
+  return {
+    hidden: { opacity: 0, y },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        // Slight settle after textures resolve so the reveal feels staged.
+        delay: compact ? 0.08 : 0.14,
+        duration: compact ? 0.65 : 0.95,
+        ease: "easeOut",
+      },
+    },
+  };
+}
