@@ -224,6 +224,9 @@ export default function GlobePanel({
         dpr={maxDpr > 2 ? maxDpr : [1, maxDpr]}
         flat
         frameloop="always"
+        // Layout size, not transformed getBoundingClientRect — keeps the
+        // phone band centered if a parent ever animates with CSS transform.
+        resize={{ offsetSize: true }}
         gl={async (props) => {
           const renderer = new WebGPURenderer({
             canvas: props.canvas,

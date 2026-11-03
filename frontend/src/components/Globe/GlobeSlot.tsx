@@ -43,7 +43,7 @@ export function GlobeSlot({ maxDpr }: { maxDpr?: number }) {
       </AnimatePresence>
 
       <motion.div
-        className="relative h-full min-h-0 w-full origin-center"
+        className="relative h-full min-h-0 w-full"
         variants={bootGlobeVariants}
         initial="hidden"
         animate={ready ? "show" : "hidden"}

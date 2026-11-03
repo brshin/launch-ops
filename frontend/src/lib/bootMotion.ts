@@ -83,14 +83,16 @@ export function createBootQueueItemVariants(compact = false): Variants {
 
 /**
  * Globe hero entrance — slower than panel chrome, starts once Earth is ready.
- * Scale is subtle so the canvas does not read as a UI pop-in.
+ * Opacity + light Y only: CSS scale breaks R3F sizing (getBoundingClientRect
+ * shrinks the canvas, so it sits left until a real window resize).
  */
 export function createBootGlobeVariants(compact = false): Variants {
+  const y = compact ? 6 : 10;
   return {
-    hidden: { opacity: 0, scale: compact ? 0.94 : 0.9 },
+    hidden: { opacity: 0, y },
     show: {
       opacity: 1,
-      scale: 1,
+      y: 0,
       transition: {
         // Slight settle after textures resolve so the reveal feels staged.
         delay: compact ? 0.08 : 0.14,
