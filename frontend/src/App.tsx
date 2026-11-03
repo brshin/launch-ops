@@ -13,6 +13,7 @@ import { useHourCycle } from "./hooks/useHourCycle";
 import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
+import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
 
 const GlobePanel = lazy(() => import("./components/Globe/GlobePanel"));
 
@@ -59,6 +60,12 @@ export default function App() {
     const focus = findQueueFocusIndex(launches, nowMs);
     return focus >= 0 ? focus : 0;
   }, [launches, selectedApiId, nowMs]);
+
+  useLaunchKeyboardNav({
+    launches,
+    selectedIndex,
+    onSelect: setSelectedApiId,
+  });
 
   const activeLaunch = launches[selectedIndex];
   // Hold the detail card until boot settles so cold load feels staged
