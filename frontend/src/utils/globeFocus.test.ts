@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  enrichPadFocus,
   faceYawForLatLon,
+  hoverLabelsFromPad,
   latLonToUnit,
   padFocusFromLaunch,
   padSitesFromLaunches,
@@ -40,11 +42,44 @@ describe("shortestAngleDelta", () => {
   });
 });
 
-describe("padFocusFromLaunch", () => {
-  it("reads finite pad coords", () => {
+describe("hoverLabelsFromPad", () => {
+  it("splits site and place from location", () => {
     expect(
-      padFocusFromLaunch({ pad: { latitude: 34.632, longitude: -120.611 } }),
-    ).toEqual({ latitude: 34.632, longitude: -120.611 });
+      hoverLabelsFromPad({
+        name: "Space Launch Complex 4E",
+        location: { name: "Vandenberg SFB, CA, USA" },
+      }),
+    ).toEqual({
+      siteLabel: "Vandenberg SFB",
+      placeLabel: "California, USA",
+    });
+  });
+
+  it("falls back to pad name", () => {
+    expect(hoverLabelsFromPad({ name: "LC-39A" })).toEqual({
+      siteLabel: "LC-39A",
+      placeLabel: null,
+    });
+  });
+});
+
+describe("padFocusFromLaunch", () => {
+  it("reads finite pad coords, site, and place", () => {
+    expect(
+      padFocusFromLaunch({
+        pad: {
+          latitude: 34.632,
+          longitude: -120.611,
+          location: { name: "Vandenberg SFB, CA, USA" },
+        },
+      }),
+    ).toEqual({
+      latitude: 34.632,
+      longitude: -120.611,
+      siteLabel: "Vandenberg SFB",
+      placeLabel: "California, USA",
+      upcomingCount: 1,
+    });
   });
 
   it("rejects missing or out-of-range coords", () => {
@@ -55,13 +90,33 @@ describe("padFocusFromLaunch", () => {
 });
 
 describe("padSitesFromLaunches", () => {
-  it("dedupes launches that share a pad", () => {
+  it("dedupes launches that share a pad and counts upcoming", () => {
     const sites = padSitesFromLaunches([
-      { pad: { latitude: 34.632, longitude: -120.611 } },
-      { pad: { latitude: 34.632, longitude: -120.611 } },
-      { pad: { latitude: 28.608, longitude: -80.604 } },
+      {
+        pad: {
+          latitude: 34.632,
+          longitude: -120.611,
+          location: { name: "Vandenberg SFB, CA, USA" },
+        },
+      },
+      {
+        pad: {
+          latitude: 34.632,
+          longitude: -120.611,
+          location: { name: "Vandenberg SFB, CA, USA" },
+        },
+      },
+      {
+        pad: {
+          latitude: 28.608,
+          longitude: -80.604,
+          location: { name: "Kennedy Space Center, FL, USA" },
+        },
+      },
     ]);
     expect(sites).toHaveLength(2);
+    const vandy = sites.find((s) => s.siteLabel === "Vandenberg SFB");
+    expect(vandy?.upcomingCount).toBe(2);
   });
 });
 
@@ -79,5 +134,31 @@ describe("samePad", () => {
         { latitude: 28.608, longitude: -80.604 },
       ),
     ).toBe(false);
+  });
+});
+
+describe("enrichPadFocus", () => {
+  it("copies upcoming count from the constellation entry", () => {
+    const pads = padSitesFromLaunches([
+      {
+        pad: {
+          latitude: 34.632,
+          longitude: -120.611,
+          location: { name: "Vandenberg SFB, CA, USA" },
+        },
+      },
+      {
+        pad: {
+          latitude: 34.632,
+          longitude: -120.611,
+          location: { name: "Vandenberg SFB, CA, USA" },
+        },
+      },
+    ]);
+    const enriched = enrichPadFocus(
+      { latitude: 34.632, longitude: -120.611, siteLabel: "Vandenberg SFB" },
+      pads,
+    );
+    expect(enriched?.upcomingCount).toBe(2);
   });
 });

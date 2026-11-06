@@ -15,7 +15,11 @@ import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
-import { padFocusFromLaunch, padSitesFromLaunches } from "./utils/globeFocus";
+import {
+  enrichPadFocus,
+  padFocusFromLaunch,
+  padSitesFromLaunches,
+} from "./utils/globeFocus";
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
@@ -46,11 +50,17 @@ export default function App() {
   });
 
   const activeLaunch = launches[selectedIndex];
-  const globeFocus = useMemo(
-    () => padFocusFromLaunch(activeLaunch),
-    [activeLaunch?.pad?.latitude, activeLaunch?.pad?.longitude],
-  );
   const globePads = useMemo(() => padSitesFromLaunches(launches), [launches]);
+  const globeFocus = useMemo(
+    () => enrichPadFocus(padFocusFromLaunch(activeLaunch), globePads),
+    [
+      activeLaunch?.pad?.latitude,
+      activeLaunch?.pad?.longitude,
+      activeLaunch?.pad?.location?.name,
+      activeLaunch?.pad?.name,
+      globePads,
+    ],
+  );
   // Hold the detail card until boot settles so cold load feels staged
   const showLaunchCard = Boolean(activeLaunch && bootComplete);
 

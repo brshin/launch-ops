@@ -1,6 +1,7 @@
-import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useTexture } from "@react-three/drei";
+import { Html, useTexture } from "@react-three/drei";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   DirectionalLight,
   Mesh,
@@ -69,6 +70,9 @@ const FLY_SETTLE = 0.002;
 const MARKER_CORE = "#f8fafc";
 const MARKER_GLOW = "#22d3ee";
 const QUEUE_DOT = "#0891b2";
+/** Invisible hit spheres — larger than the visible dots so hover is easy. */
+const HIT_SCALE_QUEUE = 0.09;
+const HIT_SCALE_FOCUS = 0.1;
 const UP = new Vector3(0, 1, 0);
 
 /** World-space sun. Declination lifts it; spin is the same polar rotation as the globe. */
@@ -161,10 +165,11 @@ function Earth() {
 
   return (
     <>
-      <mesh material={materials.globeMaterial}>
+      {/* Markers own pointer hits — earth/atmosphere must not block hover. */}
+      <mesh material={materials.globeMaterial} raycast={() => {}}>
         <sphereGeometry args={[1, 64, 64]} />
       </mesh>
-      <mesh material={materials.atmosphereMaterial} scale={1.04}>
+      <mesh material={materials.atmosphereMaterial} scale={1.04} raycast={() => {}}>
         <sphereGeometry args={[1, 64, 64]} />
       </mesh>
     </>
@@ -209,8 +214,124 @@ function useMarkerMaterial(hex: string, opacity: number) {
   }, [hex, opacity]);
 }
 
+function PadHoverTip({
+  siteLabel,
+  placeLabel = null,
+  upcomingCount = 1,
+}: {
+  siteLabel: string;
+  placeLabel?: string | null;
+  upcomingCount?: number;
+}) {
+  const count = Math.max(1, upcomingCount);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 5, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 3, scale: 0.98 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="pointer-events-none select-none whitespace-nowrap rounded-sm border border-cyan-800/55 bg-[#020617]/92 px-2.5 py-1.5 font-mono shadow-[0_0_18px_rgba(8,145,178,0.18)] backdrop-blur-sm"
+    >
+      <p className="text-[10px] uppercase leading-none tracking-[0.14em] text-slate-100">
+        {siteLabel}
+      </p>
+      {placeLabel ? (
+        <p className="mt-1 text-[9px] uppercase leading-none tracking-[0.14em] text-cyan-600">
+          {placeLabel}
+        </p>
+      ) : null}
+      <p
+        className={`text-[9px] uppercase leading-none tracking-[0.16em] text-cyan-400 ${
+          placeLabel ? "mt-1.5" : "mt-1"
+        }`}
+      >
+        {count} upcoming
+      </p>
+    </motion.div>
+  );
+}
+
+/**
+ * Invisible hover target + tip. Hit sphere is larger than the visible dot;
+ * tip eases in/out and hides on the far side of the globe.
+ */
+function PadHoverTarget({
+  point,
+  siteLabel,
+  placeLabel = null,
+  upcomingCount = 1,
+  hitScale = HIT_SCALE_QUEUE,
+}: {
+  point: Vector3;
+  siteLabel: string;
+  placeLabel?: string | null;
+  upcomingCount?: number;
+  hitScale?: number;
+}) {
+  const hitRef = useRef<Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+  const [facing, setFacing] = useState(true);
+  const { camera } = useThree();
+  const hit = useMarkerMaterial("#000000", 0);
+  const world = useMemo(() => new Vector3(), []);
+  const toCamera = useMemo(() => new Vector3(), []);
+
+  useFrame(() => {
+    const mesh = hitRef.current;
+    if (!mesh) return;
+    mesh.getWorldPosition(world);
+    toCamera.copy(camera.position).sub(world).normalize();
+    const outward = world.clone().normalize();
+    const nextFacing = outward.dot(toCamera) > 0.18;
+    setFacing((prev) => (prev === nextFacing ? prev : nextFacing));
+  });
+
+  const showTip = hovered && facing && Boolean(siteLabel);
+
+  return (
+    <group>
+      <mesh
+        ref={hitRef}
+        position={point.clone().multiplyScalar(1.016)}
+        scale={hitScale}
+        material={hit}
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          setHovered(true);
+        }}
+        onPointerOut={() => setHovered(false)}
+      >
+        <sphereGeometry args={[1, 10, 10]} />
+      </mesh>
+      <Html
+        position={point.clone().multiplyScalar(1.08)}
+        center
+        style={{ pointerEvents: "none" }}
+        zIndexRange={[20, 0]}
+      >
+        <AnimatePresence>
+          {showTip ? (
+            <PadHoverTip
+              key="pad-tip"
+              siteLabel={siteLabel}
+              placeLabel={placeLabel}
+              upcomingCount={upcomingCount}
+            />
+          ) : null}
+        </AnimatePresence>
+      </Html>
+    </group>
+  );
+}
+
 /** Active pad — white + cyan accent + beam (queue dots have none of that). */
-function PadMarker({ latitude, longitude }: PadFocus) {
+function PadMarker({
+  latitude,
+  longitude,
+  siteLabel = "Launch site",
+  placeLabel = null,
+  upcomingCount = 1,
+}: PadFocus) {
   const point = useMemo(() => latLonToUnit(latitude, longitude), [latitude, longitude]);
   const quaternion = useMemo(() => {
     const next = new Quaternion();
@@ -238,6 +359,7 @@ function PadMarker({ latitude, longitude }: PadFocus) {
         position={point.clone().multiplyScalar(1.014)}
         scale={0.022}
         material={core}
+        raycast={() => {}}
       >
         <sphereGeometry args={[1, 16, 16]} />
       </mesh>
@@ -246,6 +368,7 @@ function PadMarker({ latitude, longitude }: PadFocus) {
         position={point.clone().multiplyScalar(1.014)}
         scale={0.038}
         material={glow}
+        raycast={() => {}}
       >
         <sphereGeometry args={[1, 16, 16]} />
       </mesh>
@@ -253,9 +376,17 @@ function PadMarker({ latitude, longitude }: PadFocus) {
         position={point.clone().multiplyScalar(1.055)}
         quaternion={quaternion}
         material={beam}
+        raycast={() => {}}
       >
         <cylinderGeometry args={[0.0045, 0.001, 0.09, 8]} />
       </mesh>
+      <PadHoverTarget
+        point={point}
+        siteLabel={siteLabel}
+        placeLabel={placeLabel}
+        upcomingCount={upcomingCount}
+        hitScale={HIT_SCALE_FOCUS}
+      />
     </group>
   );
 }
@@ -279,14 +410,23 @@ function PadConstellation({
       {sites.map((pad) => {
         const point = latLonToUnit(pad.latitude, pad.longitude);
         return (
-          <mesh
-            key={pad.id}
-            position={point.multiplyScalar(1.012)}
-            scale={0.015}
-            material={fill}
-          >
-            <sphereGeometry args={[1, 10, 10]} />
-          </mesh>
+          <group key={pad.id}>
+            <mesh
+              position={point.clone().multiplyScalar(1.012)}
+              scale={0.015}
+              material={fill}
+              raycast={() => {}}
+            >
+              <sphereGeometry args={[1, 10, 10]} />
+            </mesh>
+            <PadHoverTarget
+              point={point}
+              siteLabel={pad.siteLabel}
+              placeLabel={pad.placeLabel}
+              upcomingCount={pad.upcomingCount}
+              hitScale={HIT_SCALE_QUEUE}
+            />
+          </group>
         );
       })}
     </group>
@@ -380,7 +520,13 @@ function OrientedGlobe({
         </Suspense>
         <PadConstellation pads={pads} focus={focus} />
         {focus ? (
-          <PadMarker latitude={focus.latitude} longitude={focus.longitude} />
+          <PadMarker
+            latitude={focus.latitude}
+            longitude={focus.longitude}
+            siteLabel={focus.siteLabel}
+            placeLabel={focus.placeLabel}
+            upcomingCount={focus.upcomingCount}
+          />
         ) : null}
       </group>
     </>
@@ -422,7 +568,8 @@ export default function GlobePanel({
           return renderer;
         }}
         camera={{ position: [0, 0.06, 3.4], fov: 34 }}
-        style={{ width: "100%", height: "100%", display: "block" }}
+        // Parent is pointer-events-none; canvas must opt in for marker hover.
+        style={{ width: "100%", height: "100%", display: "block", pointerEvents: "auto" }}
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0);
         }}
