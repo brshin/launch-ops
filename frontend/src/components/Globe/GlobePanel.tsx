@@ -1,4 +1,4 @@
-import { Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, useTexture } from "@react-three/drei";
 import { AnimatePresence, motion } from "framer-motion";
@@ -21,6 +21,7 @@ import {
   type PadFocus,
   type PadSite,
 } from "../../utils/globeFocus";
+import { globeDrag } from "../../utils/globeInteraction";
 import {
   BackSide,
   MeshBasicNodeMaterial,
@@ -64,6 +65,23 @@ const VIEW_TILT = 0.32;
 const FLY_RATE = 3.2;
 /** Radians — close enough to treat the fly-to as done and resume spin. */
 const FLY_SETTLE = 0.002;
+/**
+ * Horizontal drag: full canvas width ≈ half a turn (surface follows the finger).
+ * Vertical motion is ignored — yaw only.
+ */
+const DRAG_TURN_PER_WIDTH = Math.PI;
+/** Pixels before a press becomes a drag (keeps marker taps from spinning). */
+const DRAG_THRESHOLD_PX = 4;
+/** Exponential friction on fling velocity (higher = shorter coast). */
+const INERTIA_FRICTION = 2.4;
+/** Rad/s — below this, hand off to the idle spin. */
+const INERTIA_STOP = 0.04;
+/** Cap fling speed so a wild swipe can't blur the planet. */
+const INERTIA_MAX = 3.2;
+/** If the pointer sat still this long before release, drop momentum. */
+const INERTIA_STALE_MS = 80;
+/** Clamp rAF gaps so a hitch can't hurl the globe halfway around. */
+const MAX_FRAME_DELTA = 1 / 20;
 /**
  * Stay in the console cyan family (amber is already caution / provisional).
  * Selected = hot white core + bright cyan + beam;
@@ -291,9 +309,10 @@ function PadHoverTarget({
     const outward = world.clone().normalize();
     const nextFacing = outward.dot(toCamera) > 0.18;
     setFacing((prev) => (prev === nextFacing ? prev : nextFacing));
+    if (globeDrag.active && hovered) setHovered(false);
   });
 
-  const showTip = hovered && facing && Boolean(siteLabel);
+  const showTip = hovered && facing && !globeDrag.active && Boolean(siteLabel);
 
   return (
     <group>
@@ -473,9 +492,23 @@ function PadConstellation({
 }
 
 function focusKeyOf(focus?: PadFocus | null): string | null {
-  return focus ? `${focus.latitude},${focus.longitude}` : null;
+  // Match constellation precision so feed jitter doesn't re-trigger fly-to.
+  return focus
+    ? `${focus.latitude.toFixed(3)},${focus.longitude.toFixed(3)}`
+    : null;
 }
 
+/**
+ * Globe yaw state machine.
+ *
+ * yaw is always authoritative for what you see.
+ * spin only exists for idle sun-relative integration:
+ *   yaw = -subsolarLongitude + spin  ⇔  spin = yaw + subsolarLongitude
+ *
+ * Modes: hold (pointer down) → drag → inertia → idle, plus fly-to.
+ * Idle must never run while yaw has moved without rebasing spin — that
+ * was the fling snap-back (stale spin rewrote yaw to an older attitude).
+ */
 function OrientedGlobe({
   onReady,
   focus,
@@ -489,40 +522,206 @@ function OrientedGlobe({
 }) {
   const group = useRef<Group>(null);
   const light = useRef<DirectionalLight>(null);
-  /** Continuous polar spin; yaw = -subsolarLongitude + spin when coasting. */
+  const { gl, size } = useThree();
+  /** Idle integrator; always rebound from yaw when leaving manual modes. */
   const spin = useRef(0);
   const yaw = useRef(0);
   const focusKey = useRef<string | null>(null);
   const flying = useRef(false);
   const flyTarget = useRef(0);
+  /** Release fling velocity in rad/s; decays with friction until idle spin. */
+  const inertiaVel = useRef(0);
+  /** Press tracking — drag engages only after a small horizontal threshold. */
+  const press = useRef<{
+    pointerId: number;
+    startX: number;
+    lastX: number;
+    lastAt: number;
+    dragging: boolean;
+  } | null>(null);
+  const sizeWidth = useRef(size.width);
+  sizeWidth.current = size.width;
+
+  const syncSpinFromYaw = (subsolarLongitude: number) => {
+    spin.current = yaw.current + subsolarLongitude;
+  };
 
   useLayoutEffect(() => {
     const { declination, subsolarLongitude } = solarAttitude(new Date());
     spin.current = 0;
     yaw.current = -subsolarLongitude;
-    placeSun(declination, spin.current);
+    inertiaVel.current = 0;
+    placeSun(declination, yaw.current + subsolarLongitude);
     if (group.current) group.current.rotation.y = yaw.current;
     // First focused frame starts a fly-to via the key change below.
     focusKey.current = null;
   }, []);
 
-  useFrame((_, delta) => {
+  useEffect(() => {
+    const el = gl.domElement;
+    el.style.touchAction = "none";
+    el.style.cursor = "grab";
+
+    const finishPointer = (pointerId: number) => {
+      const state = press.current;
+      if (!state || state.pointerId !== pointerId) return;
+
+      if (state.dragging) {
+        const stale = performance.now() - state.lastAt > INERTIA_STALE_MS;
+        let vel = stale ? 0 : inertiaVel.current;
+        vel = Math.max(-INERTIA_MAX, Math.min(INERTIA_MAX, vel));
+        if (Math.abs(vel) < INERTIA_STOP) vel = 0;
+        inertiaVel.current = vel;
+
+        // Soft stop — lock spin to the view we actually have now.
+        if (vel === 0) {
+          const { subsolarLongitude } = solarAttitude(new Date());
+          syncSpinFromYaw(subsolarLongitude);
+        }
+
+        globeDrag.active = false;
+        el.style.cursor = "grab";
+      } else {
+        // Tap without drag — keep the held attitude, resume idle from here.
+        inertiaVel.current = 0;
+        const { subsolarLongitude } = solarAttitude(new Date());
+        syncSpinFromYaw(subsolarLongitude);
+      }
+
+      press.current = null;
+      try {
+        el.releasePointerCapture(pointerId);
+      } catch {
+        /* already released */
+      }
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+
+      // Catch mid-fling / mid-idle: freeze the CURRENT view (not stale spin).
+      const { subsolarLongitude } = solarAttitude(new Date());
+      inertiaVel.current = 0;
+      flying.current = false;
+      syncSpinFromYaw(subsolarLongitude);
+
+      press.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        lastX: event.clientX,
+        lastAt: performance.now(),
+        dragging: false,
+      };
+      el.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const state = press.current;
+      if (!state || state.pointerId !== event.pointerId) return;
+
+      if (!state.dragging) {
+        if (Math.abs(event.clientX - state.startX) < DRAG_THRESHOLD_PX) return;
+        state.dragging = true;
+        globeDrag.active = true;
+        flying.current = false;
+        inertiaVel.current = 0;
+        el.style.cursor = "grabbing";
+      }
+
+      const now = performance.now();
+      const dx = event.clientX - state.lastX;
+      const dtSec = (now - state.lastAt) / 1000;
+      state.lastX = event.clientX;
+      state.lastAt = now;
+
+      const width = Math.max(sizeWidth.current, 1);
+      const dYaw = (dx / width) * DRAG_TURN_PER_WIDTH;
+      // Surface follows the finger: drag right → front face moves right.
+      yaw.current += dYaw;
+
+      // Ignore hitchy gaps so a paused tab can't mint a huge fling velocity.
+      if (dtSec > 0 && dtSec < 0.08) {
+        const instant = dYaw / dtSec;
+        inertiaVel.current = inertiaVel.current * 0.65 + instant * 0.35;
+      }
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      finishPointer(event.pointerId);
+    };
+
+    const onPointerCancel = (event: PointerEvent) => {
+      finishPointer(event.pointerId);
+    };
+
+    const onLostCapture = (event: PointerEvent) => {
+      // pointerup already cleared press; only handle orphaned capture loss.
+      if (!press.current || press.current.pointerId !== event.pointerId) return;
+      finishPointer(event.pointerId);
+    };
+
+    el.addEventListener("pointerdown", onPointerDown);
+    el.addEventListener("pointermove", onPointerMove);
+    el.addEventListener("pointerup", onPointerUp);
+    el.addEventListener("pointercancel", onPointerCancel);
+    el.addEventListener("lostpointercapture", onLostCapture);
+
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown);
+      el.removeEventListener("pointermove", onPointerMove);
+      el.removeEventListener("pointerup", onPointerUp);
+      el.removeEventListener("pointercancel", onPointerCancel);
+      el.removeEventListener("lostpointercapture", onLostCapture);
+      globeDrag.active = false;
+      press.current = null;
+      inertiaVel.current = 0;
+      el.style.cursor = "";
+      el.style.touchAction = "";
+    };
+  }, [gl]);
+
+  useFrame((_, rawDelta) => {
+    const delta = Math.min(Math.max(rawDelta, 0), MAX_FRAME_DELTA);
     const { declination, subsolarLongitude } = solarAttitude(new Date());
     const nextKey = focusKeyOf(focus);
 
     if (nextKey !== focusKey.current) {
       focusKey.current = nextKey;
+      // Queue selection wins over press / fling.
+      inertiaVel.current = 0;
+      if (press.current) {
+        const pointerId = press.current.pointerId;
+        if (press.current.dragging) {
+          globeDrag.active = false;
+          gl.domElement.style.cursor = "grab";
+        }
+        press.current = null;
+        try {
+          gl.domElement.releasePointerCapture(pointerId);
+        } catch {
+          /* already released */
+        }
+      }
       if (focus) {
         flyTarget.current = faceYawForLatLon(focus.latitude, focus.longitude);
         flying.current = true;
       } else {
         flying.current = false;
-        // Resume coasting from wherever we are.
-        spin.current = yaw.current + subsolarLongitude;
+        syncSpinFromYaw(subsolarLongitude);
       }
     }
 
-    if (flying.current) {
+    const holding = Boolean(press.current);
+    const dragging = Boolean(press.current?.dragging);
+
+    if (dragging) {
+      // Yaw written by pointer handlers; keep terminator geographically locked.
+      placeSun(declination, yaw.current + subsolarLongitude);
+    } else if (holding) {
+      // Finger down, not yet past threshold — freeze under the cursor.
+      placeSun(declination, yaw.current + subsolarLongitude);
+    } else if (flying.current) {
+      inertiaVel.current = 0;
       const deltaYaw = shortestAngleDelta(yaw.current, flyTarget.current);
       const step = 1 - Math.exp(-delta * FLY_RATE);
       yaw.current += deltaYaw * step;
@@ -530,16 +729,24 @@ function OrientedGlobe({
       if (Math.abs(shortestAngleDelta(yaw.current, flyTarget.current)) < FLY_SETTLE) {
         yaw.current = flyTarget.current;
         flying.current = false;
-        // Rebase spin so free rotation continues from this attitude with no jump.
-        spin.current = yaw.current + subsolarLongitude;
+        syncSpinFromYaw(subsolarLongitude);
       }
 
-      // Same earth/sun offset keeps the terminator geographically correct mid-fly.
+      placeSun(declination, yaw.current + subsolarLongitude);
+    } else if (Math.abs(inertiaVel.current) >= INERTIA_STOP) {
+      yaw.current += inertiaVel.current * delta;
+      inertiaVel.current *= Math.exp(-INERTIA_FRICTION * delta);
+      if (Math.abs(inertiaVel.current) < INERTIA_STOP) {
+        inertiaVel.current = 0;
+        syncSpinFromYaw(subsolarLongitude);
+      }
       placeSun(declination, yaw.current + subsolarLongitude);
     } else {
+      // Idle — sun-relative coast. spin was synced whenever we entered idle.
+      inertiaVel.current = 0;
       spin.current += delta * SPIN_RATE;
       yaw.current = -subsolarLongitude + spin.current;
-      placeSun(declination, spin.current);
+      placeSun(declination, yaw.current + subsolarLongitude);
     }
 
     light.current?.position.copy(SUN_POSITION);
@@ -552,7 +759,7 @@ function OrientedGlobe({
       {/*
         Spin is only around the poles. Yaw lines local noon up with the sun,
         and the same angle is added to both, so the surface turns while night
-        stays on the real night side.
+        stays on the real night side. Horizontal drag writes yaw the same way.
       */}
       <group ref={group}>
         <Suspense fallback={null}>
