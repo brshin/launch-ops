@@ -1,4 +1,5 @@
 import { Vector3 } from "three";
+import type { LaunchLocation } from "../types/location";
 import { formatPadPlace } from "./padPlace";
 
 export type PadFocus = {
@@ -9,6 +10,18 @@ export type PadFocus = {
   /** Region / country under the site, e.g. "California, USA". */
   placeLabel?: string | null;
   upcomingCount?: number;
+};
+
+/** Active Earth site from the locations catalog (spaceport centroid). */
+export type GlobeSite = {
+  id: string;
+  locationApiId: number;
+  latitude: number;
+  longitude: number;
+  siteLabel: string;
+  placeLabel: string | null;
+  /** Queue launches at this site; 0 means catalog-only (no upcoming line). */
+  upcomingCount: number;
 };
 
 /**
@@ -153,4 +166,92 @@ export function enrichPadFocus(
     placeLabel: match.placeLabel ?? null,
     upcomingCount: match.upcomingCount,
   };
+}
+
+function isEarthBody(location: LaunchLocation): boolean {
+  const name = location.celestial_body?.name?.trim().toLowerCase();
+  // Missing body is treated as Earth — LL2 only omits it on terrestrial sites.
+  return !name || name === "earth";
+}
+
+function finiteLatLon(
+  latitude: unknown,
+  longitude: unknown,
+): { latitude: number; longitude: number } | null {
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  return { latitude: lat, longitude: lon };
+}
+
+/** Site / place labels for a catalog location row. */
+export function hoverLabelsFromLocation(location: {
+  name?: string | null;
+  country?: { name?: string | null } | null;
+}): PadHoverLabels {
+  const rawName = location.name?.trim() || "Launch site";
+  const { site, place } = formatPadPlace(rawName);
+  // No comma → formatPadPlace keeps the whole string as `place` with site null.
+  const siteLabel = site || rawName;
+  const country = location.country?.name?.trim() || null;
+  const placeCandidate = site ? place : country;
+  const placeLabel =
+    placeCandidate &&
+    placeCandidate.trim().toLowerCase() !== siteLabel.trim().toLowerCase()
+      ? placeCandidate
+      : null;
+  return { siteLabel, placeLabel };
+}
+
+/** Count upcoming launches per Launch Library location id. */
+export function upcomingCountByLocationId(
+  launches: Array<{ pad?: { location?: { id?: number | null } | null } | null }>,
+): Map<number, number> {
+  const counts = new Map<number, number>();
+  for (const launch of launches) {
+    const id = launch.pad?.location?.id;
+    if (typeof id !== "number" || !Number.isFinite(id)) continue;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Active Earth sites for the quiet globe catalog layer.
+ * When `excludeWithUpcoming` is true, sites that already have queue pad
+ * markers are omitted so pad + site don't double-mark the same coast.
+ */
+export function globeSitesFromLocations(
+  locations: LaunchLocation[],
+  launches: Array<{
+    pad?: { location?: { id?: number | null } | null } | null;
+  }> = [],
+  options: { excludeWithUpcoming?: boolean } = {},
+): GlobeSite[] {
+  const { excludeWithUpcoming = true } = options;
+  const upcoming = upcomingCountByLocationId(launches);
+  const sites: GlobeSite[] = [];
+
+  for (const location of locations) {
+    if (!location.active || !isEarthBody(location)) continue;
+    const coords = finiteLatLon(location.latitude, location.longitude);
+    if (!coords) continue;
+
+    const upcomingCount = upcoming.get(location.apiId) ?? 0;
+    if (excludeWithUpcoming && upcomingCount > 0) continue;
+
+    const labels = hoverLabelsFromLocation(location);
+    sites.push({
+      id: `loc-${location.apiId}`,
+      locationApiId: location.apiId,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      siteLabel: labels.siteLabel,
+      placeLabel: labels.placeLabel,
+      upcomingCount,
+    });
+  }
+
+  return sites;
 }

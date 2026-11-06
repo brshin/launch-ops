@@ -17,6 +17,7 @@ import {
   latLonToUnit,
   samePad,
   shortestAngleDelta,
+  type GlobeSite,
   type PadFocus,
   type PadSite,
 } from "../../utils/globeFocus";
@@ -65,12 +66,15 @@ const FLY_RATE = 3.2;
 const FLY_SETTLE = 0.002;
 /**
  * Stay in the console cyan family (amber is already caution / provisional).
- * Selected = hot white core + bright cyan + beam; queue = quieter cyan only.
+ * Selected = hot white core + bright cyan + beam;
+ * queue pads = mid cyan; catalog sites = faintest (background geography).
  */
 const MARKER_CORE = "#f8fafc";
 const MARKER_GLOW = "#22d3ee";
 const QUEUE_DOT = "#0891b2";
+const CATALOG_DOT = "#155e75";
 /** Invisible hit spheres — larger than the visible dots so hover is easy. */
+const HIT_SCALE_CATALOG = 0.07;
 const HIT_SCALE_QUEUE = 0.09;
 const HIT_SCALE_FOCUS = 0.1;
 const UP = new Vector3(0, 1, 0);
@@ -217,13 +221,14 @@ function useMarkerMaterial(hex: string, opacity: number) {
 function PadHoverTip({
   siteLabel,
   placeLabel = null,
-  upcomingCount = 1,
+  upcomingCount = 0,
 }: {
   siteLabel: string;
   placeLabel?: string | null;
+  /** Omit the upcoming line when 0 (catalog-only sites). */
   upcomingCount?: number;
 }) {
-  const count = Math.max(1, upcomingCount);
+  const showUpcoming = upcomingCount > 0;
   return (
     <motion.div
       initial={{ opacity: 0, y: 5, scale: 0.96 }}
@@ -240,13 +245,15 @@ function PadHoverTip({
           {placeLabel}
         </p>
       ) : null}
-      <p
-        className={`text-[9px] uppercase leading-none tracking-[0.16em] text-cyan-400 ${
-          placeLabel ? "mt-1.5" : "mt-1"
-        }`}
-      >
-        {count} upcoming
-      </p>
+      {showUpcoming ? (
+        <p
+          className={`text-[9px] uppercase leading-none tracking-[0.16em] text-cyan-400 ${
+            placeLabel ? "mt-1.5" : "mt-1"
+          }`}
+        >
+          {upcomingCount} upcoming
+        </p>
+      ) : null}
     </motion.div>
   );
 }
@@ -259,7 +266,7 @@ function PadHoverTarget({
   point,
   siteLabel,
   placeLabel = null,
-  upcomingCount = 1,
+  upcomingCount = 0,
   hitScale = HIT_SCALE_QUEUE,
 }: {
   point: Vector3;
@@ -330,7 +337,7 @@ function PadMarker({
   longitude,
   siteLabel = "Launch site",
   placeLabel = null,
-  upcomingCount = 1,
+  upcomingCount = 0,
 }: PadFocus) {
   const point = useMemo(() => latLonToUnit(latitude, longitude), [latitude, longitude]);
   const quaternion = useMemo(() => {
@@ -391,6 +398,38 @@ function PadMarker({
   );
 }
 
+/** Quiet catalog layer — active Earth sites without a queue pad marker. */
+function SiteCatalog({ sites }: { sites: GlobeSite[] }) {
+  const fill = useMarkerMaterial(CATALOG_DOT, 0.42);
+
+  return (
+    <group>
+      {sites.map((site) => {
+        const point = latLonToUnit(site.latitude, site.longitude);
+        return (
+          <group key={site.id}>
+            <mesh
+              position={point.clone().multiplyScalar(1.01)}
+              scale={0.009}
+              material={fill}
+              raycast={() => {}}
+            >
+              <sphereGeometry args={[1, 8, 8]} />
+            </mesh>
+            <PadHoverTarget
+              point={point}
+              siteLabel={site.siteLabel}
+              placeLabel={site.placeLabel}
+              upcomingCount={site.upcomingCount}
+              hitScale={HIT_SCALE_CATALOG}
+            />
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 /** Other upcoming pads — deeper cyan, no beam, smaller than the focus pin. */
 function PadConstellation({
   pads,
@@ -441,10 +480,12 @@ function OrientedGlobe({
   onReady,
   focus,
   pads,
+  sites,
 }: {
   onReady?: () => void;
   focus?: PadFocus | null;
   pads: PadSite[];
+  sites: GlobeSite[];
 }) {
   const group = useRef<Group>(null);
   const light = useRef<DirectionalLight>(null);
@@ -518,6 +559,7 @@ function OrientedGlobe({
           <Earth />
           <EarthReady onReady={onReady} />
         </Suspense>
+        <SiteCatalog sites={sites} />
         <PadConstellation pads={pads} focus={focus} />
         {focus ? (
           <PadMarker
@@ -543,11 +585,13 @@ export default function GlobePanel({
   onReady,
   focus = null,
   pads = [],
+  sites = [],
 }: {
   maxDpr?: number;
   onReady?: () => void;
   focus?: PadFocus | null;
   pads?: PadSite[];
+  sites?: GlobeSite[];
 }) {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
@@ -575,7 +619,7 @@ export default function GlobePanel({
         }}
       >
         <FrameCamera />
-        <OrientedGlobe onReady={onReady} focus={focus} pads={pads} />
+        <OrientedGlobe onReady={onReady} focus={focus} pads={pads} sites={sites} />
       </Canvas>
     </div>
   );

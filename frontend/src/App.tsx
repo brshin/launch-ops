@@ -18,14 +18,14 @@ import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity
 import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
 import {
   enrichPadFocus,
+  globeSitesFromLocations,
   padFocusFromLaunch,
   padSitesFromLaunches,
 } from "./utils/globeFocus";
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
-  // Hydrate location catalog (Redis / Mongo / live-location-data). Globe can consume next.
-  useLocationFeed();
+  const { locations } = useLocationFeed();
   const { cycle, hour12, setCycle } = useHourCycle();
   const sysClock = useSysClock(hour12);
 
@@ -54,6 +54,10 @@ export default function App() {
 
   const activeLaunch = launches[selectedIndex];
   const globePads = useMemo(() => padSitesFromLaunches(launches), [launches]);
+  const globeSites = useMemo(
+    () => globeSitesFromLocations(locations, launches),
+    [locations, launches],
+  );
   const globeFocus = useMemo(
     () => enrichPadFocus(padFocusFromLaunch(activeLaunch), globePads),
     [
@@ -133,13 +137,22 @@ export default function App() {
                       : "h-[8.75rem]"
                 }`}
               >
-                <GlobeSlot maxDpr={3} focus={globeFocus} pads={globePads} />
+                <GlobeSlot
+                  maxDpr={3}
+                  focus={globeFocus}
+                  pads={globePads}
+                  sites={globeSites}
+                />
               </div>
             )}
 
             {!compactMotion && (
               <div className="relative hidden min-h-0 min-w-0 flex-1 lg:block">
-                <GlobeSlot focus={globeFocus} pads={globePads} />
+                <GlobeSlot
+                  focus={globeFocus}
+                  pads={globePads}
+                  sites={globeSites}
+                />
               </div>
             )}
 

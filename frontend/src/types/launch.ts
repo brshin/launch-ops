@@ -115,6 +115,8 @@ export interface VidUrl {
 }
 
 export interface Location {
+    /** Launch Library location id — joins to the locations catalog. */
+    id?: number;
     name: string;
     country: Country;
     description: string;
