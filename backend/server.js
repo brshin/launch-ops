@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 const cors = require("cors");
 
 const Launch = require('./models/Launch');
+const Location = require('./models/Location');
 
 const app = express();
 
@@ -51,20 +52,32 @@ const setupPubSub = async() => {
     await redisSubscriber.connect().then(() => console.log('Redis Subscriber connected to Redis'));
 
     await redisSubscriber.subscribe('launch-updates', async (message) => {
-        console.log(`Pub/Sub Event Received: ${message}`);
+        console.log(`Pub/Sub Event Received (launches): ${message}`);
 
-        // Send received data to client via WebSocket
         try {
             const cachedData = await redisClient.get('upcoming-launches');
-            // console.log(cachedData);
 
             if (cachedData) {
-                // Blast the data to every connected client simultaneously
                 io.emit('live-launch-data', JSON.parse(cachedData));
                 console.log("🚀 Fresh telemetry blasted to all connected clients!");
             }
         } catch (err) {
-            console.error("Failed to emit live data:", err);
+            console.error("Failed to emit live launch data:", err);
+        }
+    });
+
+    await redisSubscriber.subscribe('location-updates', async (message) => {
+        console.log(`Pub/Sub Event Received (locations): ${message}`);
+
+        try {
+            const cachedData = await redisClient.get('launch-locations');
+
+            if (cachedData) {
+                io.emit('live-location-data', JSON.parse(cachedData));
+                console.log("🌍 Fresh locations blasted to all connected clients!");
+            }
+        } catch (err) {
+            console.error("Failed to emit live location data:", err);
         }
     });
 };
@@ -97,6 +110,30 @@ app.get('/launches', async (req, res) => {
         res.status(500).send('Server error');
     }
 
+});
+
+app.get('/locations', async (req, res) => {
+    const cacheKey = 'launch-locations';
+
+    try {
+        const cachedLocations = await redisClient.get(cacheKey);
+
+        if (cachedLocations) {
+            console.log("Serving locations from Redis cache");
+            return res.json(JSON.parse(cachedLocations));
+        }
+
+        const locations = await Location.find();
+        console.log("Location cache miss - received from database instead");
+
+        await redisClient.setEx(cacheKey, 120, JSON.stringify(locations));
+
+        res.json(locations);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
 });
 
 const connectDB = async() => {

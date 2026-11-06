@@ -9,6 +9,7 @@ import { findQueueFocusIndex } from "./utils/queueFocus";
 import { transitions, travel } from "./lib/motionTokens";
 import { useConsoleBoot } from "./hooks/useConsoleBoot";
 import { useLaunchFeed } from "./hooks/useLaunchFeed";
+import { useLocationFeed } from "./hooks/useLocationFeed";
 import { useSysClock } from "./hooks/useSysClock";
 import { useHourCycle } from "./hooks/useHourCycle";
 import { useCompactMotion } from "./hooks/useCompactMotion";
@@ -23,6 +24,8 @@ import {
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
+  // Hydrate location catalog (Redis / Mongo / live-location-data). Globe can consume next.
+  useLocationFeed();
   const { cycle, hour12, setCycle } = useHourCycle();
   const sysClock = useSysClock(hour12);
 
