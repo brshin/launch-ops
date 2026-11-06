@@ -1,8 +1,22 @@
 import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
-import { DirectionalLight, PerspectiveCamera, Vector3, type Group, type Texture } from "three";
+import {
+  DirectionalLight,
+  Mesh,
+  PerspectiveCamera,
+  Quaternion,
+  Vector3,
+  type Group,
+  type Texture,
+} from "three";
 import { solarAttitude } from "../../utils/solarAttitude";
+import {
+  faceYawForLatLon,
+  latLonToUnit,
+  shortestAngleDelta,
+  type PadFocus,
+} from "../../utils/globeFocus";
 import {
   BackSide,
   MeshBasicNodeMaterial,
@@ -14,6 +28,7 @@ import {
   bumpMap,
   cameraPosition,
   color,
+  float,
   max,
   mix,
   normalWorldGeometry,
@@ -37,10 +52,16 @@ const EARTH_DAY = "/textures/earth-day.jpg";
 const EARTH_NIGHT = "/textures/earth-night.jpg";
 const EARTH_PACKED = "/textures/earth-packed.jpg";
 
-/** One turn in about three minutes, around the poles. The sun turns with the earth, so local time stays put. */
+/** One turn in about three minutes when no pad is focused. */
 const SPIN_RATE = 0.035;
 /** Look down a little so the globe reads as a planet, not a flat disc. */
 const VIEW_TILT = 0.32;
+/** How quickly yaw settles on a newly selected pad. */
+const FLY_RATE = 3.2;
+/** Radians — close enough to treat the fly-to as done and resume spin. */
+const FLY_SETTLE = 0.002;
+const MARKER_COLOR = "#22d3ee";
+const UP = new Vector3(0, 1, 0);
 
 /** World-space sun. Declination lifts it; spin is the same polar rotation as the globe. */
 const SUN_POSITION = new Vector3(1, 0, 0);
@@ -169,23 +190,136 @@ function EarthReady({ onReady }: { onReady?: () => void }) {
   return null;
 }
 
-function OrientedGlobe({ onReady }: { onReady?: () => void }) {
+function useMarkerMaterial(opacity: number) {
+  return useMemo(() => {
+    const material = new MeshBasicNodeMaterial({
+      transparent: true,
+      depthWrite: false,
+    });
+    material.outputNode = vec4(color(MARKER_COLOR), float(opacity));
+    return material;
+  }, [opacity]);
+}
+
+/** Cyan pad pin + soft radial beam on the focused launch site. */
+function PadMarker({ latitude, longitude }: PadFocus) {
+  const point = useMemo(() => latLonToUnit(latitude, longitude), [latitude, longitude]);
+  const quaternion = useMemo(() => {
+    const next = new Quaternion();
+    next.setFromUnitVectors(UP, point.clone().normalize());
+    return next;
+  }, [point]);
+  const core = useMarkerMaterial(0.95);
+  const beam = useMarkerMaterial(0.45);
+  const halo = useMarkerMaterial(0.22);
+  const coreMesh = useRef<Mesh>(null);
+  const haloMesh = useRef<Mesh>(null);
+  const pulse = useRef(0);
+
+  useFrame((_, delta) => {
+    pulse.current += delta * 2.2;
+    const pulseScale = 1 + Math.sin(pulse.current) * 0.12;
+    coreMesh.current?.scale.setScalar(0.026 * pulseScale);
+    haloMesh.current?.scale.setScalar(0.048 * pulseScale);
+  });
+
+  return (
+    <group>
+      <mesh
+        ref={coreMesh}
+        position={point.clone().multiplyScalar(1.012)}
+        scale={0.026}
+        material={core}
+      >
+        <sphereGeometry args={[1, 16, 16]} />
+      </mesh>
+      <mesh
+        ref={haloMesh}
+        position={point.clone().multiplyScalar(1.012)}
+        scale={0.048}
+        material={halo}
+      >
+        <sphereGeometry args={[1, 16, 16]} />
+      </mesh>
+      <mesh
+        position={point.clone().multiplyScalar(1.07)}
+        quaternion={quaternion}
+        material={beam}
+      >
+        <cylinderGeometry args={[0.007, 0.0015, 0.14, 10]} />
+      </mesh>
+    </group>
+  );
+}
+
+function focusKeyOf(focus?: PadFocus | null): string | null {
+  return focus ? `${focus.latitude},${focus.longitude}` : null;
+}
+
+function OrientedGlobe({
+  onReady,
+  focus,
+}: {
+  onReady?: () => void;
+  focus?: PadFocus | null;
+}) {
   const group = useRef<Group>(null);
   const light = useRef<DirectionalLight>(null);
+  /** Continuous polar spin; yaw = -subsolarLongitude + spin when coasting. */
   const spin = useRef(0);
+  const yaw = useRef(0);
+  const focusKey = useRef<string | null>(null);
+  const flying = useRef(false);
+  const flyTarget = useRef(0);
 
   useLayoutEffect(() => {
     const { declination, subsolarLongitude } = solarAttitude(new Date());
-    placeSun(declination, 0);
-    if (group.current) group.current.rotation.y = -subsolarLongitude;
+    spin.current = 0;
+    yaw.current = -subsolarLongitude;
+    placeSun(declination, spin.current);
+    if (group.current) group.current.rotation.y = yaw.current;
+    // First focused frame starts a fly-to via the key change below.
+    focusKey.current = null;
   }, []);
 
   useFrame((_, delta) => {
-    spin.current += delta * SPIN_RATE;
     const { declination, subsolarLongitude } = solarAttitude(new Date());
-    placeSun(declination, spin.current);
+    const nextKey = focusKeyOf(focus);
+
+    if (nextKey !== focusKey.current) {
+      focusKey.current = nextKey;
+      if (focus) {
+        flyTarget.current = faceYawForLatLon(focus.latitude, focus.longitude);
+        flying.current = true;
+      } else {
+        flying.current = false;
+        // Resume coasting from wherever we are.
+        spin.current = yaw.current + subsolarLongitude;
+      }
+    }
+
+    if (flying.current) {
+      const deltaYaw = shortestAngleDelta(yaw.current, flyTarget.current);
+      const step = 1 - Math.exp(-delta * FLY_RATE);
+      yaw.current += deltaYaw * step;
+
+      if (Math.abs(shortestAngleDelta(yaw.current, flyTarget.current)) < FLY_SETTLE) {
+        yaw.current = flyTarget.current;
+        flying.current = false;
+        // Rebase spin so free rotation continues from this attitude with no jump.
+        spin.current = yaw.current + subsolarLongitude;
+      }
+
+      // Same earth/sun offset keeps the terminator geographically correct mid-fly.
+      placeSun(declination, yaw.current + subsolarLongitude);
+    } else {
+      spin.current += delta * SPIN_RATE;
+      yaw.current = -subsolarLongitude + spin.current;
+      placeSun(declination, spin.current);
+    }
+
     light.current?.position.copy(SUN_POSITION);
-    if (group.current) group.current.rotation.y = -subsolarLongitude + spin.current;
+    if (group.current) group.current.rotation.y = yaw.current;
   });
 
   return (
@@ -201,6 +335,9 @@ function OrientedGlobe({ onReady }: { onReady?: () => void }) {
           <Earth />
           <EarthReady onReady={onReady} />
         </Suspense>
+        {focus ? (
+          <PadMarker latitude={focus.latitude} longitude={focus.longitude} />
+        ) : null}
       </group>
     </>
   );
@@ -214,9 +351,11 @@ function OrientedGlobe({ onReady }: { onReady?: () => void }) {
 export default function GlobePanel({
   maxDpr = 2,
   onReady,
+  focus = null,
 }: {
   maxDpr?: number;
   onReady?: () => void;
+  focus?: PadFocus | null;
 }) {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
@@ -243,7 +382,7 @@ export default function GlobePanel({
         }}
       >
         <FrameCamera />
-        <OrientedGlobe onReady={onReady} />
+        <OrientedGlobe onReady={onReady} focus={focus} />
       </Canvas>
     </div>
   );

@@ -15,6 +15,7 @@ import { useCompactMotion } from "./hooks/useCompactMotion";
 import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
+import { padFocusFromLaunch } from "./utils/globeFocus";
 
 export default function App() {
   const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed();
@@ -45,6 +46,10 @@ export default function App() {
   });
 
   const activeLaunch = launches[selectedIndex];
+  const globeFocus = useMemo(
+    () => padFocusFromLaunch(activeLaunch),
+    [activeLaunch?.pad?.latitude, activeLaunch?.pad?.longitude],
+  );
   // Hold the detail card until boot settles so cold load feels staged
   const showLaunchCard = Boolean(activeLaunch && bootComplete);
 
@@ -114,13 +119,13 @@ export default function App() {
                       : "h-[8.75rem]"
                 }`}
               >
-                <GlobeSlot maxDpr={3} />
+                <GlobeSlot maxDpr={3} focus={globeFocus} />
               </div>
             )}
 
             {!compactMotion && (
               <div className="relative hidden min-h-0 min-w-0 flex-1 lg:block">
-                <GlobeSlot />
+                <GlobeSlot focus={globeFocus} />
               </div>
             )}
 

@@ -3,14 +3,21 @@ import { AnimatePresence, motion } from "framer-motion";
 import { createBootGlobeVariants } from "../../lib/bootMotion";
 import { transitions } from "../../lib/motionTokens";
 import { useCompactMotion } from "../../hooks/useCompactMotion";
+import type { PadFocus } from "../../utils/globeFocus";
 
 const GlobePanel = lazy(() => import("./GlobePanel"));
 
 /**
  * Cold-load globe shell. Canvas mounts early (hidden) so textures warm during
- * boot; once Earth is ready the shell fades/scales in with the console choreography.
+ * boot; once Earth is ready the shell fades in with the console choreography.
  */
-export function GlobeSlot({ maxDpr }: { maxDpr?: number }) {
+export function GlobeSlot({
+  maxDpr,
+  focus = null,
+}: {
+  maxDpr?: number;
+  focus?: PadFocus | null;
+}) {
   const compactMotion = useCompactMotion();
   const bootGlobeVariants = useMemo(
     () => createBootGlobeVariants(compactMotion),
@@ -53,7 +60,7 @@ export function GlobeSlot({ maxDpr }: { maxDpr?: number }) {
           aria-hidden
         />
         <Suspense fallback={null}>
-          <GlobePanel maxDpr={maxDpr} onReady={onReady} />
+          <GlobePanel maxDpr={maxDpr} onReady={onReady} focus={focus} />
         </Suspense>
       </motion.div>
     </div>
