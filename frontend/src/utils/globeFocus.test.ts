@@ -3,6 +3,8 @@ import {
   faceYawForLatLon,
   latLonToUnit,
   padFocusFromLaunch,
+  padSitesFromLaunches,
+  samePad,
   shortestAngleDelta,
 } from "./globeFocus";
 
@@ -49,5 +51,33 @@ describe("padFocusFromLaunch", () => {
     expect(padFocusFromLaunch(null)).toBeNull();
     expect(padFocusFromLaunch({ pad: { latitude: 91, longitude: 0 } })).toBeNull();
     expect(padFocusFromLaunch({ pad: { latitude: "x", longitude: 0 } })).toBeNull();
+  });
+});
+
+describe("padSitesFromLaunches", () => {
+  it("dedupes launches that share a pad", () => {
+    const sites = padSitesFromLaunches([
+      { pad: { latitude: 34.632, longitude: -120.611 } },
+      { pad: { latitude: 34.632, longitude: -120.611 } },
+      { pad: { latitude: 28.608, longitude: -80.604 } },
+    ]);
+    expect(sites).toHaveLength(2);
+  });
+});
+
+describe("samePad", () => {
+  it("matches pads within the constellation key precision", () => {
+    expect(
+      samePad(
+        { latitude: 34.632, longitude: -120.611 },
+        { latitude: 34.6321, longitude: -120.6112 },
+      ),
+    ).toBe(true);
+    expect(
+      samePad(
+        { latitude: 34.632, longitude: -120.611 },
+        { latitude: 28.608, longitude: -80.604 },
+      ),
+    ).toBe(false);
   });
 });

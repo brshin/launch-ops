@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { createBootGlobeVariants } from "../../lib/bootMotion";
 import { transitions } from "../../lib/motionTokens";
 import { useCompactMotion } from "../../hooks/useCompactMotion";
-import type { PadFocus } from "../../utils/globeFocus";
+import type { PadFocus, PadSite } from "../../utils/globeFocus";
 
 const GlobePanel = lazy(() => import("./GlobePanel"));
 
@@ -14,9 +14,11 @@ const GlobePanel = lazy(() => import("./GlobePanel"));
 export function GlobeSlot({
   maxDpr,
   focus = null,
+  pads = [],
 }: {
   maxDpr?: number;
   focus?: PadFocus | null;
+  pads?: PadSite[];
 }) {
   const compactMotion = useCompactMotion();
   const bootGlobeVariants = useMemo(
@@ -60,7 +62,7 @@ export function GlobeSlot({
           aria-hidden
         />
         <Suspense fallback={null}>
-          <GlobePanel maxDpr={maxDpr} onReady={onReady} focus={focus} />
+          <GlobePanel maxDpr={maxDpr} onReady={onReady} focus={focus} pads={pads} />
         </Suspense>
       </motion.div>
     </div>

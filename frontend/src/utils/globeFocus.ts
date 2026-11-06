@@ -42,3 +42,34 @@ export function padFocusFromLaunch(launch: {
   if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
   return { latitude, longitude };
 }
+
+export type PadSite = PadFocus & { id: string };
+
+function padKey(focus: PadFocus): string {
+  // Collapse launches that share a complex (e.g. many F9 from SLC-4E).
+  return `${focus.latitude.toFixed(3)},${focus.longitude.toFixed(3)}`;
+}
+
+/** Unique pad sites across the queue for the globe constellation. */
+export function padSitesFromLaunches(
+  launches: Array<{
+    pad?: { latitude?: number | string | null; longitude?: number | string | null } | null;
+  }>,
+): PadSite[] {
+  const seen = new Map<string, PadSite>();
+  for (const launch of launches) {
+    const focus = padFocusFromLaunch(launch);
+    if (!focus) continue;
+    const id = padKey(focus);
+    if (!seen.has(id)) seen.set(id, { ...focus, id });
+  }
+  return [...seen.values()];
+}
+
+export function samePad(
+  a: PadFocus | null | undefined,
+  b: PadFocus | null | undefined,
+): boolean {
+  if (!a || !b) return false;
+  return padKey(a) === padKey(b);
+}

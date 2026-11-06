@@ -14,8 +14,10 @@ import { solarAttitude } from "../../utils/solarAttitude";
 import {
   faceYawForLatLon,
   latLonToUnit,
+  samePad,
   shortestAngleDelta,
   type PadFocus,
+  type PadSite,
 } from "../../utils/globeFocus";
 import {
   BackSide,
@@ -60,7 +62,13 @@ const VIEW_TILT = 0.32;
 const FLY_RATE = 3.2;
 /** Radians — close enough to treat the fly-to as done and resume spin. */
 const FLY_SETTLE = 0.002;
-const MARKER_COLOR = "#22d3ee";
+/**
+ * Stay in the console cyan family (amber is already caution / provisional).
+ * Selected = hot white core + bright cyan + beam; queue = quieter cyan only.
+ */
+const MARKER_CORE = "#f8fafc";
+const MARKER_GLOW = "#22d3ee";
+const QUEUE_DOT = "#0891b2";
 const UP = new Vector3(0, 1, 0);
 
 /** World-space sun. Declination lifts it; spin is the same polar rotation as the globe. */
@@ -190,18 +198,18 @@ function EarthReady({ onReady }: { onReady?: () => void }) {
   return null;
 }
 
-function useMarkerMaterial(opacity: number) {
+function useMarkerMaterial(hex: string, opacity: number) {
   return useMemo(() => {
     const material = new MeshBasicNodeMaterial({
       transparent: true,
       depthWrite: false,
     });
-    material.outputNode = vec4(color(MARKER_COLOR), float(opacity));
+    material.outputNode = vec4(color(hex), float(opacity));
     return material;
-  }, [opacity]);
+  }, [hex, opacity]);
 }
 
-/** Cyan pad pin + soft radial beam on the focused launch site. */
+/** Active pad — white + cyan accent + beam (queue dots have none of that). */
 function PadMarker({ latitude, longitude }: PadFocus) {
   const point = useMemo(() => latLonToUnit(latitude, longitude), [latitude, longitude]);
   const quaternion = useMemo(() => {
@@ -209,45 +217,78 @@ function PadMarker({ latitude, longitude }: PadFocus) {
     next.setFromUnitVectors(UP, point.clone().normalize());
     return next;
   }, [point]);
-  const core = useMarkerMaterial(0.95);
-  const beam = useMarkerMaterial(0.45);
-  const halo = useMarkerMaterial(0.22);
+  const core = useMarkerMaterial(MARKER_CORE, 1);
+  const glow = useMarkerMaterial(MARKER_GLOW, 0.7);
+  const beam = useMarkerMaterial(MARKER_GLOW, 0.65);
   const coreMesh = useRef<Mesh>(null);
-  const haloMesh = useRef<Mesh>(null);
+  const glowMesh = useRef<Mesh>(null);
   const pulse = useRef(0);
 
   useFrame((_, delta) => {
-    pulse.current += delta * 2.2;
-    const pulseScale = 1 + Math.sin(pulse.current) * 0.12;
-    coreMesh.current?.scale.setScalar(0.026 * pulseScale);
-    haloMesh.current?.scale.setScalar(0.048 * pulseScale);
+    pulse.current += delta * 1.6;
+    const pulseScale = 1 + Math.sin(pulse.current) * 0.06;
+    coreMesh.current?.scale.setScalar(0.022 * pulseScale);
+    glowMesh.current?.scale.setScalar(0.038 * pulseScale);
   });
 
   return (
     <group>
       <mesh
         ref={coreMesh}
-        position={point.clone().multiplyScalar(1.012)}
-        scale={0.026}
+        position={point.clone().multiplyScalar(1.014)}
+        scale={0.022}
         material={core}
       >
         <sphereGeometry args={[1, 16, 16]} />
       </mesh>
       <mesh
-        ref={haloMesh}
-        position={point.clone().multiplyScalar(1.012)}
-        scale={0.048}
-        material={halo}
+        ref={glowMesh}
+        position={point.clone().multiplyScalar(1.014)}
+        scale={0.038}
+        material={glow}
       >
         <sphereGeometry args={[1, 16, 16]} />
       </mesh>
       <mesh
-        position={point.clone().multiplyScalar(1.07)}
+        position={point.clone().multiplyScalar(1.055)}
         quaternion={quaternion}
         material={beam}
       >
-        <cylinderGeometry args={[0.007, 0.0015, 0.14, 10]} />
+        <cylinderGeometry args={[0.0045, 0.001, 0.09, 8]} />
       </mesh>
+    </group>
+  );
+}
+
+/** Other upcoming pads — deeper cyan, no beam, smaller than the focus pin. */
+function PadConstellation({
+  pads,
+  focus,
+}: {
+  pads: PadSite[];
+  focus?: PadFocus | null;
+}) {
+  const fill = useMarkerMaterial(QUEUE_DOT, 0.85);
+  const sites = useMemo(
+    () => pads.filter((pad) => !samePad(pad, focus)),
+    [pads, focus],
+  );
+
+  return (
+    <group>
+      {sites.map((pad) => {
+        const point = latLonToUnit(pad.latitude, pad.longitude);
+        return (
+          <mesh
+            key={pad.id}
+            position={point.multiplyScalar(1.012)}
+            scale={0.015}
+            material={fill}
+          >
+            <sphereGeometry args={[1, 10, 10]} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
@@ -259,9 +300,11 @@ function focusKeyOf(focus?: PadFocus | null): string | null {
 function OrientedGlobe({
   onReady,
   focus,
+  pads,
 }: {
   onReady?: () => void;
   focus?: PadFocus | null;
+  pads: PadSite[];
 }) {
   const group = useRef<Group>(null);
   const light = useRef<DirectionalLight>(null);
@@ -335,6 +378,7 @@ function OrientedGlobe({
           <Earth />
           <EarthReady onReady={onReady} />
         </Suspense>
+        <PadConstellation pads={pads} focus={focus} />
         {focus ? (
           <PadMarker latitude={focus.latitude} longitude={focus.longitude} />
         ) : null}
@@ -352,10 +396,12 @@ export default function GlobePanel({
   maxDpr = 2,
   onReady,
   focus = null,
+  pads = [],
 }: {
   maxDpr?: number;
   onReady?: () => void;
   focus?: PadFocus | null;
+  pads?: PadSite[];
 }) {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
@@ -382,7 +428,7 @@ export default function GlobePanel({
         }}
       >
         <FrameCamera />
-        <OrientedGlobe onReady={onReady} focus={focus} />
+        <OrientedGlobe onReady={onReady} focus={focus} pads={pads} />
       </Canvas>
     </div>
   );
