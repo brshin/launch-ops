@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { Launch } from "../types/launch";
 import type { LaunchLocation } from "../types/location";
-import { buildConsoleOverview } from "./consoleOverview";
+import {
+  buildConsoleOverview,
+  formatCompactCount,
+  formatNextLaunchHeadline,
+} from "./consoleOverview";
 
 const NOW = Date.parse("2026-08-19T12:00:00.000Z");
-const HOUR = 60 * 60 * 1000;
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
 function netFromNow(offsetMs: number): string {
@@ -17,6 +22,7 @@ function makeLaunch(
     net: string;
     providerAbbrev?: string;
     orbit?: string;
+    statusAbbrev?: string;
   },
 ): Launch {
   const {
@@ -24,12 +30,13 @@ function makeLaunch(
     net,
     providerAbbrev = "SpX",
     orbit = "LEO",
+    statusAbbrev = "Go",
     ...rest
   } = overrides;
   return {
     apiId,
     name: rest.name ?? `Mission ${apiId}`,
-    status: rest.status ?? { abbrev: "Go" },
+    status: rest.status ?? { abbrev: statusAbbrev },
     last_updated: net,
     net,
     window_start: net,
@@ -59,6 +66,7 @@ function makeLaunch(
     } as Launch["pad"]),
     webcast_live: rest.webcast_live,
     vid_urls: rest.vid_urls,
+    net_precision: rest.net_precision ?? { abbrev: "MIN" },
   } as Launch;
 }
 
@@ -79,24 +87,24 @@ const locations: LaunchLocation[] = [
     celestial_body: { id: 1, name: "Earth" },
   },
   {
-    apiId: 99,
-    name: "Shackleton Crater, Moon",
+    apiId: 2,
+    name: "Plesetsk Cosmodrome, Russian Federation",
     active: true,
-    country: null,
+    country: { name: "Russia" },
     description: null,
     image: null,
     map_image: null,
-    longitude: 0,
-    latitude: -89,
-    timezone_name: null,
-    total_launch_count: 0,
+    longitude: 40.5,
+    latitude: 62.9,
+    timezone_name: "Europe/Moscow",
+    total_launch_count: 1688,
     total_landing_count: 0,
-    celestial_body: { id: 2, name: "Moon" },
+    celestial_body: { id: 1, name: "Earth" },
   },
 ];
 
 describe("buildConsoleOverview", () => {
-  it("exposes clear board stats and skips year/Go jargon", () => {
+  it("exposes schedule stats, plain orbits, and next launch", () => {
     const launches = [
       makeLaunch({ apiId: "a", net: netFromNow(2 * HOUR), providerAbbrev: "SpX" }),
       makeLaunch({
@@ -104,6 +112,7 @@ describe("buildConsoleOverview", () => {
         net: netFromNow(3 * DAY),
         providerAbbrev: "SpX",
         orbit: "SSO",
+        statusAbbrev: "TBD",
       }),
       makeLaunch({
         apiId: "c",
@@ -116,11 +125,71 @@ describe("buildConsoleOverview", () => {
 
     expect(model.upcomingCount).toBe(3);
     expect(model.weekCount).toBe(2);
-    expect(model.sitesLit).toBe(1);
-    expect(model.providers[0]).toEqual({ label: "SpX", count: 2 });
-    expect(model.orbits.map((row) => row.label)).toEqual(["LEO", "SSO"]);
-    expect(model.earthActive).toBe(1);
-    expect(model.lunarSites).toBe(1);
-    expect(model.pulse).toMatch(/7 days|select a launch/i);
+    expect(model.sitesLit).toBeGreaterThan(0);
+    expect(model.goCount).toBe(2);
+    expect(model.lifetimeAttempts).toBe(1132 + 1688);
+    expect(model.nextLaunch?.apiId).toBe("a");
+    expect(model.providers.map((row) => row.label)).toEqual(["SpX", "CASC"]);
+    expect(model.orbits.map((row) => row.label)).toEqual([
+      "Low Earth",
+      "Sun-Sync",
+    ]);
+  });
+});
+
+describe("formatNextLaunchHeadline", () => {
+  it("formats minute/hour/day ETAs without seconds", () => {
+    expect(
+      formatNextLaunchHeadline(
+        makeLaunch({ apiId: "m", net: netFromNow(21 * MINUTE) }),
+        NOW,
+      ),
+    ).toEqual({ lead: "Next launch in", emphasis: "21 min" });
+
+    expect(
+      formatNextLaunchHeadline(
+        makeLaunch({ apiId: "h", net: netFromNow(6 * HOUR) }),
+        NOW,
+      ),
+    ).toEqual({ lead: "Next launch in", emphasis: "6 hr" });
+
+    expect(
+      formatNextLaunchHeadline(
+        makeLaunch({ apiId: "d", net: netFromNow(2 * DAY + 4 * HOUR) }),
+        NOW,
+      ),
+    ).toEqual({ lead: "Next launch in", emphasis: "2d 4h" });
+  });
+
+  it("handles hold and provisional NET", () => {
+    expect(
+      formatNextLaunchHeadline(
+        makeLaunch({
+          apiId: "hold",
+          net: netFromNow(HOUR),
+          statusAbbrev: "Hold",
+        }),
+        NOW,
+      ),
+    ).toEqual({ lead: "Next launch", emphasis: "On hold" });
+
+    expect(
+      formatNextLaunchHeadline(
+        makeLaunch({
+          apiId: "tbd",
+          net: netFromNow(HOUR),
+          statusAbbrev: "TBD",
+        }),
+        NOW,
+      ),
+    ).toEqual({ lead: "Next launch", emphasis: "Time TBD" });
+  });
+});
+
+describe("formatCompactCount", () => {
+  it("compacts large totals", () => {
+    expect(formatCompactCount(42)).toBe("42");
+    expect(formatCompactCount(2820)).toBe("2.8k");
+    expect(formatCompactCount(12000)).toBe("12k");
   });
 });

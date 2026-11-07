@@ -279,12 +279,12 @@ export default function App() {
             )}
 
           {/* Inspector: narrower on short+md so Earth keeps width when height is tight. */}
-          <div className={`flex w-full min-h-0 flex-1 flex-col overflow-hidden transition-[width] duration-300 ease-out md:h-full md:flex-none md:shrink-0 console-scrollbar console-scrollbar-y ${
+          <div className={`flex w-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-[width] duration-300 ease-out md:h-full md:flex-none md:shrink-0 console-scrollbar console-scrollbar-y ${
             watching
               ? "md:w-[min(100%,32rem)] xl:w-[36rem] 2xl:w-[40rem]"
               : shortBand === "short"
-                ? "md:w-[18.5rem] xl:w-[22.5rem] 2xl:w-[26rem]"
-                : "md:w-[21rem] xl:w-[22.5rem] 2xl:w-[26rem]"
+                ? "md:w-[18.5rem] xl:w-[24rem] 2xl:w-[32rem]"
+                : "md:w-[21rem] xl:w-[24rem] 2xl:w-[32rem]"
           }`}>
             <AnimatePresence mode="wait">
               {showLocationPanel && selectedLocation ? (

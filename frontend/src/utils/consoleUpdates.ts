@@ -84,10 +84,10 @@ export function updateKindLabel(kind: ConsoleUpdateKind): string {
     case "scheduled":
       return "New";
     case "rescheduled":
-      return "NET";
+      return "Time";
     case "status":
       return "Status";
     case "removed":
-      return "Off";
+      return "Gone";
   }
 }

@@ -17,7 +17,7 @@ function update(
     atMs: NOW,
     apiId: "a",
     title: "Mission",
-    detail: "Added to the board",
+    detail: "Added to the queue",
     ...overrides,
   };
 }
@@ -26,7 +26,7 @@ describe("normalizeConsoleUpdate", () => {
   it("accepts valid rows and rejects junk", () => {
     expect(
       normalizeConsoleUpdate(
-        update({ id: "1", kind: "webcast", detail: "Webcast just went live" }),
+        update({ id: "1", kind: "webcast", detail: "Webcast is live now" }),
       ),
     ).toMatchObject({ id: "1", kind: "webcast" });
     expect(normalizeConsoleUpdate({ id: "x" })).toBeNull();
@@ -56,6 +56,7 @@ describe("updateKindLabel", () => {
   it("maps kinds to short chips", () => {
     expect(updateKindLabel("webcast")).toBe("Live");
     expect(updateKindLabel("scheduled")).toBe("New");
-    expect(updateKindLabel("rescheduled")).toBe("NET");
+    expect(updateKindLabel("rescheduled")).toBe("Time");
+    expect(updateKindLabel("removed")).toBe("Gone");
   });
 });

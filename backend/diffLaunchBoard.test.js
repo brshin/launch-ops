@@ -64,5 +64,13 @@ describe("diffLaunchBoard", () => {
     assert.ok(kinds.includes("status"));
     assert.ok(kinds.includes("removed"));
     assert.equal(updates[0].kind, "webcast");
+
+    const slip = updates.find((update) => update.apiId === "slip");
+    assert.equal(slip.kind, "rescheduled");
+    assert.match(slip.detail, /→/);
+    assert.equal(
+      updates.find((update) => update.apiId === "status").detail,
+      "TBD → Go",
+    );
   });
 });

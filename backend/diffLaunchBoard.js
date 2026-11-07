@@ -36,6 +36,21 @@ function isLive(launch) {
   return (launch?.vid_urls ?? []).some((entry) => Boolean(entry?.live));
 }
 
+/** Compact UTC NET for update details — 21 Aug 00:00Z */
+function formatNetChip(net) {
+  if (!net) return null;
+  const date = new Date(net);
+  if (Number.isNaN(date.getTime())) return null;
+  const day = date.getUTCDate();
+  const month = date.toLocaleString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const hh = String(date.getUTCHours()).padStart(2, "0");
+  const mm = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${day} ${month} ${hh}:${mm}Z`;
+}
+
 /**
  * @param {object[]} previous
  * @param {object[]} next
@@ -60,7 +75,7 @@ function diffLaunchBoard(previous, next, atMs = Date.now()) {
         atMs,
         apiId: launch.apiId,
         title,
-        detail: "Added to the board",
+        detail: "Added to the queue",
       });
       continue;
     }
@@ -72,18 +87,21 @@ function diffLaunchBoard(previous, next, atMs = Date.now()) {
         atMs,
         apiId: launch.apiId,
         title,
-        detail: "Webcast just went live",
+        detail: "Webcast is live now",
       });
     }
 
     if (prior.net !== launch.net) {
+      const from = formatNetChip(prior.net);
+      const to = formatNetChip(launch.net);
       updates.push({
         id: `${atMs}-rescheduled-${launch.apiId}`,
         kind: "rescheduled",
         atMs,
         apiId: launch.apiId,
         title,
-        detail: "Launch time changed",
+        detail:
+          from && to ? `${from} → ${to}` : "Launch time updated",
       });
     }
 
@@ -109,7 +127,7 @@ function diffLaunchBoard(previous, next, atMs = Date.now()) {
       atMs,
       apiId: launch.apiId,
       title: getLaunchTitle(launch),
-      detail: "Left the board",
+      detail: "Removed from the queue",
     });
   }
 
