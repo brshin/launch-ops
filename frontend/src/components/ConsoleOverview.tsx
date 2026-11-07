@@ -163,11 +163,10 @@ function RankList({
  *
  * Layout contract:
  * - Outer chrome never scrolls; only Recent updates scrolls.
- * - CSS grid rows: auto / auto / minmax(updates) / auto so providers +
- *   destinations always keep a seat; Updates flexes with leftover height.
- * - Side-by-side composition when the inspector container is ≥20rem (typical
- *   phone console width) — that saves vertical space vs stacking.
- * - Short height only trims row counts, never drops a whole section.
+ * - Grid everywhere: auto / auto / 1fr updates / auto ranks.
+ *   Updates absorb leftover height and scroll; composition stays content-sized
+ *   at the bottom — same contract on phone, tablet, and desktop.
+ * - compactMotion / shortBand only change density and rank counts.
  */
 export function ConsoleOverview({
   launches,
@@ -185,13 +184,12 @@ export function ConsoleOverview({
   /*
     Always keep both composition sections. Trim row counts only:
     - short height → leanest bars (side-by-side still)
-    - phone / mid shell → moderate
-    - desktop roomy → full top-5
+    - mid / tight height → moderate
+    - roomy (desktop or tall phone) → full top-5 so composition keeps
+      weight under the flexible updates band
   */
-  const providerLimit =
-    shortBand === "short" ? 2 : compactMotion || tight ? 3 : 5;
-  const orbitLimit =
-    shortBand === "short" ? 2 : compactMotion || tight ? 3 : 5;
+  const providerLimit = shortBand === "short" ? 2 : tight ? 3 : 5;
+  const orbitLimit = shortBand === "short" ? 2 : tight ? 3 : 5;
 
   const model = useMemo(
     () => buildConsoleOverview(launches, locations, nowMs),
@@ -349,35 +347,51 @@ export function ConsoleOverview({
       </motion.header>
 
       {/*
-        Always 4-up — on phone a 2×2 spent a whole row on four short facts.
-        Narrow cells: tight tracking + truncate so “All launches” survives.
-        Wider containers regain airy min-heights / type.
+        Always 4-up. Density follows shell, not container width — a phone
+        console is full-bleed (~24rem) and would otherwise inherit desktop
+        type. compactMotion/tight stay compact; xl+ inspector gets air.
       */}
       <motion.div
         variants={sectionVariants}
-        className={`grid min-w-0 grid-cols-4 gap-x-2 border-b border-cyan-900/30 font-mono @[30rem]:gap-x-3 ${
-          tight
-            ? "mt-2.5 pb-2.5"
-            : "mt-2.5 pb-2.5 @[30rem]:mt-4 @[30rem]:pb-4 sm:@[30rem]:mt-5"
+        className={`grid min-w-0 grid-cols-4 border-b border-cyan-900/30 font-mono ${
+          tight || compactMotion
+            ? "mt-2.5 gap-x-2 pb-2.5"
+            : "mt-3.5 gap-x-3 pb-3.5 @[30rem]:mt-4 @[30rem]:pb-4"
         }`}
       >
         {stats.map((stat) => (
           <div
             key={stat.key}
             className={`flex min-w-0 flex-col ${
-              tight
+              tight || compactMotion
                 ? "justify-start gap-0.5"
-                : "justify-start gap-0.5 @[30rem]:min-h-[3.5rem] @[30rem]:justify-between @[30rem]:gap-0 @[40rem]:min-h-[3.75rem]"
+                : "min-h-[3.25rem] justify-between @[30rem]:min-h-[3.75rem]"
             }`}
           >
-            <p className="truncate text-[9px] uppercase leading-tight tracking-[0.06em] text-cyan-500 @[30rem]:text-[11px] @[30rem]:tracking-[0.1em] sm:text-xs sm:tracking-[0.12em]">
+            <p
+              className={`truncate uppercase leading-tight text-cyan-500 ${
+                tight || compactMotion
+                  ? "text-[9px] tracking-[0.06em]"
+                  : "text-[11px] tracking-[0.1em] @[30rem]:text-xs @[30rem]:tracking-[0.12em]"
+              }`}
+            >
               {stat.label}
             </p>
-            <div className="relative min-h-[1.15rem] min-w-0 @[30rem]:mt-1.5 @[30rem]:min-h-[1.4rem] sm:@[30rem]:mt-2 sm:@[30rem]:min-h-[1.6rem]">
+            <div
+              className={`relative min-w-0 ${
+                tight || compactMotion
+                  ? "min-h-[1.15rem]"
+                  : "mt-1.5 min-h-[1.45rem] @[30rem]:mt-2 @[30rem]:min-h-[1.6rem]"
+              }`}
+            >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.p
                   key={`${stat.key}-${stat.value}`}
-                  className="truncate text-base leading-none tabular-nums tracking-wide text-cyan-50 @[30rem]:text-xl sm:text-2xl"
+                  className={`truncate leading-none tabular-nums tracking-wide text-cyan-50 ${
+                    tight || compactMotion
+                      ? "text-base"
+                      : "text-xl @[30rem]:text-2xl"
+                  }`}
                   variants={swapVariants}
                   initial="initial"
                   animate="animate"
@@ -392,13 +406,15 @@ export function ConsoleOverview({
       </motion.div>
 
       {/*
-        Updates = the flexible middle row. Modest minmax floor (~1–2 rows) so
-        composition always fits; leftover height scrolls inside the list.
+        Updates = flexible middle. Leftover height scrolls inside the list.
+        Phone uses slightly denser rows so the 1fr band feels full, not sparse.
       */}
       <motion.section
         variants={sectionVariants}
         className={`flex min-h-0 min-w-0 flex-col border-b border-cyan-900/30 ${
-          tight ? "mt-3 pb-3" : "mt-4 pb-4 sm:mt-5 sm:pb-5"
+          tight || compactMotion
+            ? "mt-2.5 pb-2.5"
+            : "mt-4 pb-4 sm:mt-5 sm:pb-5"
         }`}
       >
         <div className="flex min-w-0 shrink-0 items-baseline justify-between gap-2">
@@ -415,7 +431,11 @@ export function ConsoleOverview({
             className="shrink-0 text-[10px]"
           />
         </div>
-        <div className="relative mt-2.5 min-h-0 min-w-0 flex-1 overflow-hidden sm:mt-3">
+        <div
+          className={`relative min-h-0 min-w-0 flex-1 overflow-hidden ${
+            tight || compactMotion ? "mt-1.5" : "mt-2.5 sm:mt-3"
+          }`}
+        >
           <AnimatePresence mode="wait" initial={false}>
             {arming ? (
               <motion.p
@@ -440,7 +460,11 @@ export function ConsoleOverview({
             ) : updates.length > 0 ? (
               <motion.ul
                 key="updates-list"
-                className="console-scrollbar console-scrollbar-y absolute inset-0 min-w-0 space-y-1 overflow-y-auto overscroll-contain pr-0.5 sm:space-y-1.5"
+                className={`console-scrollbar console-scrollbar-y absolute inset-0 min-w-0 overflow-y-auto overscroll-contain pr-0.5 ${
+                  tight || compactMotion
+                    ? "space-y-0.5"
+                    : "space-y-1 sm:space-y-1.5"
+                }`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -459,7 +483,7 @@ export function ConsoleOverview({
                         type="button"
                         onClick={() => onSelectLaunch(update.apiId)}
                         className={`group flex w-full min-w-0 items-start gap-2.5 border-l-2 border-transparent pl-2.5 text-left transition-colors hover:border-cyan-600/80 ${
-                          tight ? "py-1" : "py-1.5"
+                          tight || compactMotion ? "py-1" : "py-1.5"
                         }`}
                       >
                         <span
@@ -506,20 +530,27 @@ export function ConsoleOverview({
 
       {/*
         Composition always reserved (auto row). When destinations exist,
-        always share one horizontal band — stacking doubles the height tax
-        and is what used to force-drop Destinations on phone/short.
+        always share one horizontal band — stacking doubles the height tax.
       */}
       <motion.div
         variants={sectionVariants}
         className={`grid min-w-0 ${
           showDestinations ? "grid-cols-2" : "grid-cols-1"
-        } ${tight ? "mt-3 gap-3" : "mt-4 gap-4 sm:mt-5 sm:gap-5"}`}
+        } ${
+          tight || compactMotion
+            ? "mt-2.5 gap-3"
+            : "mt-4 gap-4 sm:mt-5 sm:gap-5"
+        }`}
       >
         <section className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-cyan-500">
             By provider
           </p>
-          <div className="relative mt-2.5 min-w-0 sm:mt-3">
+          <div
+            className={`relative min-w-0 ${
+              tight || compactMotion ? "mt-1.5" : "mt-2.5 sm:mt-3"
+            }`}
+          >
             <AnimatePresence mode="wait" initial={false}>
               {arming ? (
                 <motion.p
@@ -540,7 +571,11 @@ export function ConsoleOverview({
                   animate="animate"
                   exit="exit"
                 >
-                  <RankList rows={providers} max={providerMax} kind="provider" />
+                  <RankList
+                    rows={providers}
+                    max={providerMax}
+                    kind="provider"
+                  />
                 </motion.div>
               ) : (
                 <motion.p
@@ -563,7 +598,11 @@ export function ConsoleOverview({
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-cyan-500">
               Destinations
             </p>
-            <div className="mt-2.5 min-w-0 sm:mt-3">
+            <div
+              className={`min-w-0 ${
+                tight || compactMotion ? "mt-1.5" : "mt-2.5 sm:mt-3"
+              }`}
+            >
               <RankList rows={orbits} max={orbitMax} kind="orbit" />
             </div>
           </section>
