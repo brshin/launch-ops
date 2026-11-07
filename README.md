@@ -8,20 +8,14 @@ LaunchOps combines launch schedules, mission details, local countdowns, webcasts
 
 ## Highlights
 
-- Live launch queue with sticky selection, keyboard navigation, local NET times, and honest TBD/TBC precision
-- Mission, vehicle, provider, customer, orbit, launch site, and status details
-- T− and T+ countdowns with launch-state-aware labels such as `LIVE`, `HOLD`, and `STREAM`
+- Live launch queue with sticky selection, keyboard navigation, and honest TBD/TBC precision
+- Mission card: vehicle, provider, customer, orbit, site, status, and T− / T+ countdowns
 - Embedded YouTube webcasts, with outbound links for X and other providers
-- Interactive Earth: flies to the selected pad, marks the upcoming pad constellation, and shows quieter catalog sites
-- Drag-to-yaw globe with fling inertia; click a pad or site to inspect it
-- On phone portrait, the Earth band expands on hover or tap so pads stay usable, then yields space back to the inspector
-- Location inspector for catalog sites — imagery, lifetime metrics, and still-upcoming launches at that site
-- Launch Site tile on the mission card opens the matching location panel when the catalog joins
-- Idle console overview with board stats and newest-first recent updates (durable across refresh)
-- Real-time launch and location cache updates over Socket.IO
-- Solar-time Earth visualization with a day/night terminator
-- Shared 12/24-hour clock preference and responsive layouts from phone to desktop
-- Shared signal colors (cyan schedule, emerald live/Go, deeper green success, amber caution) — see [docs/color-scheme.md](docs/color-scheme.md)
+- Interactive day/night Earth — fly to pads, inspect catalog sites, drag-to-yaw with inertia
+- Location inspector with imagery, lifetime metrics, and still-upcoming launches at that site
+- Idle console overview with board stats and durable recent updates
+- Real-time board refreshes over Socket.IO; shared 12/24-hour clock preference
+- Shared signal colors — see [docs/color-scheme.md](docs/color-scheme.md)
 
 ## How it works
 
@@ -48,11 +42,7 @@ The Space Devs Launch Library
                      React client
 ```
 
-The backend starts the ingestion worker with the API server. The worker fetches upcoming launches on a five-minute cadence and the locations catalog about every twelve hours, maps each external payload to LaunchOps' stored model, upserts MongoDB, refreshes Redis, and publishes an update. Before overwriting the launches cache, the worker diffs the previous Redis board against the new payload, appends any console events to a capped Redis list, and includes that batch in the pub/sub message. Clients hydrate through `GET /launches`, `GET /locations`, and `GET /launches/updates`; subsequent board refreshes arrive over Socket.IO (`live-launch-data`), and new console events over `live-launch-events` on the same launch connection.
-
-On the globe, queue pads are drawn from still-upcoming launches (NET in the future). Active Earth sites from the locations catalog fill in as quieter markers where the queue does not already mark the coast. Selecting a pad or site opens the mission card or location inspector; Upcoming site counts ignore past-NET rows even when Launch Library status lags (for example a sticky `In Flight`). Below the `md` breakpoint the Earth band can expand on hover or tap for clearer pad targets; Escape or engaging the inspector collapses it again. The shell scales the globe without resizing WebGL mid-tween, and location tip type stays screen-sized.
-
-Webcast ranking stays in the frontend because availability can change with each feed refresh. LaunchOps prefers YouTube for in-app playback, then X, then other providers, while favoring live and official sources.
+The backend starts the ingestion worker with the API server. The worker maps Launch Library payloads into LaunchOps' stored model, upserts MongoDB, refreshes Redis, and publishes updates. Before overwriting the launches cache, it diffs the previous board, appends console events to a capped Redis list, and includes that batch in the pub/sub message. Clients hydrate through `GET /launches`, `GET /locations`, and `GET /launches/updates`; subsequent refreshes arrive over Socket.IO.
 
 ## Tech stack
 
@@ -120,16 +110,10 @@ Open [http://localhost:5173](http://localhost:5173). The `--host` flag also make
 
 ## Development commands
 
-Run tests:
-
 ```bash
 cd frontend && npm test
 cd backend && npm test
-```
 
-Lint or build the frontend:
-
-```bash
 cd frontend
 npm run lint
 npm run build
@@ -159,9 +143,9 @@ Local `.env` files are ignored by Git and should not be committed.
 | `GET /launches` | Upcoming launches from Redis, falling back to MongoDB |
 | `GET /launches/updates` | Recent board change events (new / NET slip / status / webcast / removed), newest first |
 | `GET /locations` | Launch-site catalog from Redis, falling back to MongoDB |
-| `live-launch-data` | Server-to-client Socket.IO event after a launch ingestion refresh |
-| `live-launch-events` | Server-to-client Socket.IO event with new board-change rows from that refresh |
-| `live-location-data` | Server-to-client Socket.IO event after a locations ingestion refresh |
+| `live-launch-data` | Socket.IO event after a launch ingestion refresh |
+| `live-launch-events` | Socket.IO event with new board-change rows from that refresh |
+| `live-location-data` | Socket.IO event after a locations ingestion refresh |
 
 The worker requests:
 
@@ -170,7 +154,7 @@ GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed&limit=20
 GET https://ll.thespacedevs.com/2.3.0/locations/?format=json&limit=100
 ```
 
-Detailed launch mode is required for webcast URLs. Launches request 20 rows per refresh (LL2 default is 10; max is 100), run once at startup, and every five minutes thereafter. Locations paginate the full catalog, refresh once at startup, and again about every twelve hours. Unauthenticated LL2 allows about 15 requests per hour per IP — this cadence stays under that without an API key.
+Detailed mode is required for webcast URLs. Launches refresh every five minutes (20 rows); locations paginate the full catalog about every twelve hours. Unauthenticated LL2 allows ~15 requests/hour per IP — this cadence stays under that without an API key.
 
 ## Repository layout
 
