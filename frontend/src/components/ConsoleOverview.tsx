@@ -349,34 +349,35 @@ export function ConsoleOverview({
       </motion.header>
 
       {/*
-        Stats stay 2×2 until labels like “All launches” fit in 4-up.
-        Parent overflow-hidden would otherwise clip the last column.
+        Always 4-up — on phone a 2×2 spent a whole row on four short facts.
+        Narrow cells: tight tracking + truncate so “All launches” survives.
+        Wider containers regain airy min-heights / type.
       */}
       <motion.div
         variants={sectionVariants}
-        className={`grid min-w-0 grid-cols-2 gap-x-4 border-b border-cyan-900/30 font-mono @[30rem]:grid-cols-4 @[30rem]:gap-x-3 ${
+        className={`grid min-w-0 grid-cols-4 gap-x-2 border-b border-cyan-900/30 font-mono @[30rem]:gap-x-3 ${
           tight
-            ? "mt-3 gap-y-3 pb-3"
-            : "mt-4 gap-y-4 pb-4 sm:mt-5"
+            ? "mt-2.5 pb-2.5"
+            : "mt-2.5 pb-2.5 @[30rem]:mt-4 @[30rem]:pb-4 sm:@[30rem]:mt-5"
         }`}
       >
         {stats.map((stat) => (
           <div
             key={stat.key}
-            className={`flex min-w-0 flex-col justify-between ${
+            className={`flex min-w-0 flex-col ${
               tight
-                ? "min-h-[2.5rem]"
-                : "min-h-[3.5rem] @[30rem]:min-h-[3.75rem]"
+                ? "justify-start gap-0.5"
+                : "justify-start gap-0.5 @[30rem]:min-h-[3.5rem] @[30rem]:justify-between @[30rem]:gap-0 @[40rem]:min-h-[3.75rem]"
             }`}
           >
-            <p className="text-[11px] uppercase leading-tight tracking-[0.1em] text-cyan-500 sm:text-xs sm:tracking-[0.12em]">
+            <p className="truncate text-[9px] uppercase leading-tight tracking-[0.06em] text-cyan-500 @[30rem]:text-[11px] @[30rem]:tracking-[0.1em] sm:text-xs sm:tracking-[0.12em]">
               {stat.label}
             </p>
-            <div className="relative mt-1.5 min-h-[1.4rem] min-w-0 sm:mt-2 sm:min-h-[1.6rem]">
+            <div className="relative min-h-[1.15rem] min-w-0 @[30rem]:mt-1.5 @[30rem]:min-h-[1.4rem] sm:@[30rem]:mt-2 sm:@[30rem]:min-h-[1.6rem]">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.p
                   key={`${stat.key}-${stat.value}`}
-                  className="truncate text-xl leading-none tabular-nums tracking-wide text-cyan-50 sm:text-2xl"
+                  className="truncate text-base leading-none tabular-nums tracking-wide text-cyan-50 @[30rem]:text-xl sm:text-2xl"
                   variants={swapVariants}
                   initial="initial"
                   animate="animate"
