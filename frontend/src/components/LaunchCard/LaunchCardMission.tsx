@@ -43,6 +43,8 @@ interface LaunchCardMissionProps {
   description: string;
   phase: LaunchTimePhase;
   hour12: boolean;
+  /** When set, Launch Site opens the catalog LocationPanel. */
+  onOpenLocation?: () => void;
 }
 
 /**
@@ -65,11 +67,13 @@ export function LaunchCardMission({
   description,
   phase,
   hour12,
+  onOpenLocation,
 }: LaunchCardMissionProps) {
   const { place, site } = formatPadPlace(padLocation);
   const sameName = site?.trim().toLowerCase() === padName.trim().toLowerCase();
   const placeRef = useFitLine(place);
   const siteRef = useFitLine(site && !sameName ? `${site} ${padName}` : padName);
+  const siteInteractive = Boolean(onOpenLocation);
 
   return (
     <motion.div
@@ -121,7 +125,25 @@ export function LaunchCardMission({
       </motion.div>
       <motion.div
         variants={sectionVariants}
-        className={`h-full min-w-0 bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 cursor-default group relative density-ease ${chrome.metaPad}`}
+        role={siteInteractive ? "button" : undefined}
+        tabIndex={siteInteractive ? 0 : undefined}
+        onClick={siteInteractive ? onOpenLocation : undefined}
+        onKeyDown={
+          siteInteractive
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onOpenLocation?.();
+                }
+              }
+            : undefined
+        }
+        aria-label={siteInteractive ? "Open launch site details" : undefined}
+        className={`h-full min-w-0 bg-black/40 border border-cyan-900/50 rounded-lg hover:bg-cyan-950/20 hover:border-cyan-500/40 active:bg-cyan-950/20 active:border-cyan-500/40 transition-all duration-300 group relative density-ease ${chrome.metaPad} ${
+          siteInteractive
+            ? "cursor-pointer focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-cyan-500/70"
+            : "cursor-default"
+        }`}
       >
         <div className="absolute left-0 top-0 w-[2px] h-full bg-cyan-800 group-hover:bg-cyan-400 group-active:bg-cyan-400 transition-colors group-hover:shadow-[0_0_8px_#22d3ee] group-active:shadow-[0_0_8px_#22d3ee]"></div>
         <h3 className="text-[10px] text-cyan-600 uppercase font-mono tracking-[0.16em] mb-1 group-hover:text-cyan-400 group-active:text-cyan-400 transition-colors lg:text-[9px] lg:tracking-[0.2em]">

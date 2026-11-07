@@ -26,6 +26,8 @@ interface LaunchCardProps {
     launch: Launch;
     hour12: boolean;
     onWatchingChange?: (watching: boolean) => void;
+    /** Opens LocationPanel when the Launch Site tile is activated. */
+    onOpenLocation?: (locationApiId: number) => void;
 }
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
@@ -43,6 +45,7 @@ export default function LaunchCard({
     launch,
     hour12,
     onWatchingChange,
+    onOpenLocation,
 }: LaunchCardProps) {
     const rootRef = useRef<HTMLDivElement>(null);
     const reduceMotion = useReducedMotion();
@@ -239,6 +242,12 @@ export default function LaunchCard({
                     description={getMissionBrief(launch.mission?.description)}
                     phase={launchTime.phase}
                     hour12={hour12}
+                    onOpenLocation={
+                        typeof launch.pad?.location?.id === "number" &&
+                        onOpenLocation
+                            ? () => onOpenLocation(launch.pad!.location!.id!)
+                            : undefined
+                    }
                 />
             </motion.div>
 

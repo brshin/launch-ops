@@ -172,22 +172,11 @@ export function LocationPanel({
         className={`flex shrink-0 items-start justify-between density-ease ${chrome.identity}`}
       >
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-sm border border-teal-700/55 bg-teal-950/50 font-mono uppercase text-teal-300 density-ease ${chrome.chip}`}
-            >
-              Site
-            </span>
-            <span
-              className={`rounded-sm border font-mono uppercase density-ease ${chrome.chip} ${
-                location.active
-                  ? "border-emerald-800/55 text-emerald-400/90"
-                  : "border-zinc-700/55 text-zinc-500"
-              }`}
-            >
-              {location.active ? "Active" : "Inactive"}
-            </span>
-          </div>
+          <span
+            className={`inline-flex rounded-sm border border-teal-700/55 bg-teal-950/50 font-mono uppercase text-teal-300 density-ease ${chrome.chip}`}
+          >
+            Site
+          </span>
           <h2
             className={`font-mono uppercase text-slate-50 break-words density-ease ${chrome.title}`}
           >

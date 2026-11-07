@@ -267,6 +267,15 @@ export default function App() {
                     launch={activeLaunch}
                     hour12={hour12}
                     onWatchingChange={setWatching}
+                    onOpenLocation={
+                      typeof activeLaunch.pad?.location?.id === "number" &&
+                      locations.some(
+                        (location) =>
+                          location.apiId === activeLaunch.pad?.location?.id,
+                      )
+                        ? openLocation
+                        : undefined
+                    }
                   />
                 </motion.div>
               ) : (
