@@ -177,12 +177,11 @@ export default function LaunchCard({
                 lg+ keeps the inspector's right-hand status column. */}
             <motion.div
                 variants={sectionVariants}
-                className={`flex flex-col gap-x-2 gap-y-1 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-x-3 lg:gap-y-1.5 shrink-0 density-ease ${chrome.identity} ${
-                    onClose ? "pr-10 sm:pr-12" : ""
-                }`}
+                className={`flex flex-col gap-x-2 gap-y-1 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-x-3 lg:gap-y-1.5 shrink-0 density-ease ${chrome.identity}`}
             >
                 <LaunchCardIdentity
                     chrome={chrome}
+                    reserveClose={Boolean(onClose)}
                     providerName={launch.launch_service_provider?.name || "UNKNOWN"}
                     providerMarkUrl={agencyMarkUrl(launch.launch_service_provider)}
                     customers={getMissionCustomers(launch)}

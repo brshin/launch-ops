@@ -242,6 +242,8 @@ function PartyName({ label, markUrl }: { label: string; markUrl?: string | null 
 
 interface LaunchCardIdentityProps {
   chrome: DensityChrome;
+  /** Clear the absolute Close control on the parties row only — not Status/T−. */
+  reserveClose?: boolean;
   providerName: string;
   providerMarkUrl: string | null;
   customers: MissionParty[];
@@ -263,6 +265,7 @@ interface LaunchCardIdentityProps {
  */
 export function LaunchCardIdentity({
   chrome,
+  reserveClose = false,
   providerName,
   providerMarkUrl,
   customers,
@@ -300,7 +303,9 @@ export function LaunchCardIdentity({
 
   const parties = (
     <div
-      className={`flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-cyan-600 uppercase lg:gap-x-4 lg:gap-y-1.5 lg:basis-full density-ease ${chrome.provider}`}
+      className={`flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-cyan-600 uppercase lg:gap-x-4 lg:gap-y-1.5 lg:basis-full density-ease ${chrome.provider} ${
+        reserveClose ? "pr-10 sm:pr-12" : ""
+      }`}
     >
       <span className="rounded-sm border border-cyan-800/55 bg-cyan-950/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.22em] text-cyan-400">
         Mission
@@ -327,7 +332,7 @@ export function LaunchCardIdentity({
   ) : null;
 
   const netReadout = (
-    <div className="flex w-full min-w-0 flex-col items-start gap-1 lg:w-auto lg:items-end">
+    <div className="flex min-w-0 flex-col items-start gap-1 lg:items-end">
       <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums sm:text-[11px]">
         <HourCycleFade cycle={hour12 ? "12" : "24"} className="inline-block">
           <span className="text-slate-50">{tZero.date}</span>
@@ -341,16 +346,17 @@ export function LaunchCardIdentity({
     </div>
   );
 
+  // Display classes only in `className` — a base `inline-flex` fights `hidden` in Tailwind.
   const statusPill = (className: string) => (
     <div
-      className={`items-center gap-2 shrink-0 bg-[#020617]/80 border rounded-sm backdrop-blur-sm cursor-help transition-all duration-300 density-ease ${statusColors.frame} ${chrome.statusPill} ${className}`}
+      className={`w-max max-w-full items-center gap-2 shrink-0 bg-[#020617]/80 border rounded-sm backdrop-blur-sm cursor-help transition-all duration-300 density-ease ${statusColors.frame} ${chrome.statusPill} ${className}`}
     >
       <span className="relative flex h-2 w-2">
         <span
           className={`relative inline-flex rounded-full h-2 w-2 ${statusColors.dot} ${statusColors.glow}`}
         ></span>
       </span>
-      <span className={`max-lg:whitespace-nowrap text-[10px] font-mono uppercase leading-none tracking-wider lg:leading-normal lg:tracking-wider xl:tracking-widest ${statusColors.text}`}>
+      <span className={`max-lg:whitespace-nowrap text-[10px] font-mono uppercase leading-none tracking-wider lg:leading-normal lg:tracking-wider ${statusColors.text}`}>
         Status: {status || "Unk"}
       </span>
     </div>
@@ -374,12 +380,13 @@ export function LaunchCardIdentity({
         </div>
       </div>
 
+      {/* Hug content, always flush right under Status (Close clearance is on parties only). */}
       <div
-        className={`flex flex-col items-start lg:items-end w-full lg:w-auto shrink-0 density-ease ${chrome.statusCol}`}
+        className={`ml-auto flex w-max max-w-full shrink-0 flex-col items-end density-ease ${chrome.statusCol}`}
       >
         {statusPill("hidden lg:flex")}
 
-        <div className="flex items-center gap-2 sm:gap-3 px-0 sm:px-2 lg:px-0 min-w-0">
+        <div className="flex min-w-0 items-center justify-end">
           {showProvisional ? (
             netReadout
           ) : launchTime.phase === "hold" ? (
