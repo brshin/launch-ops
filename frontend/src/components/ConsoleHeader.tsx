@@ -102,10 +102,10 @@ export function ConsoleHeader({
     <motion.header
       className={`w-full flex justify-between items-center gap-2 sm:gap-3 max-[359px]:flex-col max-[359px]:items-stretch border-b border-cyan-900/60 relative z-20 shrink-0 density-ease ${
         shortBand === "short"
-          ? "mb-1.5 pb-1.5 lg:mb-3 lg:pb-2.5"
+          ? "mb-1.5 pb-1.5 xl:mb-3 xl:pb-2.5"
           : shortBand === "mid"
-            ? "mb-1.5 pb-2 sm:mb-2 lg:mb-3 lg:pb-2.5"
-            : "mb-2 sm:mb-2.5 lg:mb-3 pb-2 sm:pb-2.5"
+            ? "mb-1.5 pb-2 sm:mb-2 xl:mb-3 xl:pb-2.5"
+            : "mb-2 sm:mb-2.5 xl:mb-3 pb-2 sm:pb-2.5"
       }`}
       variants={bootHeaderVariants}
       initial="hidden"
@@ -115,9 +115,9 @@ export function ConsoleHeader({
         <h1
           className={`font-bold text-slate-100 uppercase leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] density-ease ${
             shortBand === "short"
-              ? "text-xl tracking-[0.06em] min-[400px]:tracking-[0.1em] lg:text-3xl lg:tracking-[0.16em]"
+              ? "text-xl tracking-[0.06em] min-[400px]:tracking-[0.1em] xl:text-3xl xl:tracking-[0.16em]"
               : shortBand === "mid"
-                ? "text-xl min-[400px]:text-[1.35rem] sm:text-[1.65rem] tracking-[0.06em] min-[400px]:tracking-[0.11em] sm:tracking-[0.14em] lg:text-3xl lg:tracking-[0.16em]"
+                ? "text-xl min-[400px]:text-[1.35rem] sm:text-[1.65rem] tracking-[0.06em] min-[400px]:tracking-[0.11em] sm:tracking-[0.14em] xl:text-3xl xl:tracking-[0.16em]"
                 : "text-xl min-[400px]:text-2xl sm:text-3xl tracking-[0.06em] sm:tracking-[0.16em]"
           }`}
         >
@@ -125,7 +125,7 @@ export function ConsoleHeader({
           <span
             className={`text-cyan-500 ml-[0.12em] density-ease ${
               shortBand === "short"
-                ? "tracking-[0.08em] lg:tracking-[0.1em]"
+                ? "tracking-[0.08em] xl:tracking-[0.1em]"
                 : "tracking-[0.08em] sm:tracking-[0.1em]"
             }`}
           >
@@ -135,7 +135,7 @@ export function ConsoleHeader({
         <p
           className={`font-mono text-cyan-600 uppercase leading-none ${
             shortBand === "short"
-              ? "hidden lg:block text-[10px] tracking-[0.3em] mt-1"
+              ? "hidden xl:block text-[10px] tracking-[0.3em] mt-1"
               : shortBand === "mid"
                 ? "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.3em] mt-1"
                 : "hidden sm:block text-[10px] tracking-[0.28em] sm:tracking-[0.32em] mt-1"
@@ -156,7 +156,7 @@ export function ConsoleHeader({
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
         </span>
         {/* Below desktop: same two lines as the desk clock, just shorter type */}
-        <div className="flex lg:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
+        <div className="flex xl:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-baseline gap-1.5 shrink-0">
               <span className="text-[9px] tracking-[0.2em] text-cyan-600">Sys</span>
@@ -185,7 +185,7 @@ export function ConsoleHeader({
           </div>
         </div>
         {/* Desktop: compact two-line block, still short */}
-        <div className="hidden lg:flex flex-col font-mono uppercase leading-none gap-0.5 xl:gap-1">
+        <div className="hidden xl:flex flex-col font-mono uppercase leading-none gap-0.5 2xl:gap-1">
           <div className="flex items-center justify-between gap-3">
             <span className="flex items-baseline gap-1.5 shrink-0">
               <span className="text-[9px] xl:text-[10px] tracking-[0.3em] text-cyan-600">Sys Time</span>

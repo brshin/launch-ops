@@ -133,27 +133,27 @@ export function LaunchQueue({
 
   return (
     <motion.div
-      className="w-full lg:w-[320px] h-auto shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-clip"
+      className="w-full xl:w-[300px] 2xl:w-[320px] h-auto shrink-0 xl:h-full xl:min-h-0 flex flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/50 rounded-2xl shadow-[0_0_35px_rgba(8,145,178,0.12)] overflow-clip"
       variants={bootPanelVariants}
       initial="hidden"
       animate="show"
     >
       <div
-        className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 lg:gap-3 density-ease ${
+        className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 xl:gap-3 density-ease ${
           shortBand === "short"
-            ? "px-2 py-1 lg:p-4"
+            ? "px-2 py-1 xl:p-4"
             : shortBand === "mid"
-              ? "px-2.5 py-1.5 lg:p-4"
-              : "px-2.5 py-1.5 md:px-3 md:py-2 lg:p-4"
+              ? "px-2.5 py-1.5 xl:p-4"
+              : "px-2.5 py-1.5 md:px-3 md:py-2 xl:p-4"
         }`}
       >
         <h2
           className={`text-cyan-500 font-mono uppercase min-w-0 truncate density-ease ${
             shortBand === "short"
-              ? "tracking-[0.15em] text-[9px] lg:tracking-[0.25em] lg:text-xs"
+              ? "tracking-[0.15em] text-[9px] xl:tracking-[0.25em] xl:text-xs"
               : shortBand === "mid"
-                ? "tracking-[0.17em] text-[9px] sm:text-[10px] lg:tracking-[0.25em] lg:text-xs"
-                : "tracking-[0.2em] lg:tracking-[0.25em] text-[10px] lg:text-xs"
+                ? "tracking-[0.17em] text-[9px] sm:text-[10px] xl:tracking-[0.25em] xl:text-xs"
+                : "tracking-[0.2em] xl:tracking-[0.25em] text-[10px] xl:text-xs"
           }`}
         >
           Launch Queue
@@ -169,15 +169,15 @@ export function LaunchQueue({
         />
       </div>
 
-      <div className="relative min-h-0 lg:flex-1 lg:min-h-0 flex flex-col">
+      <div className="relative min-h-0 xl:flex-1 xl:min-h-0 flex flex-col">
         <motion.div
           ref={queueScrollRef}
-          className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:snap-none overscroll-x-contain lg:overscroll-y-contain density-ease ${
+          className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory xl:flex-1 xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden xl:snap-none overscroll-x-contain xl:overscroll-y-contain density-ease ${
             shortBand === "short"
-              ? "gap-1 p-1 max-lg:pr-6 lg:gap-2 lg:p-3"
+              ? "gap-1 p-1 max-xl:pr-6 xl:gap-2 xl:p-3"
               : shortBand === "mid"
-                ? "gap-1.5 p-2 max-lg:pr-7 lg:gap-2 lg:p-3"
-                : "gap-1.5 p-2 max-md:pr-6 md:gap-2 md:p-2.5 md:max-lg:pr-8 lg:p-3"
+                ? "gap-1.5 p-2 max-xl:pr-7 xl:gap-2 xl:p-3"
+                : "gap-1.5 p-2 max-md:pr-6 md:gap-2 md:p-2.5 md:max-xl:pr-8 xl:p-3"
           }`}
           variants={bootQueueListVariants}
           initial="hidden"
@@ -220,7 +220,7 @@ export function LaunchQueue({
                 onClick={() => {
                   if (launch.apiId) onSelect(launch.apiId);
                 }}
-                className={`shrink-0 snap-start lg:w-full min-h-10 md:min-h-11 text-left py-1.5 px-2.5 md:py-2.5 md:px-3 lg:py-3 lg:px-4 rounded-lg border transition-[width,colors,opacity] duration-300 ease-out flex flex-col justify-center gap-0 md:gap-0.5 lg:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
+                className={`shrink-0 snap-start xl:w-full min-h-10 md:min-h-11 text-left py-1.5 px-2.5 md:py-2.5 md:px-3 xl:py-3 xl:px-4 rounded-lg border transition-[width,colors,opacity] duration-300 ease-out flex flex-col justify-center gap-0 md:gap-0.5 xl:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
                   hour12 ? "w-[14rem] md:w-[17.5rem]" : "w-[13rem] md:w-[14rem]"
                 } ${
                   selected
@@ -234,7 +234,7 @@ export function LaunchQueue({
                   {selected && (
                     <motion.div
                       key="selected-bar"
-                      className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-400 shadow-[0_0_10px_#22d3ee] lg:inset-x-auto lg:left-0 lg:top-0 lg:bottom-0 lg:h-auto lg:w-1"
+                      className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-400 shadow-[0_0_10px_#22d3ee] xl:inset-x-auto xl:left-0 xl:top-0 xl:bottom-0 xl:h-auto xl:w-1"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -252,7 +252,7 @@ export function LaunchQueue({
                   </HourCycleFade>
                   <span className="flex items-baseline gap-1.5 shrink-0">
                     {showNext && (
-                      <span className="hidden lg:inline text-[8px] font-mono text-cyan-600 uppercase tracking-[0.2em]">
+                      <span className="hidden xl:inline text-[8px] font-mono text-cyan-600 uppercase tracking-[0.2em]">
                         NEXT
                       </span>
                     )}
@@ -290,13 +290,13 @@ export function LaunchQueue({
         {/* Horizontal scroll affordance — stacked strip only */}
         <div
           aria-hidden
-          className={`queue-strip-fade queue-strip-fade-left pointer-events-none absolute inset-y-0 left-0 z-20 lg:hidden transition-opacity duration-200 ${
+          className={`queue-strip-fade queue-strip-fade-left pointer-events-none absolute inset-y-0 left-0 z-20 xl:hidden transition-opacity duration-200 ${
             queueEdges.left ? "opacity-100" : "opacity-0"
           }`}
         />
         <div
           aria-hidden
-          className={`queue-strip-fade queue-strip-fade-right pointer-events-none absolute inset-y-0 right-0 z-20 lg:hidden transition-opacity duration-200 ${
+          className={`queue-strip-fade queue-strip-fade-right pointer-events-none absolute inset-y-0 right-0 z-20 xl:hidden transition-opacity duration-200 ${
             queueEdges.right ? "opacity-100" : "opacity-0"
           }`}
         />

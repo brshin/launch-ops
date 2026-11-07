@@ -166,12 +166,12 @@ export default function App() {
 
         {/* PANELS WRAPPER. The console stays locked. Nothing scrolls the page. */}
         <div
-          className={`console-scrollbar console-scrollbar-y relative z-10 flex w-full min-h-0 flex-1 flex-col overflow-hidden lg:flex-row density-ease ${
+          className={`console-scrollbar console-scrollbar-y relative z-10 flex w-full min-h-0 flex-1 flex-col overflow-hidden xl:flex-row density-ease ${
             shortBand === "short"
-              ? "gap-1.5 lg:gap-5"
+              ? "gap-1.5 xl:gap-5"
               : shortBand === "mid"
-                ? "gap-2 sm:gap-3 md:gap-4 lg:gap-5"
-                : "gap-3 sm:gap-4 md:gap-6 lg:gap-5"
+                ? "gap-2 sm:gap-3 md:gap-4 xl:gap-5"
+                : "gap-3 sm:gap-4 md:gap-6 xl:gap-5"
           }`}
         >
           
@@ -187,14 +187,15 @@ export default function App() {
           />
 
           {/*
-            Below md the earth is a short band and the card fills the rest.
-            From md until lg the earth is the left column and the card keeps its width.
-            lg:contents hands both back to the desktop row, unchanged.
+            Below md: earth band above the card.
+            md→xl: earth left column + fixed inspector (even on short height — stacking
+            starves the card on landscape phones).
+            xl:contents → desktop row (sidebar queue + centered globe).
           */}
           <div
-            className={`flex w-full min-h-0 flex-1 flex-col overflow-hidden md:flex-row lg:contents ${
+            className={`flex w-full min-h-0 flex-1 flex-col overflow-hidden md:flex-row xl:contents ${
               shortBand === "short"
-                ? "gap-1.5 md:gap-4"
+                ? "gap-1.5 md:gap-3"
                 : shortBand === "mid"
                   ? "gap-2 md:gap-4"
                   : "gap-3 sm:gap-4 md:gap-6"
@@ -202,13 +203,13 @@ export default function App() {
           >
             {compactMotion && (
               <div
-                className={`relative w-full shrink-0 md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-1 ${
+                className={
                   shortBand === "short"
-                    ? "h-[6.5rem]"
+                    ? "relative w-full shrink-0 h-[7.75rem] md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-[1.55]"
                     : shortBand === "mid"
-                      ? "h-[6.75rem]"
-                      : "h-[8.75rem]"
-                }`}
+                      ? "relative w-full shrink-0 h-[8.5rem] md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-[1.45]"
+                      : "relative w-full shrink-0 h-[10.25rem] md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-[1.45]"
+                }
               >
                 <GlobeSlot
                   maxDpr={3}
@@ -222,7 +223,7 @@ export default function App() {
             )}
 
             {!compactMotion && (
-              <div className="relative hidden min-h-0 min-w-0 flex-1 lg:block">
+              <div className="relative hidden min-h-0 min-w-0 flex-1 xl:block">
                 <GlobeSlot
                   focus={globeFocus}
                   pads={globePads}
@@ -233,11 +234,13 @@ export default function App() {
               </div>
             )}
 
-          {/* Mission / site inspector. Narrow on desktop so the globe keeps the center. */}
+          {/* Inspector: narrower on short+md so Earth keeps width when height is tight. */}
           <div className={`flex w-full min-h-0 flex-1 flex-col overflow-hidden transition-[width] duration-300 ease-out md:h-full md:flex-none md:shrink-0 console-scrollbar console-scrollbar-y ${
             watching
-              ? "md:w-[min(100%,34rem)] lg:w-[36rem] xl:w-[40rem]"
-              : "md:w-[22.5rem] xl:w-[26rem]"
+              ? "md:w-[min(100%,32rem)] xl:w-[36rem] 2xl:w-[40rem]"
+              : shortBand === "short"
+                ? "md:w-[18.5rem] xl:w-[22.5rem] 2xl:w-[26rem]"
+                : "md:w-[21rem] xl:w-[22.5rem] 2xl:w-[26rem]"
           }`}>
             <AnimatePresence mode="wait">
               {showLocationPanel && selectedLocation ? (

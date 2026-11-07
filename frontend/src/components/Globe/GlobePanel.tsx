@@ -210,7 +210,8 @@ function FrameCamera() {
     const vFov = (camera.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
     const limit = Math.min(vFov, hFov);
-    const distance = 1.22 / Math.tan(limit / 2);
+    // Slight margin past the atmosphere rim (scale 1.04) without letterboxing Earth.
+    const distance = 1.1 / Math.tan(limit / 2);
     camera.position.set(0, Math.sin(VIEW_TILT) * distance, Math.cos(VIEW_TILT) * distance);
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
