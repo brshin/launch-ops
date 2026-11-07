@@ -162,19 +162,7 @@ describe("getLaunchTime", () => {
 });
 
 describe("isUpcomingQueueLaunch", () => {
-  it("keeps live, hold, TBD, and future countdown rows", () => {
-    expect(
-      isUpcomingQueueLaunch(
-        { net: netFromNow(-MINUTE), status: { abbrev: "In Flight" } },
-        NOW,
-      ),
-    ).toBe(true);
-    expect(
-      isUpcomingQueueLaunch(
-        { net: netFromNow(-MINUTE), status: { abbrev: "Hold" } },
-        NOW,
-      ),
-    ).toBe(true);
+  it("keeps rows whose NET is still ahead", () => {
     expect(
       isUpcomingQueueLaunch(
         { net: netFromNow(HOUR), status: { abbrev: "Go" } },
@@ -183,22 +171,34 @@ describe("isUpcomingQueueLaunch", () => {
     ).toBe(true);
     expect(
       isUpcomingQueueLaunch(
-        { net: netFromNow(-HOUR), status: { abbrev: "TBD" } },
+        { net: netFromNow(HOUR), status: { abbrev: "TBD" } },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(HOUR), status: { abbrev: "Hold" } },
         NOW,
       ),
     ).toBe(true);
   });
 
-  it("drops Success, Failure, and other elapsed NET rows", () => {
+  it("drops past-NET rows even when status is still In Flight", () => {
     expect(
       isUpcomingQueueLaunch(
-        { net: netFromNow(-MINUTE), status: { abbrev: "Success" } },
+        { net: netFromNow(-MINUTE), status: { abbrev: "In Flight" } },
         NOW,
       ),
     ).toBe(false);
     expect(
       isUpcomingQueueLaunch(
-        { net: netFromNow(-MINUTE), status: { abbrev: "Go" } },
+        { net: netFromNow(-HOUR), status: { abbrev: "TBD" } },
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(-MINUTE), status: { abbrev: "Success" } },
         NOW,
       ),
     ).toBe(false);

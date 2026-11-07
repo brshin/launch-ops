@@ -155,9 +155,9 @@ type UpcomingQueueLaunchInput = {
 };
 
 /**
- * True while a feed row still belongs in “upcoming” UI — live / hold / TBD /
- * future countdown. Drops Success, Failure, and other elapsed NET rows that
- * Space Devs often leaves in the upcoming endpoint after liftoff.
+ * True while NET is still in the future (and not a Failure).
+ * Status alone is unreliable — Space Devs often leaves “In Flight” after
+ * the mission is over — so Upcoming counts key off NET vs now.
  */
 export function isUpcomingQueueLaunch(
   launch: UpcomingQueueLaunchInput,
@@ -168,11 +168,12 @@ export function isUpcomingQueueLaunch(
     typeof launch.status === "string"
       ? launch.status
       : launch.status?.abbrev;
-  const { phase } = getLaunchTime({
+  const { phase, msUntilNet } = getLaunchTime({
     net: launch.net,
     status,
     netPrecision: launch.net_precision,
     now,
   });
-  return phase !== "elapsed" && phase !== "failed";
+  if (phase === "failed") return false;
+  return msUntilNet > 0;
 }
