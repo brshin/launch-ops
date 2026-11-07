@@ -16,11 +16,15 @@ export function GlobeSlot({
   focus = null,
   pads = [],
   sites = [],
+  onSelectPad,
+  onSelectSite,
 }: {
   maxDpr?: number;
   focus?: PadFocus | null;
   pads?: PadSite[];
   sites?: GlobeSite[];
+  onSelectPad?: (pad: PadSite) => void;
+  onSelectSite?: (site: GlobeSite) => void;
 }) {
   const compactMotion = useCompactMotion();
   const bootGlobeVariants = useMemo(
@@ -70,6 +74,8 @@ export function GlobeSlot({
             focus={focus}
             pads={pads}
             sites={sites}
+            onSelectPad={onSelectPad}
+            onSelectSite={onSelectSite}
           />
         </Suspense>
       </motion.div>

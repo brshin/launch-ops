@@ -14,6 +14,7 @@ import {
 import { solarAttitude } from "../../utils/solarAttitude";
 import {
   faceYawForLatLon,
+  globeSiteStatLine,
   latLonToUnit,
   samePad,
   shortestAngleDelta,
@@ -22,6 +23,7 @@ import {
   type PadSite,
 } from "../../utils/globeFocus";
 import { globeDrag } from "../../utils/globeInteraction";
+import { GlobeSiteCopy } from "./GlobeSiteCopy";
 import {
   BackSide,
   MeshBasicNodeMaterial,
@@ -240,13 +242,13 @@ function PadHoverTip({
   siteLabel,
   placeLabel = null,
   upcomingCount = 0,
+  totalLaunchCount = 0,
 }: {
   siteLabel: string;
   placeLabel?: string | null;
-  /** Omit the upcoming line when 0 (catalog-only sites). */
   upcomingCount?: number;
+  totalLaunchCount?: number;
 }) {
-  const showUpcoming = upcomingCount > 0;
   return (
     <motion.div
       initial={{ opacity: 0, y: 5, scale: 0.96 }}
@@ -255,23 +257,12 @@ function PadHoverTip({
       transition={{ duration: 0.18, ease: "easeOut" }}
       className="pointer-events-none select-none whitespace-nowrap rounded-sm border border-cyan-800/55 bg-[#020617]/92 px-2.5 py-1.5 font-mono shadow-[0_0_18px_rgba(8,145,178,0.18)] backdrop-blur-sm"
     >
-      <p className="text-[10px] uppercase leading-none tracking-[0.14em] text-slate-100">
-        {siteLabel}
-      </p>
-      {placeLabel ? (
-        <p className="mt-1 text-[9px] uppercase leading-none tracking-[0.14em] text-cyan-600">
-          {placeLabel}
-        </p>
-      ) : null}
-      {showUpcoming ? (
-        <p
-          className={`text-[9px] uppercase leading-none tracking-[0.16em] text-cyan-400 ${
-            placeLabel ? "mt-1.5" : "mt-1"
-          }`}
-        >
-          {upcomingCount} upcoming
-        </p>
-      ) : null}
+      <GlobeSiteCopy
+        siteLabel={siteLabel}
+        placeLabel={placeLabel}
+        statLine={globeSiteStatLine(upcomingCount, totalLaunchCount)}
+        compact
+      />
     </motion.div>
   );
 }
@@ -285,18 +276,22 @@ function PadHoverTarget({
   siteLabel,
   placeLabel = null,
   upcomingCount = 0,
+  totalLaunchCount = 0,
   hitScale = HIT_SCALE_QUEUE,
+  onSelect,
 }: {
   point: Vector3;
   siteLabel: string;
   placeLabel?: string | null;
   upcomingCount?: number;
+  totalLaunchCount?: number;
   hitScale?: number;
+  onSelect?: () => void;
 }) {
   const hitRef = useRef<Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const [facing, setFacing] = useState(true);
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const hit = useMarkerMaterial("#000000", 0);
   const world = useMemo(() => new Vector3(), []);
   const toCamera = useMemo(() => new Vector3(), []);
@@ -324,8 +319,17 @@ function PadHoverTarget({
         onPointerOver={(event) => {
           event.stopPropagation();
           setHovered(true);
+          if (!globeDrag.active) gl.domElement.style.cursor = "pointer";
         }}
-        onPointerOut={() => setHovered(false)}
+        onPointerOut={() => {
+          setHovered(false);
+          if (!globeDrag.active) gl.domElement.style.cursor = "grab";
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (globeDrag.suppressClick || globeDrag.active) return;
+          onSelect?.();
+        }}
       >
         <sphereGeometry args={[1, 10, 10]} />
       </mesh>
@@ -342,6 +346,7 @@ function PadHoverTarget({
               siteLabel={siteLabel}
               placeLabel={placeLabel}
               upcomingCount={upcomingCount}
+              totalLaunchCount={totalLaunchCount}
             />
           ) : null}
         </AnimatePresence>
@@ -357,7 +362,9 @@ function PadMarker({
   siteLabel = "Launch site",
   placeLabel = null,
   upcomingCount = 0,
-}: PadFocus) {
+  totalLaunchCount = 0,
+  onSelect,
+}: PadFocus & { onSelect?: () => void }) {
   const point = useMemo(() => latLonToUnit(latitude, longitude), [latitude, longitude]);
   const quaternion = useMemo(() => {
     const next = new Quaternion();
@@ -411,14 +418,22 @@ function PadMarker({
         siteLabel={siteLabel}
         placeLabel={placeLabel}
         upcomingCount={upcomingCount}
+        totalLaunchCount={totalLaunchCount}
         hitScale={HIT_SCALE_FOCUS}
+        onSelect={onSelect}
       />
     </group>
   );
 }
 
 /** Quiet catalog layer — active Earth sites without a queue pad marker. */
-function SiteCatalog({ sites }: { sites: GlobeSite[] }) {
+function SiteCatalog({
+  sites,
+  onSelectSite,
+}: {
+  sites: GlobeSite[];
+  onSelectSite?: (site: GlobeSite) => void;
+}) {
   const fill = useMarkerMaterial(CATALOG_DOT, 0.42);
 
   return (
@@ -440,7 +455,9 @@ function SiteCatalog({ sites }: { sites: GlobeSite[] }) {
               siteLabel={site.siteLabel}
               placeLabel={site.placeLabel}
               upcomingCount={site.upcomingCount}
+              totalLaunchCount={site.totalLaunchCount}
               hitScale={HIT_SCALE_CATALOG}
+              onSelect={onSelectSite ? () => onSelectSite(site) : undefined}
             />
           </group>
         );
@@ -453,9 +470,11 @@ function SiteCatalog({ sites }: { sites: GlobeSite[] }) {
 function PadConstellation({
   pads,
   focus,
+  onSelectPad,
 }: {
   pads: PadSite[];
   focus?: PadFocus | null;
+  onSelectPad?: (pad: PadSite) => void;
 }) {
   const fill = useMarkerMaterial(QUEUE_DOT, 0.85);
   const sites = useMemo(
@@ -482,7 +501,9 @@ function PadConstellation({
               siteLabel={pad.siteLabel}
               placeLabel={pad.placeLabel}
               upcomingCount={pad.upcomingCount}
+              totalLaunchCount={pad.totalLaunchCount}
               hitScale={HIT_SCALE_QUEUE}
+              onSelect={onSelectPad ? () => onSelectPad(pad) : undefined}
             />
           </group>
         );
@@ -514,11 +535,15 @@ function OrientedGlobe({
   focus,
   pads,
   sites,
+  onSelectPad,
+  onSelectSite,
 }: {
   onReady?: () => void;
   focus?: PadFocus | null;
   pads: PadSite[];
   sites: GlobeSite[];
+  onSelectPad?: (pad: PadSite) => void;
+  onSelectSite?: (site: GlobeSite) => void;
 }) {
   const group = useRef<Group>(null);
   const light = useRef<DirectionalLight>(null);
@@ -603,6 +628,7 @@ function OrientedGlobe({
       const { subsolarLongitude } = solarAttitude(new Date());
       inertiaVel.current = 0;
       flying.current = false;
+      globeDrag.suppressClick = false;
       syncSpinFromYaw(subsolarLongitude);
 
       press.current = {
@@ -623,6 +649,7 @@ function OrientedGlobe({
         if (Math.abs(event.clientX - state.startX) < DRAG_THRESHOLD_PX) return;
         state.dragging = true;
         globeDrag.active = true;
+        globeDrag.suppressClick = true;
         flying.current = false;
         inertiaVel.current = 0;
         el.style.cursor = "grabbing";
@@ -673,12 +700,18 @@ function OrientedGlobe({
       el.removeEventListener("pointercancel", onPointerCancel);
       el.removeEventListener("lostpointercapture", onLostCapture);
       globeDrag.active = false;
+      globeDrag.suppressClick = false;
       press.current = null;
       inertiaVel.current = 0;
       el.style.cursor = "";
       el.style.touchAction = "";
     };
   }, [gl]);
+
+  const focusPad = useMemo(
+    () => (focus ? pads.find((pad) => samePad(pad, focus)) ?? null : null),
+    [focus, pads],
+  );
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(Math.max(rawDelta, 0), MAX_FRAME_DELTA);
@@ -766,8 +799,8 @@ function OrientedGlobe({
           <Earth />
           <EarthReady onReady={onReady} />
         </Suspense>
-        <SiteCatalog sites={sites} />
-        <PadConstellation pads={pads} focus={focus} />
+        <SiteCatalog sites={sites} onSelectSite={onSelectSite} />
+        <PadConstellation pads={pads} focus={focus} onSelectPad={onSelectPad} />
         {focus ? (
           <PadMarker
             latitude={focus.latitude}
@@ -775,6 +808,12 @@ function OrientedGlobe({
             siteLabel={focus.siteLabel}
             placeLabel={focus.placeLabel}
             upcomingCount={focus.upcomingCount}
+            totalLaunchCount={focus.totalLaunchCount}
+            onSelect={
+              focusPad && onSelectPad
+                ? () => onSelectPad(focusPad)
+                : undefined
+            }
           />
         ) : null}
       </group>
@@ -793,12 +832,16 @@ export default function GlobePanel({
   focus = null,
   pads = [],
   sites = [],
+  onSelectPad,
+  onSelectSite,
 }: {
   maxDpr?: number;
   onReady?: () => void;
   focus?: PadFocus | null;
   pads?: PadSite[];
   sites?: GlobeSite[];
+  onSelectPad?: (pad: PadSite) => void;
+  onSelectSite?: (site: GlobeSite) => void;
 }) {
   return (
     <div className="pointer-events-none h-full min-h-0 w-full">
@@ -826,7 +869,14 @@ export default function GlobePanel({
         }}
       >
         <FrameCamera />
-        <OrientedGlobe onReady={onReady} focus={focus} pads={pads} sites={sites} />
+        <OrientedGlobe
+          onReady={onReady}
+          focus={focus}
+          pads={pads}
+          sites={sites}
+          onSelectPad={onSelectPad}
+          onSelectSite={onSelectSite}
+        />
       </Canvas>
     </div>
   );

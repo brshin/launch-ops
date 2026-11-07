@@ -10,6 +10,9 @@ import {
   padSitesFromLaunches,
   samePad,
   shortestAngleDelta,
+  globeSiteStatLine,
+  launchesAtLocation,
+  soonestLaunchAtPad,
   upcomingCountByLocationId,
 } from "./globeFocus";
 import type { LaunchLocation } from "../types/location";
@@ -100,6 +103,7 @@ describe("padFocusFromLaunch", () => {
       siteLabel: "Vandenberg SFB",
       placeLabel: "California, USA",
       upcomingCount: 1,
+      totalLaunchCount: 0,
     });
   });
 
@@ -208,6 +212,18 @@ describe("hoverLabelsFromLocation", () => {
       placeLabel: "Kazakhstan",
     });
   });
+
+  it("prefers the short country when the name tail is a country alias", () => {
+    expect(
+      hoverLabelsFromLocation({
+        name: "Wenchang Space Launch Site, People's Republic of China",
+        country: { name: "China" },
+      }),
+    ).toEqual({
+      siteLabel: "Wenchang Space Launch Site",
+      placeLabel: "China",
+    });
+  });
 });
 
 describe("upcomingCountByLocationId", () => {
@@ -252,6 +268,7 @@ describe("globeSitesFromLocations", () => {
       siteLabel: "Vandenberg SFB",
       placeLabel: "California, USA",
       upcomingCount: 0,
+      totalLaunchCount: 0,
     });
   });
 
@@ -280,5 +297,125 @@ describe("globeSitesFromLocations", () => {
     );
     expect(sites).toHaveLength(1);
     expect(sites[0].upcomingCount).toBe(2);
+  });
+});
+
+describe("launchesAtLocation", () => {
+  it("returns queue launches for a location id sorted by NET", () => {
+    const rows = launchesAtLocation(
+      [
+        {
+          apiId: "b",
+          net: "2026-11-08T00:00:00Z",
+          pad: { location: { id: 11 } },
+        },
+        {
+          apiId: "a",
+          net: "2026-11-07T00:00:00Z",
+          pad: { location: { id: 11 } },
+        },
+        {
+          apiId: "other",
+          net: "2026-11-06T00:00:00Z",
+          pad: { location: { id: 8 } },
+        },
+      ],
+      11,
+    );
+    expect(rows.map((r) => r.apiId)).toEqual(["a", "b"]);
+  });
+});
+
+describe("globeSiteStatLine", () => {
+  it("prefers upcoming over lifetime total", () => {
+    expect(globeSiteStatLine(2, 400)).toBe("2 upcoming");
+  });
+
+  it("falls back to lifetime total when nothing is upcoming", () => {
+    expect(globeSiteStatLine(0, 400)).toBe("400 total");
+    expect(globeSiteStatLine(0, 0)).toBe("0 total");
+  });
+});
+
+describe("soonestLaunchAtPad", () => {
+  const pad = {
+    latitude: 34.632,
+    longitude: -120.611,
+    siteLabel: "Vandenberg SFB",
+  };
+
+  it("returns null when no launch matches the pad", () => {
+    expect(
+      soonestLaunchAtPad(
+        [
+          {
+            apiId: "a",
+            net: "2026-11-07T00:00:00Z",
+            pad: { latitude: 28.608, longitude: -80.604 },
+          },
+        ],
+        pad,
+        Date.parse("2026-11-06T00:00:00Z"),
+      ),
+    ).toBeNull();
+  });
+
+  it("prefers the soonest upcoming NET at that pad", () => {
+    const now = Date.parse("2026-11-06T12:00:00Z");
+    const pick = soonestLaunchAtPad(
+      [
+        {
+          apiId: "later",
+          net: "2026-11-08T00:00:00Z",
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
+        },
+        {
+          apiId: "sooner",
+          net: "2026-11-07T00:00:00Z",
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
+        },
+        {
+          apiId: "past",
+          net: "2026-11-05T00:00:00Z",
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
+        },
+      ],
+      pad,
+      now,
+    );
+    expect(pick?.apiId).toBe("sooner");
+  });
+
+  it("falls back to the earliest NET when all are in the past", () => {
+    const now = Date.parse("2026-11-10T00:00:00Z");
+    const pick = soonestLaunchAtPad(
+      [
+        {
+          apiId: "b",
+          net: "2026-11-08T00:00:00Z",
+          pad: { latitude: 34.632, longitude: -120.611 },
+        },
+        {
+          apiId: "a",
+          net: "2026-11-05T00:00:00Z",
+          pad: { latitude: 34.632, longitude: -120.611 },
+        },
+      ],
+      pad,
+      now,
+    );
+    expect(pick?.apiId).toBe("a");
   });
 });

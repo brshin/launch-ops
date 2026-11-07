@@ -10,13 +10,21 @@ export interface LocationCelestialBody {
   name: string;
 }
 
+export interface LocationImage {
+  id?: number;
+  name?: string;
+  image_url?: string;
+  thumbnail_url?: string;
+  credit?: string;
+}
+
 export interface LaunchLocation {
   apiId: number;
   name: string;
   active: boolean;
   country: LocationCountry | null;
   description: string | null;
-  image: unknown;
+  image: LocationImage | null;
   map_image: string | null;
   longitude: number | null;
   latitude: number | null;

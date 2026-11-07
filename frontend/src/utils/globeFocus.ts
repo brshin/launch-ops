@@ -10,6 +10,8 @@ export type PadFocus = {
   /** Region / country under the site, e.g. "California, USA". */
   placeLabel?: string | null;
   upcomingCount?: number;
+  /** Lifetime launches at the site (LL2 total_launch_count). */
+  totalLaunchCount?: number;
 };
 
 /** Active Earth site from the locations catalog (spaceport centroid). */
@@ -22,6 +24,7 @@ export type GlobeSite = {
   placeLabel: string | null;
   /** Queue launches at this site; 0 means catalog-only (no upcoming line). */
   upcomingCount: number;
+  totalLaunchCount: number;
 };
 
 /**
@@ -55,7 +58,11 @@ type PadLike = {
   name?: string | null;
   latitude?: number | string | null;
   longitude?: number | string | null;
-  location?: { name?: string | null } | null;
+  location?: {
+    id?: number | null;
+    name?: string | null;
+    total_launch_count?: number | null;
+  } | null;
 } | null | undefined;
 
 export type PadHoverLabels = {
@@ -95,12 +102,14 @@ export function padFocusFromLaunch(launch: {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
   if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
   const labels = hoverLabelsFromPad(launch?.pad);
+  const total = Number(launch?.pad?.location?.total_launch_count);
   return {
     latitude,
     longitude,
     siteLabel: labels.siteLabel,
     placeLabel: labels.placeLabel,
     upcomingCount: 1,
+    totalLaunchCount: Number.isFinite(total) ? total : 0,
   };
 }
 
@@ -108,6 +117,8 @@ export type PadSite = PadFocus & {
   id: string;
   siteLabel: string;
   upcomingCount: number;
+  /** Launch Library location id when the pad nests a location. */
+  locationApiId?: number;
 };
 
 function padKey(focus: PadFocus): string {
@@ -131,6 +142,7 @@ export function padSitesFromLaunches(
       existing.upcomingCount += 1;
       continue;
     }
+    const locationApiId = launch.pad?.location?.id;
     seen.set(id, {
       id,
       latitude: focus.latitude,
@@ -138,6 +150,11 @@ export function padSitesFromLaunches(
       siteLabel: focus.siteLabel ?? "Launch site",
       placeLabel: focus.placeLabel ?? null,
       upcomingCount: 1,
+      totalLaunchCount: focus.totalLaunchCount ?? 0,
+      locationApiId:
+        typeof locationApiId === "number" && Number.isFinite(locationApiId)
+          ? locationApiId
+          : undefined,
     });
   }
   return [...seen.values()];
@@ -165,6 +182,7 @@ export function enrichPadFocus(
     siteLabel: match.siteLabel,
     placeLabel: match.placeLabel ?? null,
     upcomingCount: match.upcomingCount,
+    totalLaunchCount: match.totalLaunchCount ?? focus.totalLaunchCount ?? 0,
   };
 }
 
@@ -185,6 +203,18 @@ function finiteLatLon(
   return { latitude: lat, longitude: lon };
 }
 
+/** True when the name tail is only a verbose country, not a region+country. */
+function placeIsCountryAlias(place: string, country: string): boolean {
+  const p = place.trim().toLowerCase();
+  const c = country.trim().toLowerCase();
+  if (!p || !c) return false;
+  if (p === c) return true;
+  // Keep "California, USA" — only collapse undelimited tails like
+  // "People's Republic of China" → "China".
+  if (place.includes(",")) return false;
+  return p.includes(c) || c.includes(p);
+}
+
 /** Site / place labels for a catalog location row. */
 export function hoverLabelsFromLocation(location: {
   name?: string | null;
@@ -195,12 +225,22 @@ export function hoverLabelsFromLocation(location: {
   // No comma → formatPadPlace keeps the whole string as `place` with site null.
   const siteLabel = site || rawName;
   const country = location.country?.name?.trim() || null;
-  const placeCandidate = site ? place : country;
-  const placeLabel =
-    placeCandidate &&
-    placeCandidate.trim().toLowerCase() !== siteLabel.trim().toLowerCase()
-      ? placeCandidate
-      : null;
+
+  let placeLabel: string | null = null;
+  if (site && place) {
+    // Prefer the short country field when the name tail is only a country alias.
+    placeLabel =
+      country && placeIsCountryAlias(place, country) ? country : place;
+  } else if (country) {
+    placeLabel = country;
+  }
+
+  if (
+    placeLabel &&
+    placeLabel.trim().toLowerCase() === siteLabel.trim().toLowerCase()
+  ) {
+    placeLabel = null;
+  }
   return { siteLabel, placeLabel };
 }
 
@@ -250,8 +290,102 @@ export function globeSitesFromLocations(
       siteLabel: labels.siteLabel,
       placeLabel: labels.placeLabel,
       upcomingCount,
+      totalLaunchCount: location.total_launch_count ?? 0,
     });
   }
 
   return sites;
+}
+
+/**
+ * Among queue launches at this pad, prefer the soonest still-upcoming NET,
+ * else the chronologically earliest match. Used by globe click-to-select.
+ */
+export function soonestLaunchAtPad<
+  T extends {
+    apiId: string;
+    net?: string | null;
+    pad?: PadLike;
+  },
+>(launches: T[], pad: PadFocus, nowMs: number): T | null {
+  const matches = launches.filter((launch) => {
+    const focus = padFocusFromLaunch(launch);
+    return Boolean(focus && samePad(focus, pad));
+  });
+  if (!matches.length) return null;
+
+  let upcoming: T | null = null;
+  let upcomingMs = Infinity;
+  let earliest: T | null = null;
+  let earliestMs = Infinity;
+
+  for (const launch of matches) {
+    const netMs = Date.parse(String(launch.net ?? ""));
+    if (!Number.isFinite(netMs)) {
+      if (!earliest) earliest = launch;
+      continue;
+    }
+    if (netMs < earliestMs) {
+      earliestMs = netMs;
+      earliest = launch;
+    }
+    if (netMs >= nowMs && netMs < upcomingMs) {
+      upcomingMs = netMs;
+      upcoming = launch;
+    }
+  }
+
+  return upcoming ?? earliest ?? matches[0];
+}
+
+/** Fly-to focus from a full catalog location row. */
+export function padFocusFromLocation(
+  location: LaunchLocation,
+  upcomingCount = 0,
+): PadFocus | null {
+  const coords = finiteLatLon(location.latitude, location.longitude);
+  if (!coords) return null;
+  const labels = hoverLabelsFromLocation(location);
+  return {
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    siteLabel: labels.siteLabel,
+    placeLabel: labels.placeLabel,
+    upcomingCount,
+    totalLaunchCount: location.total_launch_count ?? 0,
+  };
+}
+
+/** Queue launches whose pad.location.id matches this catalog site. */
+export function launchesAtLocation<
+  T extends {
+    apiId: string;
+    net?: string | null;
+    pad?: { location?: { id?: number | null } | null } | null;
+  },
+>(launches: T[], locationApiId: number): T[] {
+  return launches
+    .filter((launch) => launch.pad?.location?.id === locationApiId)
+    .sort((a, b) => {
+      const aMs = Date.parse(String(a.net ?? ""));
+      const bMs = Date.parse(String(b.net ?? ""));
+      const aOk = Number.isFinite(aMs);
+      const bOk = Number.isFinite(bMs);
+      if (aOk && bOk) return aMs - bMs;
+      if (aOk) return -1;
+      if (bOk) return 1;
+      return 0;
+    });
+}
+
+/**
+ * Shared third line for globe hover tips.
+ * Queue activity wins; otherwise lifetime total from the locations catalog.
+ */
+export function globeSiteStatLine(
+  upcomingCount = 0,
+  totalLaunchCount = 0,
+): string {
+  if (upcomingCount > 0) return `${upcomingCount} upcoming`;
+  return `${Math.max(0, totalLaunchCount)} total`;
 }

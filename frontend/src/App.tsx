@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard/LaunchCard';
+import { LocationPanel } from './components/LocationPanel/LocationPanel';
 import { Starfield } from './components/Starfield';
 import { ConsoleHeader } from './components/ConsoleHeader';
 import { LaunchQueue } from './components/LaunchQueue';
@@ -19,8 +20,13 @@ import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
 import {
   enrichPadFocus,
   globeSitesFromLocations,
+  launchesAtLocation,
   padFocusFromLaunch,
+  padFocusFromLocation,
   padSitesFromLaunches,
+  soonestLaunchAtPad,
+  type GlobeSite,
+  type PadSite,
 } from "./utils/globeFocus";
 
 export default function App() {
@@ -32,6 +38,8 @@ export default function App() {
   const compactMotion = useCompactMotion();
   const shortBand = useShortViewportBand();
   const [watching, setWatching] = useState(false);
+  /** Catalog site open in the inspector — swaps with LaunchCard. */
+  const [selectedLocationApiId, setSelectedLocationApiId] = useState<number | null>(null);
   useConsoleScrollbarActivity();
   const cardEnterY = compactMotion ? travel.compact.cardY : travel.desktop.cardY;
 
@@ -46,30 +54,92 @@ export default function App() {
     return focus >= 0 ? focus : 0;
   }, [launches, selectedApiId, nowMs]);
 
+  const selectLaunch = useCallback(
+    (apiId: string | null) => {
+      setSelectedLocationApiId(null);
+      setSelectedApiId(apiId);
+    },
+    [setSelectedApiId],
+  );
+
+  const openLocation = useCallback((locationApiId: number) => {
+    setWatching(false);
+    setSelectedLocationApiId(locationApiId);
+  }, []);
+
   useLaunchKeyboardNav({
     launches,
     selectedIndex,
-    onSelect: setSelectedApiId,
+    onSelect: selectLaunch,
   });
 
   const activeLaunch = launches[selectedIndex];
+  const selectedLocation = useMemo(
+    () =>
+      selectedLocationApiId == null
+        ? null
+        : locations.find((location) => location.apiId === selectedLocationApiId) ?? null,
+    [locations, selectedLocationApiId],
+  );
+  const locationUpcoming = useMemo(
+    () =>
+      selectedLocation
+        ? launchesAtLocation(launches, selectedLocation.apiId)
+        : [],
+    [launches, selectedLocation],
+  );
+
   const globePads = useMemo(() => padSitesFromLaunches(launches), [launches]);
   const globeSites = useMemo(
     () => globeSitesFromLocations(locations, launches),
     [locations, launches],
   );
-  const globeFocus = useMemo(
+  const launchFocus = useMemo(
     () => enrichPadFocus(padFocusFromLaunch(activeLaunch), globePads),
     [
       activeLaunch?.pad?.latitude,
       activeLaunch?.pad?.longitude,
       activeLaunch?.pad?.location?.name,
       activeLaunch?.pad?.name,
+      activeLaunch?.pad?.location?.total_launch_count,
       globePads,
     ],
   );
-  // Hold the detail card until boot settles so cold load feels staged
-  const showLaunchCard = Boolean(activeLaunch && bootComplete);
+  const globeFocus = useMemo(() => {
+    if (selectedLocation) {
+      return (
+        padFocusFromLocation(selectedLocation, locationUpcoming.length) ??
+        launchFocus
+      );
+    }
+    return launchFocus;
+  }, [selectedLocation, locationUpcoming.length, launchFocus]);
+
+  const handleSelectPad = useCallback(
+    (pad: PadSite) => {
+      // Prefer the catalog site panel when we can resolve it; else pick a launch.
+      if (typeof pad.locationApiId === "number") {
+        const catalog = locations.find((location) => location.apiId === pad.locationApiId);
+        if (catalog) {
+          openLocation(catalog.apiId);
+          return;
+        }
+      }
+      const match = soonestLaunchAtPad(launches, pad, nowMs);
+      if (match) selectLaunch(match.apiId);
+    },
+    [locations, launches, nowMs, openLocation, selectLaunch],
+  );
+
+  const handleSelectSite = useCallback(
+    (site: GlobeSite) => {
+      openLocation(site.locationApiId);
+    },
+    [openLocation],
+  );
+
+  const showLocationPanel = Boolean(selectedLocation && bootComplete);
+  const showLaunchCard = Boolean(activeLaunch && bootComplete && !selectedLocation);
 
   return (
     <div className="relative w-screen h-dvh overflow-hidden bg-[#020617] text-cyan-50 font-sans select-none flex cursor-default">
@@ -106,7 +176,7 @@ export default function App() {
             launches={launches}
             selectedIndex={selectedIndex}
             nowMs={nowMs}
-            onSelect={setSelectedApiId}
+            onSelect={selectLaunch}
             feedLive={feedLive}
             isBooting={isBooting}
             shortBand={shortBand}
@@ -142,6 +212,8 @@ export default function App() {
                   focus={globeFocus}
                   pads={globePads}
                   sites={globeSites}
+                  onSelectPad={handleSelectPad}
+                  onSelectSite={handleSelectSite}
                 />
               </div>
             )}
@@ -152,18 +224,37 @@ export default function App() {
                   focus={globeFocus}
                   pads={globePads}
                   sites={globeSites}
+                  onSelectPad={handleSelectPad}
+                  onSelectSite={handleSelectSite}
                 />
               </div>
             )}
 
-          {/* Mission inspector. Narrow on desktop so the globe keeps the center. */}
+          {/* Mission / site inspector. Narrow on desktop so the globe keeps the center. */}
           <div className={`flex w-full min-h-0 flex-1 flex-col overflow-hidden transition-[width] duration-300 ease-out md:h-full md:flex-none md:shrink-0 console-scrollbar console-scrollbar-y ${
             watching
               ? "md:w-[min(100%,34rem)] lg:w-[36rem] xl:w-[40rem]"
               : "md:w-[22.5rem] xl:w-[26rem]"
           }`}>
             <AnimatePresence mode="wait">
-              {showLaunchCard && activeLaunch ? (
+              {showLocationPanel && selectedLocation ? (
+                <motion.div
+                  key={`location-${selectedLocation.apiId}`}
+                  className="flex h-full min-h-0 w-full flex-col"
+                  initial={{ opacity: 0, y: cardEnterY }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -cardEnterY }}
+                  transition={transitions.soft}
+                >
+                  <LocationPanel
+                    location={selectedLocation}
+                    upcoming={locationUpcoming}
+                    hour12={hour12}
+                    onClose={() => setSelectedLocationApiId(null)}
+                    onSelectLaunch={selectLaunch}
+                  />
+                </motion.div>
+              ) : showLaunchCard && activeLaunch ? (
                 <motion.div
                   key={activeLaunch.apiId}
                   className="flex h-full min-h-0 w-full flex-col"
