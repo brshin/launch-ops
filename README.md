@@ -4,15 +4,19 @@ A real-time dashboard for tracking upcoming rocket launches.
 
 ![LaunchOps console showing the launch queue, day-and-night Earth, and selected mission](docs/console.jpg)
 
-LaunchOps combines launch schedules, mission details, local countdowns, and webcasts in a responsive mission-control interface. Data comes from [The Space Devs Launch Library](https://thespacedevs.com/), is cached through Redis and MongoDB, and reaches the browser through REST and Socket.IO.
+LaunchOps combines launch schedules, mission details, local countdowns, webcasts, and a launch-site catalog in a responsive mission-control interface. Data comes from [The Space Devs Launch Library](https://thespacedevs.com/), is cached through Redis and MongoDB, and reaches the browser through REST and Socket.IO.
 
 ## Highlights
 
-- Live launch queue with sticky selection, local NET times, and honest TBD/TBC precision
+- Live launch queue with sticky selection, keyboard navigation, local NET times, and honest TBD/TBC precision
 - Mission, vehicle, provider, customer, orbit, launch site, and status details
 - T− and T+ countdowns with launch-state-aware labels such as `LIVE`, `HOLD`, and `STREAM`
 - Embedded YouTube webcasts, with outbound links for X and other providers
-- Real-time cache updates over Socket.IO
+- Interactive Earth: flies to the selected pad, marks the upcoming pad constellation, and shows quieter catalog sites
+- Drag-to-yaw globe with fling inertia; click a pad or site to inspect it
+- Location inspector for catalog sites — imagery, lifetime metrics, and still-upcoming launches at that site
+- Launch Site tile on the mission card opens the matching location panel when the catalog joins
+- Real-time launch and location cache updates over Socket.IO
 - Solar-time Earth visualization with a day/night terminator
 - Shared 12/24-hour clock preference and responsive layouts from phone to desktop
 
@@ -20,24 +24,28 @@ LaunchOps combines launch schedules, mission details, local countdowns, and webc
 
 ```text
 The Space Devs Launch Library
-              |
-              | detailed launches every 5 minutes
-              v
-         Ingestion worker
-          /           \
-   MongoDB             Redis cache
-                          |
-                    Redis Pub/Sub
-                          |
-                          v
-                 Express + Socket.IO
-                    /           \
-             GET /launches   live-launch-data
-                    \           /
+        |                    |
+        | upcoming           | locations catalog
+        | every 5 minutes    | every 12 hours
+        v                    v
+           Ingestion worker
+            /           \
+     MongoDB             Redis cache
+                            |
+                      Redis Pub/Sub
+                            |
+                            v
+                   Express + Socket.IO
+                  /                  \
+     GET /launches              GET /locations
+     live-launch-data           live-location-data
+                  \                  /
                      React client
 ```
 
-The backend starts the ingestion worker with the API server. The worker fetches upcoming launches, maps the external payload to LaunchOps' stored model, upserts MongoDB, refreshes Redis, and publishes an update. Clients initially hydrate through `GET /launches`; subsequent refreshes arrive over Socket.IO without reloading the page.
+The backend starts the ingestion worker with the API server. The worker fetches upcoming launches on a five-minute cadence and the locations catalog about every twelve hours, maps each external payload to LaunchOps' stored model, upserts MongoDB, refreshes Redis, and publishes an update. Clients hydrate through `GET /launches` and `GET /locations`; subsequent refreshes arrive over Socket.IO without reloading the page.
+
+On the globe, queue pads are drawn from still-upcoming launches (NET in the future). Active Earth sites from the locations catalog fill in as quieter markers where the queue does not already mark the coast. Selecting a pad or site opens the mission card or location inspector; Upcoming site counts ignore past-NET rows even when Launch Library status lags (for example a sticky `In Flight`).
 
 Webcast ranking stays in the frontend because availability can change with each feed refresh. LaunchOps prefers YouTube for in-app playback, then X, then other providers, while favoring live and official sources.
 
@@ -144,15 +152,18 @@ Local `.env` files are ignored by Git and should not be committed.
 | --- | --- |
 | `GET /` | Backend health response |
 | `GET /launches` | Upcoming launches from Redis, falling back to MongoDB |
-| `live-launch-data` | Server-to-client Socket.IO event after an ingestion refresh |
+| `GET /locations` | Launch-site catalog from Redis, falling back to MongoDB |
+| `live-launch-data` | Server-to-client Socket.IO event after a launch ingestion refresh |
+| `live-location-data` | Server-to-client Socket.IO event after a locations ingestion refresh |
 
 The worker requests:
 
 ```text
 GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed
+GET https://ll.thespacedevs.com/2.3.0/locations/?format=json&limit=100
 ```
 
-Detailed mode is required for webcast URLs. The worker runs once at startup and every five minutes thereafter.
+Detailed launch mode is required for webcast URLs. Launches refresh once at startup and every five minutes thereafter. Locations paginate the full catalog, refresh once at startup, and again about every twelve hours.
 
 ## Repository layout
 
@@ -162,14 +173,14 @@ launch-ops/
 ├── frontend/
 │   ├── public/             # Static assets and Earth textures
 │   └── src/
-│       ├── components/     # Console, launch card, queue, and globe UI
-│       ├── hooks/          # Feed, clock, countdown, and responsive state
+│       ├── components/     # Console, launch card, location panel, queue, and globe UI
+│       ├── hooks/          # Launch/location feeds, clock, countdown, and responsive state
 │       ├── types/          # Frontend domain types
-│       └── utils/          # Launch-domain helpers and contract tests
+│       └── utils/          # Launch/location helpers, globe focus, and contract tests
 ├── docs/                   # README imagery
 └── .github/workflows/      # Continuous integration
 ```
 
 ## Data source
 
-Launch data is provided by [The Space Devs](https://thespacedevs.com/). LaunchOps stores only the fields used by the application and treats provisional launch times as provisional rather than displaying false countdown precision.
+Launch and location data are provided by [The Space Devs](https://thespacedevs.com/). LaunchOps stores only the fields used by the application and treats provisional launch times as provisional rather than displaying false countdown precision.
