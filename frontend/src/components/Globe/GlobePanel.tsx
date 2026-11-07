@@ -340,17 +340,23 @@ function PadHoverTarget({
         style={{ pointerEvents: "none" }}
         zIndexRange={[20, 0]}
       >
-        <AnimatePresence>
-          {showTip ? (
-            <PadHoverTip
-              key="pad-tip"
-              siteLabel={siteLabel}
-              placeLabel={placeLabel}
-              upcomingCount={upcomingCount}
-              totalLaunchCount={totalLaunchCount}
-            />
-          ) : null}
-        </AnimatePresence>
+        {/*
+          Phone earth shell may CSS-scale the canvas; keep tip type at screen
+          size via --earth-scale counter-scale (no-op when var is 1 / unset).
+        */}
+        <div className="globe-html-counter-scale">
+          <AnimatePresence>
+            {showTip ? (
+              <PadHoverTip
+                key="pad-tip"
+                siteLabel={siteLabel}
+                placeLabel={placeLabel}
+                upcomingCount={upcomingCount}
+                totalLaunchCount={totalLaunchCount}
+              />
+            ) : null}
+          </AnimatePresence>
+        </div>
       </Html>
     </group>
   );

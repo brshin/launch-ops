@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import LaunchCard from './components/LaunchCard/LaunchCard';
 import { LocationPanel } from './components/LocationPanel/LocationPanel';
 import { ConsoleOverview } from './components/ConsoleOverview';
@@ -15,7 +15,10 @@ import { useLocationFeed } from "./hooks/useLocationFeed";
 import { useSysClock } from "./hooks/useSysClock";
 import { useHourCycle } from "./hooks/useHourCycle";
 import { useCompactMotion } from "./hooks/useCompactMotion";
-import { useShortViewportBand } from "./hooks/useShortViewportBand";
+import {
+  useShortViewportBand,
+  type ShortViewportBand,
+} from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
 import { isEditableKeyboardTarget } from "./utils/queueNav";
@@ -30,6 +33,35 @@ import {
   type GlobeSite,
   type PadSite,
 } from "./utils/globeFocus";
+
+/** Phone stack only (< md). md+ keeps the existing flex earth column. */
+const PHONE_STACK_QUERY = "(max-width: 767px)";
+/** Real hover (mouse/trackpad) — skip ghost mouse events after touch. */
+const FINE_HOVER_QUERY = "(hover: hover) and (pointer: fine)";
+
+/** Delay before hover-collapse so layout reflow doesn’t flicker pointerleave. */
+const EARTH_HOVER_LEAVE_MS = 160;
+
+/**
+ * Pixel heights for the phone earth band. CSS `height` + `transform: scale`
+ * animate these — Tailwind class swaps and Framer height tweens both fought
+ * WebGL resize/camera refit and felt like a hard pop.
+ */
+function phoneEarthHeightPx(
+  shortBand: ShortViewportBand,
+  expanded: boolean,
+  viewportH: number,
+): number {
+  if (shortBand === "short") return 128; // 8rem — no expand
+  if (!expanded) {
+    return shortBand === "mid" ? 152 : 184; // 9.5rem / 11.5rem
+  }
+  if (shortBand === "mid") return Math.min(viewportH * 0.4, 240); // ≤15rem
+  return Math.min(viewportH * 0.44, 288); // ≤18rem
+}
+
+/** Shared easing for phone earth band height + scale (keep in sync). */
+const EARTH_SIZE_EASING = "0.5s cubic-bezier(0.22, 1, 0.36, 1)";
 
 export default function App() {
   /** Idle = console overview. Default on load/refresh; cleared when a mission is selected. */
@@ -52,8 +84,108 @@ export default function App() {
   const [watching, setWatching] = useState(false);
   /** Catalog site open in the inspector — swaps with LaunchCard. */
   const [selectedLocationApiId, setSelectedLocationApiId] = useState<number | null>(null);
+  /**
+   * Phone portrait: earth band grows on engage so pads are usable, then
+   * yields space back when the inspector is used. Disabled on short height
+   * and at md+ (flex column already sizes earth).
+   */
+  const [earthExpanded, setEarthExpanded] = useState(false);
+  const [phoneStack, setPhoneStack] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(PHONE_STACK_QUERY).matches
+      : false,
+  );
+  const [fineHover, setFineHover] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(FINE_HOVER_QUERY).matches
+      : false,
+  );
+  const [viewportH, setViewportH] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight : 844,
+  );
+  const earthLeaveTimerRef = useRef<number | null>(null);
+  const reduceMotion = useReducedMotion();
   useConsoleScrollbarActivity();
   const cardEnterY = compactMotion ? travel.compact.cardY : travel.desktop.cardY;
+
+  useEffect(() => {
+    const stackMq = window.matchMedia(PHONE_STACK_QUERY);
+    const hoverMq = window.matchMedia(FINE_HOVER_QUERY);
+    const syncStack = () => setPhoneStack(stackMq.matches);
+    const syncHover = () => setFineHover(hoverMq.matches);
+    const syncViewport = () => setViewportH(window.innerHeight);
+    syncStack();
+    syncHover();
+    syncViewport();
+    stackMq.addEventListener("change", syncStack);
+    hoverMq.addEventListener("change", syncHover);
+    window.addEventListener("resize", syncViewport);
+    return () => {
+      stackMq.removeEventListener("change", syncStack);
+      hoverMq.removeEventListener("change", syncHover);
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
+  const earthExpandable =
+    compactMotion && phoneStack && shortBand !== "short";
+
+  useEffect(() => {
+    if (!earthExpandable) setEarthExpanded(false);
+  }, [earthExpandable]);
+
+  useEffect(
+    () => () => {
+      if (earthLeaveTimerRef.current != null) {
+        window.clearTimeout(earthLeaveTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const expandEarth = useCallback(() => {
+    if (!earthExpandable) return;
+    if (earthLeaveTimerRef.current != null) {
+      window.clearTimeout(earthLeaveTimerRef.current);
+      earthLeaveTimerRef.current = null;
+    }
+    setEarthExpanded(true);
+  }, [earthExpandable]);
+
+  const collapseEarth = useCallback(() => {
+    if (earthLeaveTimerRef.current != null) {
+      window.clearTimeout(earthLeaveTimerRef.current);
+      earthLeaveTimerRef.current = null;
+    }
+    setEarthExpanded(false);
+  }, []);
+
+  const scheduleCollapseEarth = useCallback(() => {
+    if (!earthExpandable) return;
+    if (earthLeaveTimerRef.current != null) {
+      window.clearTimeout(earthLeaveTimerRef.current);
+    }
+    earthLeaveTimerRef.current = window.setTimeout(() => {
+      earthLeaveTimerRef.current = null;
+      setEarthExpanded(false);
+    }, EARTH_HOVER_LEAVE_MS);
+  }, [earthExpandable]);
+
+  const earthCollapsedPx = phoneEarthHeightPx(shortBand, false, viewportH);
+  const earthHeightPx = phoneEarthHeightPx(
+    shortBand,
+    earthExpanded,
+    viewportH,
+  );
+  const earthScale = earthHeightPx / earthCollapsedPx;
+  const earthHeightTransition = reduceMotion
+    ? undefined
+    : `height ${EARTH_SIZE_EASING}`;
+  const earthScaleTransition = reduceMotion
+    ? undefined
+    : `transform ${EARTH_SIZE_EASING}`;
+  const earthMdFlex =
+    shortBand === "short" ? "md:flex-[1.55]" : "md:flex-[1.45]";
 
   const { bootComplete, isBooting } = useConsoleBoot(launches.length > 0);
 
@@ -100,13 +232,24 @@ export default function App() {
       if (event.key !== "Escape") return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (isEditableKeyboardTarget(event.target)) return;
+      if (earthExpanded) {
+        event.preventDefault();
+        collapseEarth();
+        return;
+      }
       if (selectedLocationApiId == null && selectedApiId == null) return;
       event.preventDefault();
       closeToOverview();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [closeToOverview, selectedApiId, selectedLocationApiId]);
+  }, [
+    collapseEarth,
+    closeToOverview,
+    earthExpanded,
+    selectedApiId,
+    selectedLocationApiId,
+  ]);
 
   const activeLaunch =
     selectedIndex >= 0 ? launches[selectedIndex] ?? null : null;
@@ -210,6 +353,7 @@ export default function App() {
 
         {/* PANELS WRAPPER. The console stays locked. Nothing scrolls the page. */}
         <div
+          onPointerDown={collapseEarth}
           className={`console-scrollbar console-scrollbar-y relative z-10 flex w-full min-h-0 flex-1 flex-col overflow-hidden xl:flex-row density-ease ${
             shortBand === "short"
               ? "gap-1.5 xl:gap-5"
@@ -247,22 +391,70 @@ export default function App() {
           >
             {compactMotion && (
               <div
-                className={
-                  shortBand === "short"
-                    ? "relative w-full shrink-0 h-[7.75rem] md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-[1.55]"
-                    : shortBand === "mid"
-                      ? "relative w-full shrink-0 h-[8.5rem] md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-[1.45]"
-                      : "relative w-full shrink-0 h-[10.25rem] md:h-full md:min-h-0 md:w-auto md:min-w-0 md:flex-[1.45]"
+                className={`relative w-full shrink-0 overflow-hidden md:h-full md:min-h-0 md:w-auto md:min-w-0 ${earthMdFlex}`}
+                data-earth-expanded={earthExpanded ? "true" : undefined}
+                style={
+                  phoneStack
+                    ? {
+                        height: earthHeightPx,
+                        transition: earthHeightTransition,
+                      }
+                    : undefined
                 }
+                onPointerEnter={(event) => {
+                  // Fine pointers only — touch expands via pointerdown (tap).
+                  if (fineHover && event.pointerType === "mouse") expandEarth();
+                }}
+                onPointerLeave={(event) => {
+                  if (fineHover && event.pointerType === "mouse") {
+                    scheduleCollapseEarth();
+                  }
+                }}
+                onMouseEnter={fineHover ? expandEarth : undefined}
+                onMouseLeave={fineHover ? scheduleCollapseEarth : undefined}
+                onPointerDown={(event) => {
+                  // Keep panels-wrapper collapse from firing on the same press.
+                  event.stopPropagation();
+                  expandEarth();
+                }}
               >
-                <GlobeSlot
-                  maxDpr={3}
-                  focus={globeFocus}
-                  pads={globePads}
-                  sites={globeSites}
-                  onSelectPad={handleSelectPad}
-                  onSelectSite={handleSelectSite}
-                />
+                {/*
+                  Phone: keep the WebGL canvas at the collapsed size and scale
+                  it with CSS. Animating layout height alone reflows R3F every
+                  frame (camera + setSize) and reads as a sudden size pop.
+                */}
+                {phoneStack ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div
+                      className="relative w-full"
+                      style={{
+                        height: earthCollapsedPx,
+                        // Html location tips read --earth-scale and counter-scale.
+                        ["--earth-scale" as string]: earthScale,
+                        transform: `scale(${earthScale})`,
+                        transition: earthScaleTransition,
+                      }}
+                    >
+                      <GlobeSlot
+                        maxDpr={3}
+                        focus={globeFocus}
+                        pads={globePads}
+                        sites={globeSites}
+                        onSelectPad={handleSelectPad}
+                        onSelectSite={handleSelectSite}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <GlobeSlot
+                    maxDpr={3}
+                    focus={globeFocus}
+                    pads={globePads}
+                    sites={globeSites}
+                    onSelectPad={handleSelectPad}
+                    onSelectSite={handleSelectSite}
+                  />
+                )}
               </div>
             )}
 
