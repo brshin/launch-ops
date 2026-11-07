@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
-const HIDE_MS = 1000;
+/** Hold visible after last scroll so the CSS fade-out can finish cleanly. */
+const HIDE_MS = 1100;
 
 /**
  * Show cyan console scrollbar thumbs only while scrolling (and via CSS :hover).

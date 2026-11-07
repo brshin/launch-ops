@@ -254,12 +254,15 @@ export function LocationPanel({
           />
         </motion.div>
 
-        {/* Shared leftover: upcoming + brief split ~evenly so 3+ launches don't crush the brief. */}
+        {/*
+          Upcoming hugs its rows (cap + scroll when long); brief takes the
+          leftover. A 50/50 flex-1 split left empty air under 1–2 launches.
+        */}
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
           {hasUpcoming ? (
             <motion.section
               variants={sectionVariants}
-              className="flex min-h-0 flex-1 basis-0 flex-col overflow-hidden rounded-lg border border-teal-900/40 bg-teal-950/15"
+              className="flex max-h-[min(42%,13rem)] min-h-0 shrink-0 flex-col overflow-hidden rounded-lg border border-teal-900/40 bg-teal-950/15"
             >
               <div
                 className={`flex shrink-0 items-center justify-between gap-2 border-b border-teal-900/35 density-ease ${chrome.sectionHead}`}
@@ -270,7 +273,7 @@ export function LocationPanel({
                 </p>
               </div>
               <ul
-                className={`console-scrollbar console-scrollbar-y min-h-0 flex-1 overflow-y-auto density-ease ${chrome.listPad}`}
+                className={`console-scrollbar console-scrollbar-y min-h-0 overflow-y-auto density-ease ${chrome.listPad}`}
               >
                 {upcoming.map((launch) => (
                   <li key={launch.apiId}>
@@ -299,9 +302,7 @@ export function LocationPanel({
 
           <motion.section
             variants={sectionVariants}
-            className={`flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-700/45 bg-black/30 ${
-              hasUpcoming ? "flex-1 basis-0" : "flex-1"
-            }`}
+            className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-700/45 bg-black/30"
           >
             <div
               className={`shrink-0 border-b border-slate-800/80 density-ease ${chrome.sectionHead}`}

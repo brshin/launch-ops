@@ -175,10 +175,10 @@ export function LaunchQueue({
           ref={queueScrollRef}
           className={`console-scrollbar console-scrollbar-y queue-sidebar-scroll relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory xl:flex-1 xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden xl:snap-none overscroll-x-contain xl:overscroll-y-contain density-ease ${
             shortBand === "short"
-              ? "gap-1 p-1 max-xl:pr-6 xl:gap-2 xl:p-3"
+              ? "gap-1 p-1 max-xl:pr-5 xl:gap-1.5 xl:p-1.5"
               : shortBand === "mid"
-                ? "gap-1.5 p-2 max-xl:pr-7 xl:gap-2 xl:p-3"
-                : "gap-1.5 p-2 max-md:pr-6 md:gap-2 md:p-2.5 md:max-xl:pr-8 xl:p-3"
+                ? "gap-1.5 p-1.5 max-xl:pr-6 xl:gap-1.5 xl:p-1.5"
+                : "gap-1.5 p-1.5 max-md:pr-5 md:gap-2 md:p-2 md:max-xl:pr-6 xl:gap-1.5 xl:p-1.5"
           }`}
           variants={bootQueueListVariants}
           initial="hidden"
@@ -221,7 +221,7 @@ export function LaunchQueue({
                 onClick={() => {
                   if (launch.apiId) onSelect(launch.apiId);
                 }}
-                className={`relative flex min-h-10 shrink-0 snap-start flex-col justify-center gap-0 overflow-clip rounded-lg border px-2.5 py-1.5 text-left transition-[width,colors,opacity] duration-300 ease-out touch-manipulation group cursor-pointer md:min-h-11 md:gap-0.5 md:px-3 md:py-2.5 xl:w-full xl:gap-1 xl:px-3 xl:py-3 ${
+                className={`relative flex min-h-10 shrink-0 snap-start flex-col justify-center gap-0 overflow-clip rounded-lg border px-2.5 py-1.5 text-left transition-[width,colors,opacity] duration-300 ease-out touch-manipulation group cursor-pointer md:min-h-11 md:gap-0.5 md:px-3 md:py-2.5 xl:w-full xl:gap-0.5 xl:px-2.5 xl:py-2.5 ${
                   hour12 ? "w-[14rem] md:w-[17.5rem]" : "w-[13rem] md:w-[14rem]"
                 } ${
                   selected
@@ -232,7 +232,7 @@ export function LaunchQueue({
                 } ${isPast && !selected ? "opacity-50" : "opacity-100"}`}
               >
                 {/*
-                  Equal xl:px-3 on both sides. Accent overlays the left pad so
+                  Equal xl:px-2.5 on both sides. Accent overlays the left pad so
                   date/chip share the same inset from the card edge.
                 */}
                 <AnimatePresence>
