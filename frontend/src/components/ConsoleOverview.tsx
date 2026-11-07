@@ -11,6 +11,7 @@ import {
   formatNextLaunchHeadline,
 } from "../utils/consoleOverview";
 import { getLaunchTitle } from "../utils/launchTitle";
+import { consoleUpdateAccent } from "../lib/signalColors";
 import {
   formatUpdateAge,
   updateKindLabel,
@@ -37,25 +38,6 @@ const rootVariants: Variants = {
     },
   },
 };
-
-/**
- * Kind chip colors — spread across the palette so chips read apart at a glance.
- * Live leans Go/emerald (not sky, which sat too close to New/cyan).
- */
-function updateAccent(kind: ConsoleUpdate["kind"]): string {
-  switch (kind) {
-    case "webcast":
-      return "text-emerald-400 [text-shadow:0_0_8px_rgba(52,211,153,0.45)]";
-    case "scheduled":
-      return "text-cyan-300";
-    case "rescheduled":
-      return "text-amber-400";
-    case "status":
-      return "text-violet-300";
-    case "removed":
-      return "text-slate-500";
-  }
-}
 
 function ProviderMark({ url }: { url: string }) {
   const [src, setSrc] = useState<string | null>(null);
@@ -480,7 +462,7 @@ export function ConsoleOverview({
                         }`}
                       >
                         <span
-                          className={`mt-0.5 w-[3.35rem] shrink-0 font-mono text-[11px] uppercase tracking-[0.1em] ${updateAccent(update.kind)}`}
+                          className={`mt-0.5 w-[3.35rem] shrink-0 font-mono text-[11px] uppercase tracking-[0.1em] ${consoleUpdateAccent(update.kind)}`}
                         >
                           {updateKindLabel(update.kind)}
                         </span>

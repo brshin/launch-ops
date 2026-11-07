@@ -6,7 +6,7 @@ import { formatPadPlace } from "../../utils/padPlace";
 import { HourCycleFade } from "../HourCycleFade";
 import type { LaunchTimePhase } from "../../utils/launchTime";
 
-/** The tile tick follows the clock: T− cyan, T+ emerald, hold amber, fail red. */
+/** Tile tick — T− cyan, live/T+ emerald, hold amber, fail red (docs/color-scheme.md). */
 function tZeroTickClass(phase: LaunchTimePhase): string {
   switch (phase) {
     case "live":

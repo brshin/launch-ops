@@ -22,7 +22,8 @@ const HOUR_MS = 60 * 60 * 1000;
 const queueChipBase =
   "shrink-0 text-[9px] md:text-[10px] leading-tight font-mono uppercase tracking-wider tabular-nums";
 
-const streamChipClass = `${queueChipBase} text-sky-300 font-bold [text-shadow:0_0_8px_rgba(56,189,248,0.75)]`;
+/** STREAM / live — emerald (same signal as console Live; not sky). */
+const streamChipClass = `${queueChipBase} text-emerald-400 font-bold [text-shadow:0_0_8px_rgba(52,211,153,0.55)]`;
 
 function queueChipClass(phase: LaunchTimePhase, msUntilNet: number): string {
   switch (phase) {

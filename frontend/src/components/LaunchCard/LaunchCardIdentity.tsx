@@ -134,12 +134,13 @@ function getStatusColors(status: string) {
           "border-emerald-800/70 hover:border-emerald-400/80 active:border-emerald-400/80 hover:bg-emerald-950/50 active:bg-emerald-950/50",
       };
     case "In Flight":
+      // Live signal — emerald (matches STREAM / console Live). Success stays deeper green.
       return {
-        dot: "bg-sky-400",
-        glow: "shadow-[0_0_5px_#38bdf8]",
-        text: "text-sky-300",
+        dot: "bg-emerald-400",
+        glow: "shadow-[0_0_5px_#34d399]",
+        text: "text-emerald-300",
         frame:
-          "border-sky-800/70 hover:border-sky-400/80 active:border-sky-400/80 hover:bg-sky-950/50 active:bg-sky-950/50",
+          "border-emerald-800/70 hover:border-emerald-400/80 active:border-emerald-400/80 hover:bg-emerald-950/50 active:bg-emerald-950/50",
       };
     case "Success":
       return {

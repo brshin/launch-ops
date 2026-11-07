@@ -19,6 +19,7 @@ LaunchOps combines launch schedules, mission details, local countdowns, webcasts
 - Real-time launch and location cache updates over Socket.IO
 - Solar-time Earth visualization with a day/night terminator
 - Shared 12/24-hour clock preference and responsive layouts from phone to desktop
+- Shared signal colors (cyan schedule, emerald live/Go, deeper green success, amber caution) — see [docs/color-scheme.md](docs/color-scheme.md)
 
 ## How it works
 
@@ -178,9 +179,10 @@ launch-ops/
 │   └── src/
 │       ├── components/     # Console, launch card, location panel, queue, and globe UI
 │       ├── hooks/          # Launch/location feeds, clock, countdown, and responsive state
+│       ├── lib/            # Motion tokens and shared signal colors
 │       ├── types/          # Frontend domain types
 │       └── utils/          # Launch/location helpers, globe focus, and contract tests
-├── docs/                   # README imagery
+├── docs/                   # README imagery and color-scheme notes
 └── .github/workflows/      # Continuous integration
 ```
 
