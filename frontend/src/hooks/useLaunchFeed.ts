@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import type { Launch } from "../types/launch";
+import {
+  mergeConsoleUpdates,
+  normalizeConsoleUpdate,
+  type ConsoleUpdate,
+} from "../utils/consoleUpdates";
 import { pickDefaultApiId } from "../utils/queueFocus";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const MAX_BOARD_UPDATES = 24;
 
 type UseLaunchFeedOptions = {
   /**
@@ -14,12 +20,13 @@ type UseLaunchFeedOptions = {
 };
 
 /**
- * Launch list + live uplink. Owns REST hydrate, Socket.IO, and sticky apiId.
- * Socket is created on mount (not at module load) and torn down on unmount.
+ * Launch list + live uplink + server board-update log.
+ * One Socket.IO connection owns `live-launch-data` and `live-launch-events`.
  */
 export function useLaunchFeed(options: UseLaunchFeedOptions = {}) {
   const { allowAutoSelect = true } = options;
   const [launches, setLaunches] = useState<Launch[]>([]);
+  const [boardUpdates, setBoardUpdates] = useState<ConsoleUpdate[]>([]);
   const [selectedApiId, setSelectedApiId] = useState<string | null>(null);
   const [feedLive, setFeedLive] = useState(false);
 
@@ -27,6 +34,17 @@ export function useLaunchFeed(options: UseLaunchFeedOptions = {}) {
     fetch(`${API_URL}/launches`)
       .then((res) => res.json())
       .then((data) => setLaunches(data))
+      .catch((err) => console.error(err));
+
+    fetch(`${API_URL}/launches/updates?limit=${MAX_BOARD_UPDATES}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        const hydrated = data
+          .map(normalizeConsoleUpdate)
+          .filter((row): row is ConsoleUpdate => row != null);
+        setBoardUpdates(hydrated);
+      })
       .catch((err) => console.error(err));
   }, []);
 
@@ -59,14 +77,31 @@ export function useLaunchFeed(options: UseLaunchFeedOptions = {}) {
       console.log("🚀 Real-time telemetry received from server!", freshData);
       setLaunches(freshData);
     });
+    socket.on("live-launch-events", (payload: unknown) => {
+      const rows = Array.isArray(payload) ? payload : [];
+      const incoming = rows
+        .map(normalizeConsoleUpdate)
+        .filter((row): row is ConsoleUpdate => row != null);
+      if (incoming.length === 0) return;
+      setBoardUpdates((prev) =>
+        mergeConsoleUpdates(incoming, prev, MAX_BOARD_UPDATES),
+      );
+    });
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("live-launch-data");
+      socket.off("live-launch-events");
       socket.disconnect();
     };
   }, []);
 
-  return { launches, selectedApiId, setSelectedApiId, feedLive };
+  return {
+    launches,
+    boardUpdates,
+    selectedApiId,
+    setSelectedApiId,
+    feedLive,
+  };
 }

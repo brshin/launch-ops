@@ -61,6 +61,19 @@ const setupPubSub = async() => {
                 io.emit('live-launch-data', JSON.parse(cachedData));
                 console.log("🚀 Fresh telemetry blasted to all connected clients!");
             }
+
+            let events = [];
+            try {
+                const parsed = JSON.parse(message);
+                if (Array.isArray(parsed?.events)) events = parsed.events;
+            } catch {
+                // Legacy CACHE_UPDATED string — board emit only.
+            }
+
+            if (events.length > 0) {
+                io.emit('live-launch-events', events);
+                console.log(`📡 ${events.length} launch-board event(s) blasted`);
+            }
         } catch (err) {
             console.error("Failed to emit live launch data:", err);
         }
@@ -83,6 +96,30 @@ const setupPubSub = async() => {
 };
 
 setupPubSub();
+
+app.get('/launches/updates', async (req, res) => {
+    const cacheKey = 'launch-board-updates';
+    const rawLimit = Number.parseInt(String(req.query.limit ?? '24'), 10);
+    const limit = Number.isFinite(rawLimit)
+        ? Math.min(Math.max(rawLimit, 1), 50)
+        : 24;
+
+    try {
+        const rows = await redisClient.lRange(cacheKey, 0, limit - 1);
+        const updates = [];
+        for (const row of rows) {
+            try {
+                updates.push(JSON.parse(row));
+            } catch {
+                // skip corrupt entries
+            }
+        }
+        res.json(updates);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
+});
 
 app.get('/launches', async (req, res) => {
 

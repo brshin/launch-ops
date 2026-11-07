@@ -9,6 +9,12 @@ const Launch = require('./models/Launch');
 const Location = require('./models/Location');
 const { mapUpcomingLaunches } = require('./mapLaunch');
 const { mapLocations } = require('./mapLocation');
+const { diffLaunchBoard } = require('./diffLaunchBoard');
+
+const LAUNCHES_CACHE_KEY = 'upcoming-launches';
+const LAUNCH_UPDATES_KEY = 'launch-board-updates';
+/** Cap durable console updates kept in Redis (newest first). */
+const LAUNCH_UPDATES_MAX = 50;
 
 // Redis Client Initializer
 const { createClient } = require('redis');
@@ -90,16 +96,46 @@ const fetchLocations = async () => {
 
 const saveLaunchData = async (data) => {
     const launches = mapUpcomingLaunches(data);
+    const atMs = Date.now();
+    let events = [];
 
     try {
-        const cacheKey = 'upcoming-launches';
+        // Prev is still in Redis — Express is too late after overwrite.
+        let previous = [];
+        try {
+            const cached = await redisClient.get(LAUNCHES_CACHE_KEY);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed)) previous = parsed;
+            }
+        } catch (err) {
+            console.error("Failed to read previous launches for diff:", err);
+        }
+
+        // Empty prev = cold seed — do not spam "added" for the whole board.
+        if (previous.length > 0) {
+            events = diffLaunchBoard(previous, launches, atMs);
+        }
+
+        if (events.length > 0) {
+            const pipeline = redisClient.multi();
+            for (const event of events) {
+                pipeline.lPush(LAUNCH_UPDATES_KEY, JSON.stringify(event));
+            }
+            pipeline.lTrim(LAUNCH_UPDATES_KEY, 0, LAUNCH_UPDATES_MAX - 1);
+            await pipeline.exec();
+            console.log(`Recorded ${events.length} launch-board update(s)`);
+        }
 
         // 24 hr cache
-        await redisClient.setEx(cacheKey, 86400, JSON.stringify(launches));
+        await redisClient.setEx(LAUNCHES_CACHE_KEY, 86400, JSON.stringify(launches));
         console.log("Saved upcoming-launches to Redis");
 
         try {
-            await redisClient.publish('launch-updates', 'CACHE_UPDATED');
+            await redisClient.publish(
+                'launch-updates',
+                JSON.stringify({ events }),
+            );
             console.log("Published cache update notification via Redis Pub/Sub");
         } catch (err) {
             console.error("Failed to publish to Redis:", err);

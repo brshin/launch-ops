@@ -38,12 +38,14 @@ The Space Devs Launch Library
                    Express + Socket.IO
                   /                  \
      GET /launches              GET /locations
+     GET /launches/updates
      live-launch-data           live-location-data
+     live-launch-events
                   \                  /
                      React client
 ```
 
-The backend starts the ingestion worker with the API server. The worker fetches upcoming launches on a five-minute cadence and the locations catalog about every twelve hours, maps each external payload to LaunchOps' stored model, upserts MongoDB, refreshes Redis, and publishes an update. Clients hydrate through `GET /launches` and `GET /locations`; subsequent refreshes arrive over Socket.IO without reloading the page.
+The backend starts the ingestion worker with the API server. The worker fetches upcoming launches on a five-minute cadence and the locations catalog about every twelve hours, maps each external payload to LaunchOps' stored model, upserts MongoDB, refreshes Redis, and publishes an update. Before overwriting the launches cache, the worker diffs the previous Redis board against the new payload, appends any console events to a capped Redis list, and includes that batch in the pub/sub message. Clients hydrate through `GET /launches`, `GET /locations`, and `GET /launches/updates`; subsequent board refreshes arrive over Socket.IO (`live-launch-data`), and new console events over `live-launch-events` on the same launch connection.
 
 On the globe, queue pads are drawn from still-upcoming launches (NET in the future). Active Earth sites from the locations catalog fill in as quieter markers where the queue does not already mark the coast. Selecting a pad or site opens the mission card or location inspector; Upcoming site counts ignore past-NET rows even when Launch Library status lags (for example a sticky `In Flight`).
 
@@ -152,6 +154,7 @@ Local `.env` files are ignored by Git and should not be committed.
 | --- | --- |
 | `GET /` | Backend health response |
 | `GET /launches` | Upcoming launches from Redis, falling back to MongoDB |
+| `GET /launches/updates` | Recent board change events (new / NET slip / status / webcast / removed) |
 | `GET /locations` | Launch-site catalog from Redis, falling back to MongoDB |
 | `live-launch-data` | Server-to-client Socket.IO event after a launch ingestion refresh |
 | `live-location-data` | Server-to-client Socket.IO event after a locations ingestion refresh |

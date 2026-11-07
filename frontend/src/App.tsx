@@ -19,7 +19,6 @@ import { useShortViewportBand } from "./hooks/useShortViewportBand";
 import { useConsoleScrollbarActivity } from "./hooks/useConsoleScrollbarActivity";
 import { useLaunchKeyboardNav } from "./hooks/useLaunchKeyboardNav";
 import { isEditableKeyboardTarget } from "./utils/queueNav";
-import { isUpcomingQueueLaunch } from "./utils/launchTime";
 import {
   enrichPadFocus,
   globeSitesFromLocations,
@@ -35,7 +34,13 @@ import {
 export default function App() {
   /** Idle = console overview. Default on load/refresh; cleared when a mission is selected. */
   const [inspectorIdle, setInspectorIdle] = useState(true);
-  const { launches, selectedApiId, setSelectedApiId, feedLive } = useLaunchFeed({
+  const {
+    launches,
+    boardUpdates,
+    selectedApiId,
+    setSelectedApiId,
+    feedLive,
+  } = useLaunchFeed({
     allowAutoSelect: !inspectorIdle,
   });
   const { locations } = useLocationFeed();
@@ -107,10 +112,6 @@ export default function App() {
     selectedIndex >= 0 ? launches[selectedIndex] ?? null : null;
   const nextLaunch =
     focusIndex >= 0 ? launches[focusIndex] ?? null : launches[0] ?? null;
-  const upcomingCount = useMemo(
-    () => launches.filter((launch) => isUpcomingQueueLaunch(launch, nowMs)).length,
-    [launches, nowMs],
-  );
   const selectedLocation = useMemo(
     () =>
       selectedLocationApiId == null
@@ -345,14 +346,13 @@ export default function App() {
                   transition={transitions.soft}
                 >
                   <ConsoleOverview
-                    nextLaunch={bootComplete ? nextLaunch : null}
-                    upcomingCount={bootComplete ? upcomingCount : 0}
+                    launches={bootComplete ? launches : []}
+                    locations={locations}
+                    nowMs={nowMs}
                     feedLive={feedLive}
-                    hour12={hour12}
+                    updates={boardUpdates}
                     arming={!bootComplete || launches.length === 0}
-                    onOpenNext={() => {
-                      if (nextLaunch?.apiId) selectLaunch(nextLaunch.apiId);
-                    }}
+                    onSelectLaunch={selectLaunch}
                   />
                 </motion.div>
               ) : (
