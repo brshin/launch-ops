@@ -173,7 +173,7 @@ export function LaunchQueue({
       <div className="relative min-h-0 xl:flex-1 xl:min-h-0 flex flex-col">
         <motion.div
           ref={queueScrollRef}
-          className={`console-scrollbar console-scrollbar-y relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory xl:flex-1 xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden xl:snap-none overscroll-x-contain xl:overscroll-y-contain density-ease ${
+          className={`console-scrollbar console-scrollbar-y queue-sidebar-scroll relative z-10 flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory xl:flex-1 xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden xl:snap-none overscroll-x-contain xl:overscroll-y-contain density-ease ${
             shortBand === "short"
               ? "gap-1 p-1 max-xl:pr-6 xl:gap-2 xl:p-3"
               : shortBand === "mid"
@@ -221,7 +221,7 @@ export function LaunchQueue({
                 onClick={() => {
                   if (launch.apiId) onSelect(launch.apiId);
                 }}
-                className={`shrink-0 snap-start xl:w-full min-h-10 md:min-h-11 text-left py-1.5 px-2.5 md:py-2.5 md:px-3 xl:py-3 xl:px-4 rounded-lg border transition-[width,colors,opacity] duration-300 ease-out flex flex-col justify-center gap-0 md:gap-0.5 xl:gap-1 relative overflow-clip group cursor-pointer touch-manipulation ${
+                className={`relative flex min-h-10 shrink-0 snap-start flex-col justify-center gap-0 overflow-clip rounded-lg border px-2.5 py-1.5 text-left transition-[width,colors,opacity] duration-300 ease-out touch-manipulation group cursor-pointer md:min-h-11 md:gap-0.5 md:px-3 md:py-2.5 xl:w-full xl:gap-1 xl:px-3 xl:py-3 ${
                   hour12 ? "w-[14rem] md:w-[17.5rem]" : "w-[13rem] md:w-[14rem]"
                 } ${
                   selected
@@ -231,6 +231,10 @@ export function LaunchQueue({
                       : "bg-black/20 border-cyan-900/30 hover:bg-cyan-900/20 hover:border-cyan-700/50 active:bg-cyan-900/25 active:border-cyan-600/60"
                 } ${isPast && !selected ? "opacity-50" : "opacity-100"}`}
               >
+                {/*
+                  Equal xl:px-3 on both sides. Accent overlays the left pad so
+                  date/chip share the same inset from the card edge.
+                */}
                 <AnimatePresence>
                   {selected && (
                     <motion.div
@@ -244,14 +248,14 @@ export function LaunchQueue({
                   )}
                 </AnimatePresence>
 
-                <div className="flex items-baseline justify-between gap-1.5 w-full min-w-0">
+                <div className="flex w-full min-w-0 items-baseline justify-between gap-1.5">
                   <HourCycleFade
                     cycle={hour12 ? "12" : "24"}
                     className={`inline-block min-w-0 max-w-full truncate text-[11px] md:text-xs leading-tight font-mono tabular-nums ${hour12 ? "tracking-[0.04em]" : "tracking-[0.12em]"} ${selected ? "font-medium text-slate-100" : "text-slate-300"}`}
                   >
                     {formatLocalDateTime(launch.net, { includeYear: false, hour12 }).label}
                   </HourCycleFade>
-                  <span className="flex items-baseline gap-1.5 shrink-0">
+                  <span className="flex shrink-0 items-baseline justify-end gap-1.5 text-right">
                     {showNext && (
                       <span className="hidden xl:inline text-[8px] font-mono text-cyan-600 uppercase tracking-[0.2em]">
                         NEXT
@@ -269,15 +273,15 @@ export function LaunchQueue({
                   </span>
                 </div>
 
-                <div className="flex items-baseline justify-between gap-2 w-full min-w-0">
+                <div className="flex w-full min-w-0 items-baseline justify-between gap-2">
                   <span
-                    className="min-w-0 flex-1 font-mono text-[11px] md:text-xs leading-tight uppercase tracking-wide truncate text-cyan-600"
+                    className="min-w-0 flex-1 truncate font-mono text-[11px] uppercase leading-tight tracking-wide text-cyan-600 md:text-xs"
                   >
                     {getLaunchTitle(launch)}
                   </span>
                   {provider && (
                     <span
-                      className="shrink-0 text-[10px] font-mono uppercase tracking-wider truncate max-w-[40%] text-zinc-500 transition-colors group-hover:text-zinc-400 group-active:text-zinc-400"
+                      className="max-w-[40%] shrink-0 truncate text-right text-[10px] font-mono uppercase tracking-wider text-zinc-500 transition-colors group-hover:text-zinc-400 group-active:text-zinc-400"
                     >
                       {provider}
                     </span>

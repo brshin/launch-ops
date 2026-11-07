@@ -221,3 +221,20 @@ body,
 .console-scrollbar-y.scrollbar-active::-webkit-scrollbar-track {
   border-left: 1px solid rgba(22, 78, 99, 0.3);
 }
+
+/*
+  Desktop queue list: hide the vertical scrollbar gutter. A classic gutter
+  (~11px here) made the right chip column look more inset than the date
+  despite equal padding. Wheel/trackpad scrolling still works.
+  Must follow .console-scrollbar so specificity/order win.
+*/
+@media (min-width: 1280px) {
+  .console-scrollbar.queue-sidebar-scroll {
+    scrollbar-width: none;
+    scrollbar-color: transparent transparent;
+  }
+  .console-scrollbar.queue-sidebar-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
