@@ -118,9 +118,74 @@ function OrbitMark({ label }: { label: string }) {
   );
 }
 
+type RankRow = {
+  label: string;
+  count: number;
+  markUrl?: string | null;
+};
+
+function RankList({
+  rows,
+  max,
+  kind,
+}: {
+  rows: RankRow[];
+  max: number;
+  kind: "provider" | "orbit";
+}) {
+  return (
+    <ul className="min-w-0 space-y-2">
+      {rows.map((row, index) => (
+        <motion.li
+          key={row.label}
+          className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_1.5rem] items-center gap-2 font-mono sm:gap-2.5"
+          initial={{ opacity: 0, x: -6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ ...transitions.soft, delay: index * 0.04 }}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            {kind === "provider" ? (
+              row.markUrl ? (
+                <ProviderMark url={row.markUrl} />
+              ) : (
+                <span className="size-5 sm:size-6" aria-hidden />
+              )
+            ) : (
+              <OrbitMark label={row.label} />
+            )}
+            <span className="min-w-0 truncate text-[13px] uppercase tracking-[0.04em] text-cyan-100/90 sm:text-sm">
+              {row.label}
+            </span>
+          </span>
+          <div className="h-1 min-w-0 overflow-hidden bg-cyan-950/80">
+            <motion.div
+              className={`h-full ${kind === "provider" ? "bg-cyan-500/70" : "bg-cyan-600/50"}`}
+              initial={{ width: 0 }}
+              animate={{
+                width: `${Math.max(8, (row.count / max) * 100)}%`,
+              }}
+              transition={transitions.soft}
+            />
+          </div>
+          <span className="text-right text-xs tabular-nums text-cyan-400">
+            {row.count}
+          </span>
+        </motion.li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * Idle home panel — next ETA + mission, schedule snapshot, updates, composition.
- * Outer chrome does not scroll; only the updates list scrolls.
+ *
+ * Layout contract:
+ * - Outer chrome never scrolls; only Recent updates scrolls.
+ * - CSS grid rows: auto / auto / minmax(updates) / auto so providers +
+ *   destinations always keep a seat; Updates flexes with leftover height.
+ * - Side-by-side composition when the inspector container is ≥20rem (typical
+ *   phone console width) — that saves vertical space vs stacking.
+ * - Short height only trims row counts, never drops a whole section.
  */
 export function ConsoleOverview({
   launches,
@@ -133,10 +198,19 @@ export function ConsoleOverview({
 }: ConsoleOverviewProps) {
   const compactMotion = useCompactMotion();
   const shortBand = useShortViewportBand();
-  /** Phone / short height: keep Updates readable — trim composition, don't side-by-side. */
-  const denseComposition = compactMotion || shortBand !== "roomy";
-  const providerLimit = compactMotion ? 2 : denseComposition ? 3 : 5;
-  const orbitLimit = denseComposition ? 2 : 5;
+  const tight = shortBand !== "roomy";
+
+  /*
+    Always keep both composition sections. Trim row counts only:
+    - short height → leanest bars (side-by-side still)
+    - phone / mid shell → moderate
+    - desktop roomy → full top-5
+  */
+  const providerLimit =
+    shortBand === "short" ? 2 : compactMotion || tight ? 3 : 5;
+  const orbitLimit =
+    shortBand === "short" ? 2 : compactMotion || tight ? 3 : 5;
+
   const model = useMemo(
     () => buildConsoleOverview(launches, locations, nowMs),
     [launches, locations, nowMs],
@@ -145,6 +219,7 @@ export function ConsoleOverview({
   const orbits = model.orbits.slice(0, orbitLimit);
   const providerMax = providers[0]?.count ?? 1;
   const orbitMax = orbits[0]?.count ?? 1;
+  const showDestinations = !arming && orbits.length > 0;
 
   const headline = useMemo(() => {
     if (arming) {
@@ -229,7 +304,9 @@ export function ConsoleOverview({
   return (
     <motion.div
       data-inspector="console"
-      className="@container relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden pt-1 font-mono sm:pt-2 xl:pt-3"
+      className={`@container relative grid h-full min-h-0 w-full min-w-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden font-mono ${
+        tight ? "gap-0 pt-0.5" : "pt-1 sm:pt-2 xl:pt-3"
+      }`}
       variants={rootVariants}
       initial="hidden"
       animate="show"
@@ -237,7 +314,9 @@ export function ConsoleOverview({
       {/* ETA left · mission right — reads as one bar without a box */}
       <motion.header
         variants={sectionVariants}
-        className="flex min-w-0 shrink-0 items-baseline justify-between gap-3 border-b border-cyan-900/40 pb-3 sm:gap-4 sm:pb-3.5"
+        className={`flex min-w-0 items-baseline justify-between gap-3 border-b border-cyan-900/40 ${
+          tight ? "pb-2.5" : "pb-3 sm:gap-4 sm:pb-3.5"
+        }`}
       >
         <AnimatePresence mode="wait" initial={false}>
           {headline ? (
@@ -293,21 +372,25 @@ export function ConsoleOverview({
       */}
       <motion.div
         variants={sectionVariants}
-        className="mt-4 grid min-w-0 shrink-0 grid-cols-2 gap-x-4 gap-y-4 border-b border-cyan-900/30 pb-4 font-mono @[30rem]:grid-cols-4 @[30rem]:gap-x-3 sm:mt-5"
+        className={`grid min-w-0 grid-cols-2 gap-x-4 border-b border-cyan-900/30 font-mono @[30rem]:grid-cols-4 @[30rem]:gap-x-3 ${
+          tight
+            ? "mt-3 gap-y-3 pb-3"
+            : "mt-4 gap-y-4 pb-4 sm:mt-5"
+        }`}
       >
         {stats.map((stat) => (
           <div
             key={stat.key}
             className={`flex min-w-0 flex-col justify-between ${
-              denseComposition
-                ? "min-h-[2.85rem]"
+              tight
+                ? "min-h-[2.5rem]"
                 : "min-h-[3.5rem] @[30rem]:min-h-[3.75rem]"
             }`}
           >
             <p className="text-[11px] uppercase leading-tight tracking-[0.1em] text-cyan-500 sm:text-xs sm:tracking-[0.12em]">
               {stat.label}
             </p>
-            <div className="relative mt-2 min-h-[1.6rem] min-w-0">
+            <div className="relative mt-1.5 min-h-[1.4rem] min-w-0 sm:mt-2 sm:min-h-[1.6rem]">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.p
                   key={`${stat.key}-${stat.value}`}
@@ -325,11 +408,14 @@ export function ConsoleOverview({
         ))}
       </motion.div>
 
-      {/* Updates owns leftover height and scrolls internally — panel itself never scrolls */}
+      {/*
+        Updates = the flexible middle row. Modest minmax floor (~1–2 rows) so
+        composition always fits; leftover height scrolls inside the list.
+      */}
       <motion.section
         variants={sectionVariants}
-        className={`mt-4 flex min-w-0 flex-1 flex-col border-b border-cyan-900/30 pb-4 sm:mt-5 sm:pb-5 ${
-          compactMotion ? "min-h-[11rem]" : "min-h-[8.5rem] sm:min-h-[10rem]"
+        className={`flex min-h-0 min-w-0 flex-col border-b border-cyan-900/30 ${
+          tight ? "mt-3 pb-3" : "mt-4 pb-4 sm:mt-5 sm:pb-5"
         }`}
       >
         <div className="flex min-w-0 shrink-0 items-baseline justify-between gap-2">
@@ -346,7 +432,7 @@ export function ConsoleOverview({
             className="shrink-0 text-[10px]"
           />
         </div>
-        <div className="relative mt-3 min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div className="relative mt-2.5 min-h-0 min-w-0 flex-1 overflow-hidden sm:mt-3">
           <AnimatePresence mode="wait" initial={false}>
             {arming ? (
               <motion.p
@@ -371,7 +457,7 @@ export function ConsoleOverview({
             ) : updates.length > 0 ? (
               <motion.ul
                 key="updates-list"
-                className="console-scrollbar console-scrollbar-y absolute inset-0 min-w-0 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5"
+                className="console-scrollbar console-scrollbar-y absolute inset-0 min-w-0 space-y-1 overflow-y-auto overscroll-contain pr-0.5 sm:space-y-1.5"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -389,7 +475,9 @@ export function ConsoleOverview({
                       <button
                         type="button"
                         onClick={() => onSelectLaunch(update.apiId)}
-                        className="group flex w-full min-w-0 items-start gap-2.5 border-l-2 border-transparent py-1.5 pl-2.5 text-left transition-colors hover:border-cyan-600/80"
+                        className={`group flex w-full min-w-0 items-start gap-2.5 border-l-2 border-transparent pl-2.5 text-left transition-colors hover:border-cyan-600/80 ${
+                          tight ? "py-1" : "py-1.5"
+                        }`}
                       >
                         <span
                           className={`mt-0.5 w-[3.35rem] shrink-0 font-mono text-[11px] uppercase tracking-[0.1em] ${updateAccent(update.kind)}`}
@@ -400,7 +488,7 @@ export function ConsoleOverview({
                           <span className="block text-balance font-mono text-[13px] uppercase leading-snug tracking-[0.04em] text-slate-100 group-hover:text-white sm:text-sm">
                             {update.title}
                           </span>
-                          <span className="mt-1 flex min-w-0 flex-wrap items-baseline gap-x-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-cyan-500 group-hover:text-cyan-300">
+                          <span className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-cyan-500 group-hover:text-cyan-300 sm:mt-1">
                             <span className="min-w-0 text-balance text-cyan-400">
                               {update.detail}
                             </span>
@@ -433,20 +521,22 @@ export function ConsoleOverview({
         </div>
       </motion.section>
 
-      {/* Composition — side-by-side on roomy desktop; stacked + trimmed on phone */}
+      {/*
+        Composition always reserved (auto row). When destinations exist,
+        always share one horizontal band — stacking doubles the height tax
+        and is what used to force-drop Destinations on phone/short.
+      */}
       <motion.div
         variants={sectionVariants}
-        className={`mt-4 grid min-w-0 shrink-0 gap-5 sm:mt-5 ${
-          denseComposition
-            ? "grid-cols-1"
-            : "grid-cols-1 @[20rem]:grid-cols-2 @[20rem]:gap-5"
-        }`}
+        className={`grid min-w-0 ${
+          showDestinations ? "grid-cols-2" : "grid-cols-1"
+        } ${tight ? "mt-3 gap-3" : "mt-4 gap-4 sm:mt-5 sm:gap-5"}`}
       >
         <section className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-cyan-500">
             By provider
           </p>
-          <div className="relative mt-3 min-w-0">
+          <div className="relative mt-2.5 min-w-0 sm:mt-3">
             <AnimatePresence mode="wait" initial={false}>
               {arming ? (
                 <motion.p
@@ -460,51 +550,15 @@ export function ConsoleOverview({
                   Syncing…
                 </motion.p>
               ) : providers.length > 0 ? (
-                <motion.ul
+                <motion.div
                   key="providers-ready"
-                  className="min-w-0 space-y-2.5"
                   variants={swapVariants}
                   initial="initial"
                   animate="animate"
                   exit="exit"
                 >
-                  {providers.map((row, index) => (
-                    <motion.li
-                      key={row.label}
-                      className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_1.5rem] items-center gap-2 font-mono sm:gap-2.5"
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ ...transitions.soft, delay: index * 0.04 }}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        {row.markUrl ? (
-                          <ProviderMark url={row.markUrl} />
-                        ) : (
-                          <span className="size-5 sm:size-6" aria-hidden />
-                        )}
-                        <span className="min-w-0 truncate text-[13px] uppercase tracking-[0.05em] text-cyan-100/90 sm:text-sm">
-                          {row.label}
-                        </span>
-                      </span>
-                      <div className="h-1 min-w-0 overflow-hidden bg-cyan-950/80">
-                        <motion.div
-                          className="h-full bg-cyan-500/70"
-                          initial={{ width: 0 }}
-                          animate={{
-                            width: `${Math.max(
-                              8,
-                              (row.count / providerMax) * 100,
-                            )}%`,
-                          }}
-                          transition={transitions.soft}
-                        />
-                      </div>
-                      <span className="text-right text-xs tabular-nums text-cyan-400">
-                        {row.count}
-                      </span>
-                    </motion.li>
-                  ))}
-                </motion.ul>
+                  <RankList rows={providers} max={providerMax} kind="provider" />
+                </motion.div>
               ) : (
                 <motion.p
                   key="providers-empty"
@@ -521,43 +575,14 @@ export function ConsoleOverview({
           </div>
         </section>
 
-        {/* Destinations sit beside providers on desktop; on phone they steal Updates height */}
-        {!arming && !compactMotion && orbits.length > 0 ? (
+        {showDestinations ? (
           <section className="min-w-0">
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-cyan-500">
               Destinations
             </p>
-            <ul className="mt-3 min-w-0 space-y-2.5">
-              {orbits.map((row, index) => (
-                <motion.li
-                  key={row.label}
-                  className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_1.5rem] items-center gap-2 font-mono sm:gap-2.5"
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ ...transitions.soft, delay: 0.08 + index * 0.04 }}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <OrbitMark label={row.label} />
-                    <span className="min-w-0 truncate text-[13px] uppercase tracking-[0.04em] text-cyan-100/90 sm:text-sm">
-                      {row.label}
-                    </span>
-                  </span>
-                  <div className="h-1 min-w-0 overflow-hidden bg-cyan-950/80">
-                    <motion.div
-                      className="h-full bg-cyan-600/50"
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${Math.max(8, (row.count / orbitMax) * 100)}%`,
-                      }}
-                      transition={transitions.soft}
-                    />
-                  </div>
-                  <span className="text-right text-xs tabular-nums text-cyan-400">
-                    {row.count}
-                  </span>
-                </motion.li>
-              ))}
-            </ul>
+            <div className="mt-2.5 min-w-0 sm:mt-3">
+              <RankList rows={orbits} max={orbitMax} kind="orbit" />
+            </div>
           </section>
         ) : null}
       </motion.div>
