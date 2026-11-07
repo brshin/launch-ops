@@ -347,50 +347,55 @@ export function ConsoleOverview({
       </motion.header>
 
       {/*
-        Always 4-up. Density follows shell, not container width — a phone
-        console is full-bleed (~24rem) and would otherwise inherit desktop
-        type. compactMotion/tight stay compact; xl+ inspector gets air.
+        Always 4-up. Numbers lead ~1.5–1.7× update titles at every width
+        (phone, tablet/mid, desktop). Only short height steps one size down.
+        Compact shells use text-2xl so sm: update titles can’t flatten the
+        hierarchy the way text-xl did in the middle band.
       */}
       <motion.div
         variants={sectionVariants}
         className={`grid min-w-0 grid-cols-4 border-b border-cyan-900/30 font-mono ${
-          tight || compactMotion
-            ? "mt-2.5 gap-x-2 pb-2.5"
-            : "mt-3.5 gap-x-3 pb-3.5 @[30rem]:mt-4 @[30rem]:pb-4"
+          tight
+            ? "mt-2 gap-x-2 pb-2"
+            : compactMotion
+              ? "mt-2.5 gap-x-2.5 pb-2.5"
+              : "mt-3.5 gap-x-3 pb-3.5 @[30rem]:mt-4 @[30rem]:pb-4"
         }`}
       >
         {stats.map((stat) => (
           <div
             key={stat.key}
             className={`flex min-w-0 flex-col ${
-              tight || compactMotion
+              tight
                 ? "justify-start gap-0.5"
-                : "min-h-[3.25rem] justify-between @[30rem]:min-h-[3.75rem]"
+                : compactMotion
+                  ? "justify-start gap-1"
+                  : "min-h-[3.25rem] justify-between @[30rem]:min-h-[3.75rem]"
             }`}
           >
             <p
               className={`truncate uppercase leading-tight text-cyan-500 ${
-                tight || compactMotion
-                  ? "text-[9px] tracking-[0.06em]"
-                  : "text-[11px] tracking-[0.1em] @[30rem]:text-xs @[30rem]:tracking-[0.12em]"
+                tight
+                  ? "text-[10px] tracking-[0.08em]"
+                  : "text-[11px] tracking-[0.08em] @[30rem]:tracking-[0.1em] @[30rem]:text-xs @[30rem]:tracking-[0.12em]"
               }`}
             >
               {stat.label}
             </p>
             <div
               className={`relative min-w-0 ${
-                tight || compactMotion
-                  ? "min-h-[1.15rem]"
-                  : "mt-1.5 min-h-[1.45rem] @[30rem]:mt-2 @[30rem]:min-h-[1.6rem]"
+                tight
+                  ? "min-h-[1.2rem]"
+                  : compactMotion
+                    ? "min-h-[1.5rem]"
+                    : "mt-1.5 min-h-[1.45rem] @[30rem]:mt-2 @[30rem]:min-h-[1.6rem]"
               }`}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.p
                   key={`${stat.key}-${stat.value}`}
                   className={`truncate leading-none tabular-nums tracking-wide text-cyan-50 ${
-                    tight || compactMotion
-                      ? "text-base"
-                      : "text-xl @[30rem]:text-2xl"
+                    tight ? "text-lg" : "text-2xl"
                   }`}
                   variants={swapVariants}
                   initial="initial"
@@ -492,7 +497,13 @@ export function ConsoleOverview({
                           {updateKindLabel(update.kind)}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-balance font-mono text-[13px] uppercase leading-snug tracking-[0.04em] text-slate-100 group-hover:text-white sm:text-sm">
+                          <span
+                            className={`block text-balance font-mono uppercase leading-snug tracking-[0.04em] text-slate-100 group-hover:text-white ${
+                              compactMotion
+                                ? "text-[13px]"
+                                : "text-[13px] sm:text-sm"
+                            }`}
+                          >
                             {update.title}
                           </span>
                           <span className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-cyan-500 group-hover:text-cyan-300 sm:mt-1">
