@@ -35,7 +35,10 @@ connectDB();
 
 const fetchUpcomingLaunches = async() => {
     try {
-        const response = await fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed');
+        // Default LL2 page size is 10; cap stays well under max 100 for detailed payloads.
+        const response = await fetch(
+            'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed&limit=20',
+        );
 
         if (!response.ok) {
             console.error(`API Error: HTTP ${response.status}`);

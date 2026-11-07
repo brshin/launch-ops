@@ -159,11 +159,11 @@ Local `.env` files are ignored by Git and should not be committed.
 The worker requests:
 
 ```text
-GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed
+GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed&limit=20
 GET https://ll.thespacedevs.com/2.3.0/locations/?format=json&limit=100
 ```
 
-Detailed launch mode is required for webcast URLs. Launches refresh once at startup and every five minutes thereafter. Locations paginate the full catalog, refresh once at startup, and again about every twelve hours.
+Detailed launch mode is required for webcast URLs. Launches request 20 rows per refresh (LL2 default is 10; max is 100), run once at startup, and every five minutes thereafter. Locations paginate the full catalog, refresh once at startup, and again about every twelve hours. Unauthenticated LL2 allows about 15 requests per hour per IP — this cadence stays under that without an API key.
 
 ## Repository layout
 
