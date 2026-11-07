@@ -9,11 +9,15 @@ import { isEditableKeyboardTarget, stepQueueIndex } from "../utils/queueNav";
 export function useLaunchKeyboardNav({
   launches,
   selectedIndex,
+  focusIndex = -1,
   onSelect,
   enabled = true,
 }: {
   launches: Launch[];
+  /** -1 when console overview is open (no mission selected). */
   selectedIndex: number;
+  /** Queue “next” row — used when entering from idle. */
+  focusIndex?: number;
   onSelect: (apiId: string) => void;
   enabled?: boolean;
 }) {
@@ -29,8 +33,18 @@ export function useLaunchKeyboardNav({
       else if (event.key === "ArrowUp" || event.key === "ArrowLeft") delta = -1;
       else return;
 
-      const next = stepQueueIndex(selectedIndex, launches.length, delta);
       event.preventDefault();
+
+      // Idle overview: first arrow opens the focus (or first) row.
+      if (selectedIndex < 0) {
+        const enter =
+          focusIndex >= 0 && focusIndex < launches.length ? focusIndex : 0;
+        const apiId = launches[enter]?.apiId;
+        if (apiId) onSelect(apiId);
+        return;
+      }
+
+      const next = stepQueueIndex(selectedIndex, launches.length, delta);
       if (next === selectedIndex) return;
 
       const apiId = launches[next]?.apiId;
@@ -40,5 +54,5 @@ export function useLaunchKeyboardNav({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [enabled, launches, onSelect, selectedIndex]);
+  }, [enabled, focusIndex, launches, onSelect, selectedIndex]);
 }

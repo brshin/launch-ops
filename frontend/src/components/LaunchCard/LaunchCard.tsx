@@ -28,6 +28,8 @@ interface LaunchCardProps {
     onWatchingChange?: (watching: boolean) => void;
     /** Opens LocationPanel when the Launch Site tile is activated. */
     onOpenLocation?: (locationApiId: number) => void;
+    /** Returns the inspector to console overview. */
+    onClose?: () => void;
 }
 
 /** Parent orchestrates children; staggerChildren = delay between each direct motion child. */
@@ -46,6 +48,7 @@ export default function LaunchCard({
     hour12,
     onWatchingChange,
     onOpenLocation,
+    onClose,
 }: LaunchCardProps) {
     const rootRef = useRef<HTMLDivElement>(null);
     const reduceMotion = useReducedMotion();
@@ -159,12 +162,24 @@ export default function LaunchCard({
                 <div className="card-hairline-gleam" />
             </motion.div>
 
+            {onClose ? (
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="absolute right-3 top-3 z-10 font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-700 transition-colors hover:text-cyan-400 sm:right-4 sm:top-4"
+                >
+                    Close
+                </button>
+            ) : null}
+
             {/* Identity + status/countdown
                 Below lg the card is a narrow column: status sits beside the title, countdown underneath.
                 lg+ keeps the inspector's right-hand status column. */}
             <motion.div
                 variants={sectionVariants}
-                className={`flex flex-col gap-x-2 gap-y-1 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-x-3 lg:gap-y-1.5 shrink-0 density-ease ${chrome.identity}`}
+                className={`flex flex-col gap-x-2 gap-y-1 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-x-3 lg:gap-y-1.5 shrink-0 density-ease ${chrome.identity} ${
+                    onClose ? "pr-10 sm:pr-12" : ""
+                }`}
             >
                 <LaunchCardIdentity
                     chrome={chrome}

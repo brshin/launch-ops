@@ -5,11 +5,20 @@ import { pickDefaultApiId } from "../utils/queueFocus";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+type UseLaunchFeedOptions = {
+  /**
+   * When false, a null selection stays null (console overview / user closed the card).
+   * Still recovers if a previously selected id leaves the feed.
+   */
+  allowAutoSelect?: boolean;
+};
+
 /**
  * Launch list + live uplink. Owns REST hydrate, Socket.IO, and sticky apiId.
  * Socket is created on mount (not at module load) and torn down on unmount.
  */
-export function useLaunchFeed() {
+export function useLaunchFeed(options: UseLaunchFeedOptions = {}) {
+  const { allowAutoSelect = true } = options;
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedApiId, setSelectedApiId] = useState<string | null>(null);
   const [feedLive, setFeedLive] = useState(false);
@@ -26,8 +35,15 @@ export function useLaunchFeed() {
     if (selectedApiId && launches.some((launch) => launch.apiId === selectedApiId)) {
       return;
     }
+    // Stale id left the queue — pick a replacement.
+    if (selectedApiId) {
+      setSelectedApiId(pickDefaultApiId(launches));
+      return;
+    }
+    // Explicit idle (overview) — do not force a mission open.
+    if (!allowAutoSelect) return;
     setSelectedApiId(pickDefaultApiId(launches));
-  }, [launches, selectedApiId]);
+  }, [launches, selectedApiId, allowAutoSelect]);
 
   useEffect(() => {
     const socket = io(API_URL);
