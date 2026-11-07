@@ -158,7 +158,7 @@ describe("formatNextLaunchHeadline", () => {
         makeLaunch({ apiId: "d", net: netFromNow(2 * DAY + 4 * HOUR) }),
         NOW,
       ),
-    ).toEqual({ lead: "Next launch in", emphasis: "2d 4h" });
+    ).toEqual({ lead: "Next launch in", emphasis: "2d\u00A04h" });
   });
 
   it("handles hold and provisional NET", () => {

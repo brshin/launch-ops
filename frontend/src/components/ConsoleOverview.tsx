@@ -309,7 +309,7 @@ export function ConsoleOverview({
               exit="exit"
             >
               <span>{headline.lead}</span>{" "}
-              <span className="font-bold tracking-[0.08em] text-cyan-300 tabular-nums text-shadow-[0_0_12px_rgba(34,211,238,0.25)] sm:text-[0.95rem]">
+              <span className="whitespace-nowrap font-bold tracking-[0.08em] text-cyan-300 tabular-nums text-shadow-[0_0_12px_rgba(34,211,238,0.25)] sm:text-[0.95rem]">
                 {headline.emphasis}
               </span>
             </motion.p>

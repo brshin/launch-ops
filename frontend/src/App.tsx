@@ -46,16 +46,18 @@ const EARTH_HOVER_LEAVE_MS = 160;
  * Pixel heights for the phone earth band. CSS `height` + `transform: scale`
  * animate these — Tailwind class swaps and Framer height tweens both fought
  * WebGL resize/camera refit and felt like a hard pop.
+ * Short viewports still expand (pads are unusable otherwise); caps stay tighter.
  */
 function phoneEarthHeightPx(
   shortBand: ShortViewportBand,
   expanded: boolean,
   viewportH: number,
 ): number {
-  if (shortBand === "short") return 128; // 8rem — no expand
   if (!expanded) {
+    if (shortBand === "short") return 128; // 8rem
     return shortBand === "mid" ? 152 : 184; // 9.5rem / 11.5rem
   }
+  if (shortBand === "short") return Math.min(viewportH * 0.36, 200); // ≤12.5rem
   if (shortBand === "mid") return Math.min(viewportH * 0.4, 240); // ≤15rem
   return Math.min(viewportH * 0.44, 288); // ≤18rem
 }
@@ -86,8 +88,8 @@ export default function App() {
   const [selectedLocationApiId, setSelectedLocationApiId] = useState<number | null>(null);
   /**
    * Phone portrait: earth band grows on engage so pads are usable, then
-   * yields space back when the inspector is used. Disabled on short height
-   * and at md+ (flex column already sizes earth).
+   * yields space back when the inspector is used. Any shortBand expands;
+   * disabled only at md+ (flex column already sizes earth).
    */
   const [earthExpanded, setEarthExpanded] = useState(false);
   const [phoneStack, setPhoneStack] = useState(() =>
@@ -127,8 +129,7 @@ export default function App() {
     };
   }, []);
 
-  const earthExpandable =
-    compactMotion && phoneStack && shortBand !== "short";
+  const earthExpandable = compactMotion && phoneStack;
 
   useEffect(() => {
     if (!earthExpandable) setEarthExpanded(false);
@@ -353,7 +354,17 @@ export default function App() {
 
         {/* PANELS WRAPPER. The console stays locked. Nothing scrolls the page. */}
         <div
-          onPointerDown={collapseEarth}
+          onPointerDown={(event) => {
+            // Canvas / R3F often swallows bubble stopPropagation — ignore
+            // presses that started on the earth band so tap-expand sticks.
+            if (
+              event.target instanceof Element &&
+              event.target.closest("[data-earth-band]")
+            ) {
+              return;
+            }
+            collapseEarth();
+          }}
           className={`console-scrollbar console-scrollbar-y relative z-10 flex w-full min-h-0 flex-1 flex-col overflow-hidden xl:flex-row density-ease ${
             shortBand === "short"
               ? "gap-1.5 xl:gap-5"
@@ -368,8 +379,6 @@ export default function App() {
             selectedIndex={selectedIndex}
             nowMs={nowMs}
             onSelect={selectLaunch}
-            feedLive={feedLive}
-            isBooting={isBooting}
             shortBand={shortBand}
             hour12={hour12}
           />
@@ -391,7 +400,8 @@ export default function App() {
           >
             {compactMotion && (
               <div
-                className={`relative w-full shrink-0 overflow-hidden md:h-full md:min-h-0 md:w-auto md:min-w-0 ${earthMdFlex}`}
+                data-earth-band=""
+                className={`relative w-full shrink-0 overflow-hidden touch-manipulation md:h-full md:min-h-0 md:w-auto md:min-w-0 ${earthMdFlex}`}
                 data-earth-expanded={earthExpanded ? "true" : undefined}
                 style={
                   phoneStack
@@ -412,8 +422,13 @@ export default function App() {
                 }}
                 onMouseEnter={fineHover ? expandEarth : undefined}
                 onMouseLeave={fineHover ? scheduleCollapseEarth : undefined}
+                onPointerDownCapture={() => {
+                  // Capture runs before the canvas drag listener, so phone
+                  // taps on the WebGL surface still expand the band.
+                  expandEarth();
+                }}
                 onPointerDown={(event) => {
-                  // Keep panels-wrapper collapse from firing on the same press.
+                  // Belt-and-suspenders when bubble still reaches the band.
                   event.stopPropagation();
                   expandEarth();
                 }}

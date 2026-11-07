@@ -255,14 +255,14 @@ export function LocationPanel({
         </motion.div>
 
         {/*
-          Upcoming hugs its rows (cap + scroll when long); brief takes the
-          leftover. A 50/50 flex-1 split left empty air under 1–2 launches.
+          Share leftover height: Upcoming capped so Brief always keeps a
+          readable floor; both can scroll when content runs long.
         */}
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
           {hasUpcoming ? (
             <motion.section
               variants={sectionVariants}
-              className="flex max-h-[min(42%,13rem)] min-h-0 shrink-0 flex-col overflow-hidden rounded-lg border border-teal-900/40 bg-teal-950/15"
+              className="flex max-h-[min(48%,15rem)] min-h-[5.5rem] shrink-0 flex-col overflow-hidden rounded-lg border border-teal-900/40 bg-teal-950/15"
             >
               <div
                 className={`flex shrink-0 items-center justify-between gap-2 border-b border-teal-900/35 density-ease ${chrome.sectionHead}`}

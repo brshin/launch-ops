@@ -152,7 +152,8 @@ export function formatNextLaunchHeadline(
       emphasis: `${days} day${days === 1 ? "" : "s"}`,
     };
   }
-  return { lead: "Next launch in", emphasis: `${days}d ${hours}h` };
+  // NBSP so "1d 9h" can't wrap between units on a narrow phone header.
+  return { lead: "Next launch in", emphasis: `${days}d\u00A0${hours}h` };
 }
 
 /**

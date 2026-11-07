@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FeedStatus } from "./FeedStatus";
 import { Launch } from "../types/launch";
 import { getLaunchTitle } from "../utils/launchTitle";
 import { getLaunchTime, type LaunchTimePhase } from "../utils/launchTime";
@@ -48,8 +47,6 @@ interface LaunchQueueProps {
   selectedIndex: number;
   nowMs: number;
   onSelect: (apiId: string) => void;
-  feedLive: boolean;
-  isBooting: boolean;
   shortBand: ShortViewportBand;
   hour12: boolean;
 }
@@ -57,14 +54,13 @@ interface LaunchQueueProps {
 /**
  * Upcoming-launch strip / sidebar. Owns scroll-edge fades, row chips, and queue boot.
  * Selection and the clock tick stay in App — the detail card needs both.
+ * Feed live status lives on the console overview (Recent updates), not here.
  */
 export function LaunchQueue({
   launches,
   selectedIndex,
   nowMs,
   onSelect,
-  feedLive,
-  isBooting,
   shortBand,
   hour12,
 }: LaunchQueueProps) {
@@ -140,7 +136,7 @@ export function LaunchQueue({
       animate="show"
     >
       <div
-        className={`border-b border-cyan-800/50 bg-black/30 flex justify-between items-center shadow-lg z-20 shrink-0 gap-2 xl:gap-3 density-ease ${
+        className={`border-b border-cyan-800/50 bg-black/30 flex items-center shadow-lg z-20 shrink-0 density-ease ${
           shortBand === "short"
             ? "px-2 py-1 xl:p-4"
             : shortBand === "mid"
@@ -159,15 +155,6 @@ export function LaunchQueue({
         >
           Launch Queue
         </h2>
-        <FeedStatus
-          live={feedLive}
-          arming={isBooting && !feedLive}
-          quietLive
-          liveLabel="Feed Live"
-          offlineLabel="Feed Offline"
-          armingLabel="Arming Feed"
-          className="shrink-0 text-[9px]"
-        />
       </div>
 
       <div className="relative min-h-0 xl:flex-1 xl:min-h-0 flex flex-col">
