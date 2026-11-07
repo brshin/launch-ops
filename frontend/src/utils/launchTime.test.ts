@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { getLaunchTime, getNetPrecisionCaption, hasLaunchWindow, isNetPreciseEnough } from "./launchTime";
+import {
+  getLaunchTime,
+  getNetPrecisionCaption,
+  hasLaunchWindow,
+  isNetPreciseEnough,
+  isUpcomingQueueLaunch,
+} from "./launchTime";
 
 const NOW = Date.parse("2026-08-19T12:00:00.000Z");
 const MINUTE = 60_000;
@@ -152,5 +158,58 @@ describe("getLaunchTime", () => {
         }).chip,
       ).toBe(chip);
     }
+  });
+});
+
+describe("isUpcomingQueueLaunch", () => {
+  it("keeps live, hold, TBD, and future countdown rows", () => {
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(-MINUTE), status: { abbrev: "In Flight" } },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(-MINUTE), status: { abbrev: "Hold" } },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(HOUR), status: { abbrev: "Go" } },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(-HOUR), status: { abbrev: "TBD" } },
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it("drops Success, Failure, and other elapsed NET rows", () => {
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(-MINUTE), status: { abbrev: "Success" } },
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(-MINUTE), status: { abbrev: "Go" } },
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isUpcomingQueueLaunch(
+        { net: netFromNow(HOUR), status: { abbrev: "Failure" } },
+        NOW,
+      ),
+    ).toBe(false);
+    expect(isUpcomingQueueLaunch({ net: null, status: { abbrev: "Go" } }, NOW)).toBe(
+      false,
+    );
   });
 });

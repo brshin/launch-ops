@@ -1,5 +1,7 @@
 import { Vector3 } from "three";
+import type { NetPrecision } from "../types/launch";
 import type { LaunchLocation } from "../types/location";
+import { isUpcomingQueueLaunch } from "./launchTime";
 import { formatPadPlace } from "./padPlace";
 
 export type PadFocus = {
@@ -65,6 +67,14 @@ type PadLike = {
   } | null;
 } | null | undefined;
 
+/** Feed row fields needed to drop elapsed / failed from “upcoming” counts. */
+type QueueLaunchLike = {
+  net?: string | null;
+  status?: { abbrev?: string | null } | string | null;
+  net_precision?: NetPrecision | null;
+  pad?: PadLike;
+};
+
 export type PadHoverLabels = {
   siteLabel: string;
   /** Null when place would duplicate the site line. */
@@ -126,14 +136,14 @@ function padKey(focus: PadFocus): string {
   return `${focus.latitude.toFixed(3)},${focus.longitude.toFixed(3)}`;
 }
 
-/** Unique pad sites across the queue for the globe constellation. */
+/** Unique pad sites across still-upcoming queue launches for the globe constellation. */
 export function padSitesFromLaunches(
-  launches: Array<{
-    pad?: PadLike;
-  }>,
+  launches: QueueLaunchLike[],
+  nowMs: number = Date.now(),
 ): PadSite[] {
   const seen = new Map<string, PadSite>();
   for (const launch of launches) {
+    if (!isUpcomingQueueLaunch(launch, nowMs)) continue;
     const focus = padFocusFromLaunch(launch);
     if (!focus) continue;
     const id = padKey(focus);
@@ -244,12 +254,14 @@ export function hoverLabelsFromLocation(location: {
   return { siteLabel, placeLabel };
 }
 
-/** Count upcoming launches per Launch Library location id. */
+/** Count still-upcoming launches per Launch Library location id. */
 export function upcomingCountByLocationId(
-  launches: Array<{ pad?: { location?: { id?: number | null } | null } | null }>,
+  launches: QueueLaunchLike[],
+  nowMs: number = Date.now(),
 ): Map<number, number> {
   const counts = new Map<number, number>();
   for (const launch of launches) {
+    if (!isUpcomingQueueLaunch(launch, nowMs)) continue;
     const id = launch.pad?.location?.id;
     if (typeof id !== "number" || !Number.isFinite(id)) continue;
     counts.set(id, (counts.get(id) ?? 0) + 1);
@@ -264,13 +276,11 @@ export function upcomingCountByLocationId(
  */
 export function globeSitesFromLocations(
   locations: LaunchLocation[],
-  launches: Array<{
-    pad?: { location?: { id?: number | null } | null } | null;
-  }> = [],
-  options: { excludeWithUpcoming?: boolean } = {},
+  launches: QueueLaunchLike[] = [],
+  options: { excludeWithUpcoming?: boolean; nowMs?: number } = {},
 ): GlobeSite[] {
-  const { excludeWithUpcoming = true } = options;
-  const upcoming = upcomingCountByLocationId(launches);
+  const { excludeWithUpcoming = true, nowMs = Date.now() } = options;
+  const upcoming = upcomingCountByLocationId(launches, nowMs);
   const sites: GlobeSite[] = [];
 
   for (const location of locations) {
@@ -356,16 +366,22 @@ export function padFocusFromLocation(
   };
 }
 
-/** Queue launches whose pad.location.id matches this catalog site. */
+/** Still-upcoming queue launches whose pad.location.id matches this catalog site. */
 export function launchesAtLocation<
   T extends {
     apiId: string;
     net?: string | null;
+    status?: { abbrev?: string | null } | string | null;
+    net_precision?: NetPrecision | null;
     pad?: { location?: { id?: number | null } | null } | null;
   },
->(launches: T[], locationApiId: number): T[] {
+>(launches: T[], locationApiId: number, nowMs: number = Date.now()): T[] {
   return launches
-    .filter((launch) => launch.pad?.location?.id === locationApiId)
+    .filter(
+      (launch) =>
+        launch.pad?.location?.id === locationApiId &&
+        isUpcomingQueueLaunch(launch, nowMs),
+    )
     .sort((a, b) => {
       const aMs = Date.parse(String(a.net ?? ""));
       const bMs = Date.parse(String(b.net ?? ""));

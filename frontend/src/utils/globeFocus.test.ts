@@ -17,6 +17,11 @@ import {
 } from "./globeFocus";
 import type { LaunchLocation } from "../types/location";
 
+const NOW = Date.parse("2026-11-06T20:00:00.000Z");
+const FUTURE_A = "2026-11-07T00:00:00Z";
+const FUTURE_B = "2026-11-08T00:00:00Z";
+const PAST = "2026-11-06T12:00:00Z";
+
 function loc(partial: Partial<LaunchLocation> & Pick<LaunchLocation, "apiId" | "name">): LaunchLocation {
   return {
     active: true,
@@ -116,29 +121,47 @@ describe("padFocusFromLaunch", () => {
 
 describe("padSitesFromLaunches", () => {
   it("dedupes launches that share a pad and counts upcoming", () => {
-    const sites = padSitesFromLaunches([
-      {
-        pad: {
-          latitude: 34.632,
-          longitude: -120.611,
-          location: { name: "Vandenberg SFB, CA, USA" },
+    const sites = padSitesFromLaunches(
+      [
+        {
+          net: FUTURE_A,
+          status: { abbrev: "Go" },
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
         },
-      },
-      {
-        pad: {
-          latitude: 34.632,
-          longitude: -120.611,
-          location: { name: "Vandenberg SFB, CA, USA" },
+        {
+          net: FUTURE_B,
+          status: { abbrev: "Go" },
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
         },
-      },
-      {
-        pad: {
-          latitude: 28.608,
-          longitude: -80.604,
-          location: { name: "Kennedy Space Center, FL, USA" },
+        {
+          net: PAST,
+          status: { abbrev: "Success" },
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
         },
-      },
-    ]);
+        {
+          net: FUTURE_A,
+          status: { abbrev: "Go" },
+          pad: {
+            latitude: 28.608,
+            longitude: -80.604,
+            location: { name: "Kennedy Space Center, FL, USA" },
+          },
+        },
+      ],
+      NOW,
+    );
     expect(sites).toHaveLength(2);
     const vandy = sites.find((s) => s.siteLabel === "Vandenberg SFB");
     expect(vandy?.upcomingCount).toBe(2);
@@ -164,22 +187,29 @@ describe("samePad", () => {
 
 describe("enrichPadFocus", () => {
   it("copies upcoming count from the constellation entry", () => {
-    const pads = padSitesFromLaunches([
-      {
-        pad: {
-          latitude: 34.632,
-          longitude: -120.611,
-          location: { name: "Vandenberg SFB, CA, USA" },
+    const pads = padSitesFromLaunches(
+      [
+        {
+          net: FUTURE_A,
+          status: { abbrev: "Go" },
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
         },
-      },
-      {
-        pad: {
-          latitude: 34.632,
-          longitude: -120.611,
-          location: { name: "Vandenberg SFB, CA, USA" },
+        {
+          net: FUTURE_B,
+          status: { abbrev: "Go" },
+          pad: {
+            latitude: 34.632,
+            longitude: -120.611,
+            location: { name: "Vandenberg SFB, CA, USA" },
+          },
         },
-      },
-    ]);
+      ],
+      NOW,
+    );
     const enriched = enrichPadFocus(
       { latitude: 34.632, longitude: -120.611, siteLabel: "Vandenberg SFB" },
       pads,
@@ -227,13 +257,21 @@ describe("hoverLabelsFromLocation", () => {
 });
 
 describe("upcomingCountByLocationId", () => {
-  it("counts launches by pad.location.id", () => {
-    const counts = upcomingCountByLocationId([
-      { pad: { location: { id: 11 } } },
-      { pad: { location: { id: 11 } } },
-      { pad: { location: { id: 8 } } },
-      { pad: { location: { id: null } } },
-    ]);
+  it("counts still-upcoming launches by pad.location.id", () => {
+    const counts = upcomingCountByLocationId(
+      [
+        { net: FUTURE_A, status: { abbrev: "Go" }, pad: { location: { id: 11 } } },
+        { net: FUTURE_B, status: { abbrev: "Go" }, pad: { location: { id: 11 } } },
+        {
+          net: PAST,
+          status: { abbrev: "Success" },
+          pad: { location: { id: 11 } },
+        },
+        { net: FUTURE_A, status: { abbrev: "Go" }, pad: { location: { id: 8 } } },
+        { net: FUTURE_A, status: { abbrev: "Go" }, pad: { location: { id: null } } },
+      ],
+      NOW,
+    );
     expect(counts.get(11)).toBe(2);
     expect(counts.get(8)).toBe(1);
   });
@@ -284,7 +322,14 @@ describe("globeSitesFromLocations", () => {
           country: { name: "China" },
         }),
       ],
-      [{ pad: { location: { id: 11 } } }],
+      [
+        {
+          net: FUTURE_A,
+          status: { abbrev: "Go" },
+          pad: { location: { id: 11 } },
+        },
+      ],
+      { nowMs: NOW },
     );
     expect(sites.map((s) => s.locationApiId)).toEqual([17]);
   });
@@ -292,8 +337,24 @@ describe("globeSitesFromLocations", () => {
   it("can keep upcoming sites when excludeWithUpcoming is false", () => {
     const sites = globeSitesFromLocations(
       [loc({ apiId: 11, name: "Vandenberg SFB, CA, USA" })],
-      [{ pad: { location: { id: 11 } } }, { pad: { location: { id: 11 } } }],
-      { excludeWithUpcoming: false },
+      [
+        {
+          net: FUTURE_A,
+          status: { abbrev: "Go" },
+          pad: { location: { id: 11 } },
+        },
+        {
+          net: FUTURE_B,
+          status: { abbrev: "Go" },
+          pad: { location: { id: 11 } },
+        },
+        {
+          net: PAST,
+          status: { abbrev: "Success" },
+          pad: { location: { id: 11 } },
+        },
+      ],
+      { excludeWithUpcoming: false, nowMs: NOW },
     );
     expect(sites).toHaveLength(1);
     expect(sites[0].upcomingCount).toBe(2);
@@ -301,26 +362,36 @@ describe("globeSitesFromLocations", () => {
 });
 
 describe("launchesAtLocation", () => {
-  it("returns queue launches for a location id sorted by NET", () => {
+  it("returns still-upcoming launches for a location id sorted by NET", () => {
     const rows = launchesAtLocation(
       [
         {
           apiId: "b",
-          net: "2026-11-08T00:00:00Z",
+          net: FUTURE_B,
+          status: { abbrev: "Go" },
           pad: { location: { id: 11 } },
         },
         {
           apiId: "a",
-          net: "2026-11-07T00:00:00Z",
+          net: FUTURE_A,
+          status: { abbrev: "Go" },
+          pad: { location: { id: 11 } },
+        },
+        {
+          apiId: "flown",
+          net: PAST,
+          status: { abbrev: "Success" },
           pad: { location: { id: 11 } },
         },
         {
           apiId: "other",
-          net: "2026-11-06T00:00:00Z",
+          net: FUTURE_A,
+          status: { abbrev: "Go" },
           pad: { location: { id: 8 } },
         },
       ],
       11,
+      NOW,
     );
     expect(rows.map((r) => r.apiId)).toEqual(["a", "b"]);
   });

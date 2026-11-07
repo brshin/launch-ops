@@ -84,15 +84,18 @@ export default function App() {
   const locationUpcoming = useMemo(
     () =>
       selectedLocation
-        ? launchesAtLocation(launches, selectedLocation.apiId)
+        ? launchesAtLocation(launches, selectedLocation.apiId, nowMs)
         : [],
-    [launches, selectedLocation],
+    [launches, selectedLocation, nowMs],
   );
 
-  const globePads = useMemo(() => padSitesFromLaunches(launches), [launches]);
+  const globePads = useMemo(
+    () => padSitesFromLaunches(launches, nowMs),
+    [launches, nowMs],
+  );
   const globeSites = useMemo(
-    () => globeSitesFromLocations(locations, launches),
-    [locations, launches],
+    () => globeSitesFromLocations(locations, launches, { nowMs }),
+    [locations, launches, nowMs],
   );
   const launchFocus = useMemo(
     () => enrichPadFocus(padFocusFromLaunch(activeLaunch), globePads),

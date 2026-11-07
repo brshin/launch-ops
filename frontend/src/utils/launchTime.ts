@@ -147,3 +147,32 @@ export function getLaunchTime(input: {
 
   return { phase, chip, preciseEnough, msUntilNet };
 }
+
+type UpcomingQueueLaunchInput = {
+  net?: string | Date | null;
+  status?: { abbrev?: string | null } | string | null;
+  net_precision?: NetPrecision | null;
+};
+
+/**
+ * True while a feed row still belongs in “upcoming” UI — live / hold / TBD /
+ * future countdown. Drops Success, Failure, and other elapsed NET rows that
+ * Space Devs often leaves in the upcoming endpoint after liftoff.
+ */
+export function isUpcomingQueueLaunch(
+  launch: UpcomingQueueLaunchInput,
+  now: number | Date = Date.now(),
+): boolean {
+  if (launch.net == null || launch.net === "") return false;
+  const status =
+    typeof launch.status === "string"
+      ? launch.status
+      : launch.status?.abbrev;
+  const { phase } = getLaunchTime({
+    net: launch.net,
+    status,
+    netPrecision: launch.net_precision,
+    now,
+  });
+  return phase !== "elapsed" && phase !== "failed";
+}
