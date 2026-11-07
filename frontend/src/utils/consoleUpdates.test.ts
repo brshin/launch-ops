@@ -3,6 +3,7 @@ import {
   formatUpdateAge,
   mergeConsoleUpdates,
   normalizeConsoleUpdate,
+  sortConsoleUpdates,
   updateKindLabel,
   type ConsoleUpdate,
 } from "./consoleUpdates";
@@ -33,14 +34,38 @@ describe("normalizeConsoleUpdate", () => {
   });
 });
 
+describe("sortConsoleUpdates", () => {
+  it("orders by atMs newest-first, then kind priority", () => {
+    const sorted = sortConsoleUpdates([
+      update({ id: "old-new", kind: "scheduled", atMs: NOW - 60_000 }),
+      update({ id: "new-status", kind: "status", atMs: NOW }),
+      update({ id: "new-live", kind: "webcast", atMs: NOW }),
+      update({ id: "mid", kind: "rescheduled", atMs: NOW - 30_000 }),
+    ]);
+    expect(sorted.map((row) => row.id)).toEqual([
+      "new-live",
+      "new-status",
+      "mid",
+      "old-new",
+    ]);
+  });
+});
+
 describe("mergeConsoleUpdates", () => {
-  it("prepends incoming and drops duplicate ids", () => {
+  it("dedupes, sorts newest-first, and caps length", () => {
     const merged = mergeConsoleUpdates(
-      [update({ id: "new" }), update({ id: "dup" })],
-      [update({ id: "dup" }), update({ id: "old" })],
+      [
+        update({ id: "newer", atMs: NOW + 10_000 }),
+        update({ id: "dup", atMs: NOW + 5_000 }),
+      ],
+      [
+        update({ id: "dup", atMs: NOW - 1 }),
+        update({ id: "older", atMs: NOW - 60_000 }),
+      ],
       24,
     );
-    expect(merged.map((row) => row.id)).toEqual(["new", "dup", "old"]);
+    expect(merged.map((row) => row.id)).toEqual(["newer", "dup", "older"]);
+    expect(merged[1]?.atMs).toBe(NOW + 5_000);
   });
 });
 

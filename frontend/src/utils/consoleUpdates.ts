@@ -24,6 +24,15 @@ const KINDS = new Set<ConsoleUpdateKind>([
   "removed",
 ]);
 
+/** Same-tick tie-break — matches worker diffLaunchBoard priority. */
+const KIND_PRIORITY: Record<ConsoleUpdateKind, number> = {
+  webcast: 0,
+  scheduled: 1,
+  rescheduled: 2,
+  status: 3,
+  removed: 4,
+};
+
 /** Coerce a socket/REST row into a ConsoleUpdate, or null if invalid. */
 export function normalizeConsoleUpdate(raw: unknown): ConsoleUpdate | null {
   if (!raw || typeof raw !== "object") return null;
@@ -48,7 +57,19 @@ export function normalizeConsoleUpdate(raw: unknown): ConsoleUpdate | null {
   };
 }
 
-/** Merge newest-first; drop duplicate ids. */
+/**
+ * Recent updates: newest `atMs` first; same tick → kind priority (Live → … → Gone).
+ */
+export function sortConsoleUpdates(updates: ConsoleUpdate[]): ConsoleUpdate[] {
+  return updates.slice().sort(
+    (a, b) =>
+      b.atMs - a.atMs ||
+      KIND_PRIORITY[a.kind] - KIND_PRIORITY[b.kind] ||
+      a.id.localeCompare(b.id),
+  );
+}
+
+/** Merge, dedupe by id, sort newest-first, cap length. */
 export function mergeConsoleUpdates(
   incoming: ConsoleUpdate[],
   existing: ConsoleUpdate[],
@@ -60,9 +81,8 @@ export function mergeConsoleUpdates(
     if (seen.has(update.id)) continue;
     seen.add(update.id);
     merged.push(update);
-    if (merged.length >= max) break;
   }
-  return merged;
+  return sortConsoleUpdates(merged).slice(0, max);
 }
 
 /** Short age chip for the updates list. */

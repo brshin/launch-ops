@@ -4,6 +4,7 @@ import type { Launch } from "../types/launch";
 import {
   mergeConsoleUpdates,
   normalizeConsoleUpdate,
+  sortConsoleUpdates,
   type ConsoleUpdate,
 } from "../utils/consoleUpdates";
 import { pickDefaultApiId } from "../utils/queueFocus";
@@ -43,7 +44,9 @@ export function useLaunchFeed(options: UseLaunchFeedOptions = {}) {
         const hydrated = data
           .map(normalizeConsoleUpdate)
           .filter((row): row is ConsoleUpdate => row != null);
-        setBoardUpdates(hydrated);
+        setBoardUpdates(
+          sortConsoleUpdates(hydrated).slice(0, MAX_BOARD_UPDATES),
+        );
       })
       .catch((err) => console.error(err));
   }, []);
