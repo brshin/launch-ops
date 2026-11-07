@@ -14,8 +14,10 @@ LaunchOps combines launch schedules, mission details, local countdowns, webcasts
 - Embedded YouTube webcasts, with outbound links for X and other providers
 - Interactive Earth: flies to the selected pad, marks the upcoming pad constellation, and shows quieter catalog sites
 - Drag-to-yaw globe with fling inertia; click a pad or site to inspect it
+- On phone portrait, the Earth band expands on hover or tap so pads stay usable, then yields space back to the inspector
 - Location inspector for catalog sites — imagery, lifetime metrics, and still-upcoming launches at that site
 - Launch Site tile on the mission card opens the matching location panel when the catalog joins
+- Idle console overview with board stats and newest-first recent updates (durable across refresh)
 - Real-time launch and location cache updates over Socket.IO
 - Solar-time Earth visualization with a day/night terminator
 - Shared 12/24-hour clock preference and responsive layouts from phone to desktop
@@ -48,7 +50,7 @@ The Space Devs Launch Library
 
 The backend starts the ingestion worker with the API server. The worker fetches upcoming launches on a five-minute cadence and the locations catalog about every twelve hours, maps each external payload to LaunchOps' stored model, upserts MongoDB, refreshes Redis, and publishes an update. Before overwriting the launches cache, the worker diffs the previous Redis board against the new payload, appends any console events to a capped Redis list, and includes that batch in the pub/sub message. Clients hydrate through `GET /launches`, `GET /locations`, and `GET /launches/updates`; subsequent board refreshes arrive over Socket.IO (`live-launch-data`), and new console events over `live-launch-events` on the same launch connection.
 
-On the globe, queue pads are drawn from still-upcoming launches (NET in the future). Active Earth sites from the locations catalog fill in as quieter markers where the queue does not already mark the coast. Selecting a pad or site opens the mission card or location inspector; Upcoming site counts ignore past-NET rows even when Launch Library status lags (for example a sticky `In Flight`).
+On the globe, queue pads are drawn from still-upcoming launches (NET in the future). Active Earth sites from the locations catalog fill in as quieter markers where the queue does not already mark the coast. Selecting a pad or site opens the mission card or location inspector; Upcoming site counts ignore past-NET rows even when Launch Library status lags (for example a sticky `In Flight`). Below the `md` breakpoint the Earth band can expand on hover or tap for clearer pad targets; Escape or engaging the inspector collapses it again. The shell scales the globe without resizing WebGL mid-tween, and location tip type stays screen-sized.
 
 Webcast ranking stays in the frontend because availability can change with each feed refresh. LaunchOps prefers YouTube for in-app playback, then X, then other providers, while favoring live and official sources.
 
@@ -155,9 +157,10 @@ Local `.env` files are ignored by Git and should not be committed.
 | --- | --- |
 | `GET /` | Backend health response |
 | `GET /launches` | Upcoming launches from Redis, falling back to MongoDB |
-| `GET /launches/updates` | Recent board change events (new / NET slip / status / webcast / removed) |
+| `GET /launches/updates` | Recent board change events (new / NET slip / status / webcast / removed), newest first |
 | `GET /locations` | Launch-site catalog from Redis, falling back to MongoDB |
 | `live-launch-data` | Server-to-client Socket.IO event after a launch ingestion refresh |
+| `live-launch-events` | Server-to-client Socket.IO event with new board-change rows from that refresh |
 | `live-location-data` | Server-to-client Socket.IO event after a locations ingestion refresh |
 
 The worker requests:
