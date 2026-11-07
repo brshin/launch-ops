@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import type { Launch } from "../../types/launch";
 import type { LaunchLocation } from "../../types/location";
 import { transitions, travel } from "../../lib/motionTokens";
+import { locationDensityChrome } from "../../lib/cardDensityChrome";
 import { useCompactMotion } from "../../hooks/useCompactMotion";
+import {
+  useCardDensityBand,
+  type CardDensity,
+} from "../../hooks/useCardDensityBand";
+import { useShortViewportBand } from "../../hooks/useShortViewportBand";
 import { getLaunchTitle } from "../../utils/launchTitle";
 import { hoverLabelsFromLocation } from "../../utils/globeFocus";
 import { formatLocalDateTime } from "../../utils/localTime";
@@ -29,16 +35,28 @@ const cardVariants: Variants = {
 function Metric({
   label,
   value,
+  pad,
+  labelClass,
+  valueClass,
 }: {
   label: string;
   value: string | number;
+  pad: string;
+  labelClass: string;
+  valueClass: string;
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-cyan-900/50 bg-black/40 px-2.5 py-2">
-      <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-cyan-600">
+    <div
+      className={`min-w-0 rounded-lg border border-slate-700/55 bg-black/35 ${pad}`}
+    >
+      <p
+        className={`font-mono uppercase text-slate-500 density-ease ${labelClass}`}
+      >
         {label}
       </p>
-      <p className="mt-1 truncate font-mono text-sm tabular-nums tracking-wide text-slate-100">
+      <p
+        className={`truncate font-mono tabular-nums tracking-wide text-slate-100 density-ease ${valueClass}`}
+      >
         {value}
       </p>
     </div>
@@ -81,7 +99,7 @@ function useLocationImageSrc(location: LaunchLocation): {
 
 /**
  * Inspector panel for a catalog launch site — sibling to LaunchCard.
- * Geography and lifetime metrics live here; mission detail stays on LaunchCard.
+ * Same density bands as mission card; upcoming + brief share leftover height.
  */
 export function LocationPanel({
   location,
@@ -90,16 +108,31 @@ export function LocationPanel({
   onClose,
   onSelectLaunch,
 }: LocationPanelProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const compactMotion = useCompactMotion();
+  const shortBand = useShortViewportBand();
+  const cardBand = useCardDensityBand(rootRef, compactMotion);
+
+  const density: CardDensity = useMemo(() => {
+    if (!compactMotion) return "roomy";
+    const rank: Record<CardDensity, number> = { roomy: 0, mid: 1, dense: 2 };
+    const fromShort: CardDensity =
+      shortBand === "short" ? "dense" : shortBand === "mid" ? "mid" : "roomy";
+    return rank[cardBand] >= rank[fromShort] ? cardBand : fromShort;
+  }, [compactMotion, cardBand, shortBand]);
+
+  const chrome = locationDensityChrome[density];
+  const compactTravel = density !== "roomy" || compactMotion;
+
   const labels = useMemo(() => hoverLabelsFromLocation(location), [location]);
   const { src: imageUrl, credit: imageCredit, onError: onImageError } =
     useLocationImageSrc(location);
   const description = location.description?.replace(/\r\n/g, "\n").trim() || null;
-  const timezone = location.timezone_name?.trim() || null;
+  const hasUpcoming = upcoming.length > 0;
 
   const sectionVariants: Variants = useMemo(() => {
-    const y = compactMotion ? travel.compact.sectionY : travel.desktop.sectionY;
+    const y = compactTravel ? travel.compact.sectionY : travel.desktop.sectionY;
     return {
       hidden: { opacity: 0, y },
       show: {
@@ -108,66 +141,81 @@ export function LocationPanel({
         transition: transitions.soft,
       },
     };
-  }, [compactMotion]);
+  }, [compactTravel]);
 
   return (
     <motion.div
-      className="relative flex h-full min-h-0 w-full flex-col overflow-clip rounded-2xl border border-cyan-900/60 bg-black/10 shadow-[0_0_40px_rgba(8,145,178,0.15)] backdrop-blur-sm"
+      ref={rootRef}
+      data-inspector="site"
+      data-density={density}
+      className={`relative flex h-full min-h-0 w-full flex-col overflow-clip rounded-2xl border border-slate-700/50 bg-black/15 shadow-[0_0_40px_rgba(15,23,42,0.45)] backdrop-blur-sm density-ease ${chrome.rootPad}`}
       variants={cardVariants}
       initial="hidden"
       animate="show"
     >
+      {/* Geographic rail — distinguishes SITE from mission cyan chrome. */}
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-teal-400/85 via-teal-600/55 to-slate-600/40"
+        aria-hidden
+      />
+
       <motion.div
-        className="card-hairline absolute left-12 right-12 top-0 h-3 overflow-hidden"
+        className="absolute left-12 right-12 top-0 h-px overflow-hidden bg-slate-700/60"
         style={{ originX: 0 }}
         initial={reduceMotion ? false : { scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={transitions.soft}
-      >
-        <div className="card-hairline-gleam" />
-      </motion.div>
+      />
 
       <motion.div
         variants={sectionVariants}
-        className="flex shrink-0 items-start justify-between gap-3 px-4 pb-2 pt-4 sm:px-5"
+        className={`flex shrink-0 items-start justify-between density-ease ${chrome.identity}`}
       >
         <div className="min-w-0">
-          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-600">
-            Launch site
-          </p>
-          <h2 className="mt-1 font-mono text-base uppercase tracking-[0.06em] text-slate-50 sm:text-lg break-words">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-sm border border-teal-700/55 bg-teal-950/50 font-mono uppercase text-teal-300 density-ease ${chrome.chip}`}
+            >
+              Site
+            </span>
+            <span
+              className={`rounded-sm border font-mono uppercase density-ease ${chrome.chip} ${
+                location.active
+                  ? "border-emerald-800/55 text-emerald-400/90"
+                  : "border-zinc-700/55 text-zinc-500"
+              }`}
+            >
+              {location.active ? "Active" : "Inactive"}
+            </span>
+          </div>
+          <h2
+            className={`font-mono uppercase text-slate-50 break-words density-ease ${chrome.title}`}
+          >
             {labels.siteLabel}
           </h2>
           {labels.placeLabel ? (
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-cyan-500 break-words">
+            <p
+              className={`font-mono uppercase text-slate-400 break-words density-ease ${chrome.place}`}
+            >
               {labels.placeLabel}
             </p>
           ) : null}
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <span
-            className={`rounded-sm border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em] ${
-              location.active
-                ? "border-emerald-700/60 text-emerald-400"
-                : "border-zinc-700/60 text-zinc-500"
-            }`}
-          >
-            {location.active ? "Active" : "Inactive"}
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-700 transition-colors hover:text-cyan-400"
-          >
-            Close
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className={`shrink-0 font-mono uppercase text-slate-500 transition-colors hover:text-teal-300 density-ease ${chrome.close}`}
+        >
+          Close
+        </button>
       </motion.div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-4 pb-3 sm:px-5">
+      <div
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden density-ease ${chrome.bodyGap}`}
+      >
         <motion.div
           variants={sectionVariants}
-          className="relative aspect-[16/10] max-h-36 w-full shrink-0 overflow-clip rounded-lg border border-cyan-900/60 bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)]"
+          className={`relative aspect-[16/10] w-full shrink-0 overflow-clip rounded-lg border border-slate-700/55 bg-[#020617] shadow-[inset_0_0_30px_rgba(0,0,0,1)] density-ease ${chrome.imageMax}`}
         >
           {imageUrl ? (
             <img
@@ -179,12 +227,12 @@ export function LocationPanel({
               onError={onImageError}
             />
           ) : (
-            <div className="flex h-full items-center justify-center font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-800">
+            <div className="flex h-full items-center justify-center font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600">
               No site imagery
             </div>
           )}
           {imageUrl && imageCredit ? (
-            <p className="absolute bottom-1.5 right-2 max-w-[80%] truncate font-mono text-[8px] uppercase tracking-[0.12em] text-cyan-200/80">
+            <p className="absolute bottom-1.5 right-2 max-w-[80%] truncate font-mono text-[8px] uppercase tracking-[0.12em] text-slate-200/75">
               {imageCredit}
             </p>
           ) : null}
@@ -192,73 +240,100 @@ export function LocationPanel({
 
         <motion.div
           variants={sectionVariants}
-          className="grid shrink-0 grid-cols-3 gap-2"
+          className={`grid shrink-0 grid-cols-3 density-ease ${chrome.metricGap}`}
         >
-          <Metric label="Upcoming" value={upcoming.length} />
-          <Metric label="Total" value={location.total_launch_count ?? 0} />
-          <Metric label="Landings" value={location.total_landing_count ?? 0} />
+          <Metric
+            label="Upcoming"
+            value={upcoming.length}
+            pad={chrome.metricPad}
+            labelClass={chrome.metricLabel}
+            valueClass={chrome.metricValue}
+          />
+          <Metric
+            label="Total"
+            value={location.total_launch_count ?? 0}
+            pad={chrome.metricPad}
+            labelClass={chrome.metricLabel}
+            valueClass={chrome.metricValue}
+          />
+          <Metric
+            label="Landings"
+            value={location.total_landing_count ?? 0}
+            pad={chrome.metricPad}
+            labelClass={chrome.metricLabel}
+            valueClass={chrome.metricValue}
+          />
         </motion.div>
 
-        {(timezone ||
-          (typeof location.latitude === "number" &&
-            typeof location.longitude === "number")) && (
-          <motion.div
-            variants={sectionVariants}
-            className="flex shrink-0 flex-wrap gap-x-3 gap-y-1 font-mono text-[9px] uppercase tracking-[0.14em] text-cyan-700"
-          >
-            {timezone ? <span>TZ {timezone}</span> : null}
-            {typeof location.latitude === "number" &&
-            typeof location.longitude === "number" ? (
-              <span>
-                {location.latitude.toFixed(2)}°, {location.longitude.toFixed(2)}°
-              </span>
-            ) : null}
-          </motion.div>
-        )}
-
-        <motion.div
-          variants={sectionVariants}
-          className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-cyan-900/50 bg-black/30"
-        >
-          <div className="console-scrollbar console-scrollbar-y min-h-0 flex-1 overflow-y-auto px-3 py-2.5">
-            {description ? (
-              <p className="whitespace-pre-wrap font-mono text-[12px] leading-relaxed text-slate-300">
-                {description}
-              </p>
-            ) : (
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-800">
-                No site brief on file
-              </p>
-            )}
-
-            {upcoming.length > 0 ? (
-              <div className="mt-4 border-t border-cyan-900/40 pt-3">
-                <p className="mb-2 text-[9px] font-mono uppercase tracking-[0.16em] text-cyan-600">
-                  Upcoming
+        {/* Shared leftover: upcoming + brief split ~evenly so 3+ launches don't crush the brief. */}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+          {hasUpcoming ? (
+            <motion.section
+              variants={sectionVariants}
+              className="flex min-h-0 flex-1 basis-0 flex-col overflow-hidden rounded-lg border border-teal-900/40 bg-teal-950/15"
+            >
+              <div
+                className={`flex shrink-0 items-center justify-between gap-2 border-b border-teal-900/35 density-ease ${chrome.sectionHead}`}
+              >
+                <p className="font-mono uppercase text-teal-400/90">Upcoming</p>
+                <p className="font-mono uppercase text-teal-700">
+                  {upcoming.length}
                 </p>
-                <ul className="flex flex-col gap-1.5">
-                  {upcoming.map((launch) => (
-                    <li key={launch.apiId}>
-                      <button
-                        type="button"
-                        onClick={() => onSelectLaunch(launch.apiId)}
-                        className="group flex w-full flex-col items-start rounded-md border border-cyan-900/40 bg-cyan-950/20 px-2.5 py-2 text-left transition-colors hover:border-cyan-600/50 hover:bg-cyan-950/40"
-                      >
-                        <span className="truncate font-mono text-[11px] uppercase tracking-[0.08em] text-slate-100 group-hover:text-white">
-                          {getLaunchTitle(launch)}
-                        </span>
-                        <span className="mt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-cyan-600 group-hover:text-cyan-400">
-                          {formatLocalDateTime(launch.net, { hour12 }).label}
-                          {launch.pad?.name ? ` · ${launch.pad.name}` : ""}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
               </div>
-            ) : null}
-          </div>
-        </motion.div>
+              <ul
+                className={`console-scrollbar console-scrollbar-y min-h-0 flex-1 overflow-y-auto density-ease ${chrome.listPad}`}
+              >
+                {upcoming.map((launch) => (
+                  <li key={launch.apiId}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectLaunch(launch.apiId)}
+                      className="group flex w-full flex-col items-start rounded-md border border-slate-700/45 bg-black/30 px-2.5 py-2 text-left transition-colors hover:border-teal-600/45 hover:bg-teal-950/30"
+                    >
+                      <span
+                        className={`truncate font-mono uppercase text-slate-100 group-hover:text-white density-ease ${chrome.listTitle}`}
+                      >
+                        {getLaunchTitle(launch)}
+                      </span>
+                      <span
+                        className={`font-mono uppercase text-slate-500 group-hover:text-teal-400/90 density-ease ${chrome.listMeta}`}
+                      >
+                        {formatLocalDateTime(launch.net, { hour12 }).label}
+                        {launch.pad?.name ? ` · ${launch.pad.name}` : ""}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </motion.section>
+          ) : null}
+
+          <motion.section
+            variants={sectionVariants}
+            className={`flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-700/45 bg-black/30 ${
+              hasUpcoming ? "flex-1 basis-0" : "flex-1"
+            }`}
+          >
+            <div
+              className={`shrink-0 border-b border-slate-800/80 density-ease ${chrome.sectionHead}`}
+            >
+              <p className="font-mono uppercase text-slate-500">Brief</p>
+            </div>
+            <div
+              className={`console-scrollbar console-scrollbar-y min-h-0 flex-1 overflow-y-auto density-ease ${chrome.briefBody}`}
+            >
+              {description ? (
+                <p className="whitespace-pre-wrap font-mono text-slate-300">
+                  {description}
+                </p>
+              ) : (
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-600">
+                  No site brief on file
+                </p>
+              )}
+            </div>
+          </motion.section>
+        </div>
       </div>
     </motion.div>
   );

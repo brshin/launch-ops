@@ -301,6 +301,9 @@ export function LaunchCardIdentity({
     <div
       className={`flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-cyan-600 uppercase lg:gap-x-4 lg:gap-y-1.5 lg:basis-full density-ease ${chrome.provider}`}
     >
+      <span className="rounded-sm border border-cyan-800/55 bg-cyan-950/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.22em] text-cyan-400">
+        Mission
+      </span>
       <PartyName label={providerName} markUrl={providerMarkUrl} />
       {customers.map((customer) => (
         <PartyName key={customer.label} label={customer.label} markUrl={customer.markUrl} />

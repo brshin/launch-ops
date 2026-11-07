@@ -139,6 +139,7 @@ export default function LaunchCard({
         <motion.div
             ref={rootRef}
             data-density={density}
+            data-inspector="mission"
             className={`launch-card flex h-full min-h-0 w-full flex-col bg-black/10 backdrop-blur-sm border border-cyan-900/60 rounded-2xl shadow-[0_0_40px_rgba(8,145,178,0.15)] relative overflow-clip density-ease ${chrome.rootPad}`}
             variants={cardVariants}
             initial="hidden"
