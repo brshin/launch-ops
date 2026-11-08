@@ -55,7 +55,7 @@ function ClockReadout({ time, compactSeconds = false }: { time: string; compactS
 function HourCycleControl({
   cycle,
   onChange,
-  className = "",
+  className = "text-[9px]",
 }: {
   cycle: HourCycle;
   onChange: (cycle: HourCycle) => void;
@@ -69,7 +69,7 @@ function HourCycleControl({
         cycle === "12" ? "12-hour time, switch to 24-hour" : "24-hour time, switch to 12-hour"
       }
       onClick={() => onChange(next)}
-      className={`shrink-0 cursor-pointer touch-manipulation px-1 py-1 -my-1 font-mono text-[9px] uppercase leading-none tracking-[0.14em] text-cyan-600 transition-colors duration-300 hover:text-cyan-300 ${className}`}
+      className={`shrink-0 cursor-pointer touch-manipulation px-1 py-1 -my-1 font-mono uppercase leading-none tracking-[0.14em] text-cyan-600 transition-colors duration-300 hover:text-cyan-300 ${className}`}
     >
       <HourCycleFade calm cycle={cycle}>
         {cycle}h
@@ -81,6 +81,10 @@ function HourCycleControl({
 /**
  * Brand + Sys Time. Density comes from App so the shell and header share one band.
  * Boot travel is local — same compact-motion hook Starfield uses.
+ *
+ * Flush clock (no tile): denser secondary type, Launch Ops primary. Vertical
+ * hierarchy matches main — items-center so the clock sits in the brand band
+ * rather than sharing the wordmark’s top edge.
  */
 export function ConsoleHeader({
   sysClock,
@@ -97,6 +101,27 @@ export function ConsoleHeader({
     () => createBootSysClockVariants(compactMotion),
     [compactMotion],
   );
+
+  // Secondary to the wordmark — readable, never rivaling brand title size.
+  const compact = shortBand === "short";
+  const metaType = compact
+    ? "text-[9px] tracking-[0.18em]"
+    : "text-[9px] sm:text-[10px] tracking-[0.2em]";
+  const zoneType = compact
+    ? "text-[9px] tracking-[0.12em]"
+    : "text-[9px] sm:text-[10px] tracking-[0.12em]";
+  const cycleType = compact ? "text-[9px]" : "text-[9px] sm:text-[10px]";
+  // ~½–⅔ of brand title; date a touch quieter on the same baseline.
+  const timeType = compact
+    ? "text-[11px] sm:text-xs tracking-[0.04em]"
+    : shortBand === "mid"
+      ? "text-sm tracking-[0.05em]"
+      : "text-sm sm:text-[0.9375rem] tracking-[0.06em]";
+  const dateType = compact
+    ? "text-[11px] sm:text-xs tracking-[0.08em]"
+    : shortBand === "mid"
+      ? "text-[0.8125rem] sm:text-sm tracking-[0.09em]"
+      : "text-sm tracking-[0.09em]";
 
   return (
     <motion.header
@@ -147,67 +172,75 @@ export function ConsoleHeader({
 
       <div className="flex min-w-0 justify-start max-[359px]:w-full max-[359px]:flex-none min-[360px]:flex-1 min-[360px]:justify-end">
       <motion.div
-        className="flex w-max max-w-full min-w-0 items-center gap-1.5 sm:gap-2.5 bg-black/20 border border-cyan-800/50 px-2 py-1 sm:px-3 sm:py-1.5 xl:px-3.5 xl:py-2 rounded-sm backdrop-blur-md"
+        className="flex w-max max-w-full min-w-0 items-center gap-1.5 sm:gap-2.5"
         variants={bootSysClockVariants}
         initial="hidden"
         animate="show"
       >
-        <span className="relative flex h-1.5 w-1.5 shrink-0">
-          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
+        <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden>
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_5px_#22d3ee]" />
         </span>
-        {/* Below desktop: same two lines as the desk clock, just shorter type */}
-        <div className="flex xl:hidden min-w-0 flex-col font-mono uppercase leading-none gap-0.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-baseline gap-1.5 shrink-0">
-              <span className="text-[9px] tracking-[0.2em] text-cyan-600">Sys</span>
-              <HourCycleControl cycle={hourCycle} onChange={onHourCycle} />
+
+        {/* Below xl — same two-line stack as desk, denser type fills brand band */}
+        <div className="flex xl:hidden min-w-0 flex-col gap-1 font-mono uppercase leading-none">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="flex items-baseline gap-1 shrink-0">
+              <span className={`text-cyan-600 ${metaType}`}>Sys</span>
+              <HourCycleControl cycle={hourCycle} onChange={onHourCycle} className={cycleType} />
             </span>
             <span
-              className="flex min-w-0 items-baseline gap-x-1 text-[9px] text-cyan-500"
+              className={`flex min-w-0 items-baseline gap-x-1 text-cyan-500/90 ${zoneType}`}
               title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
             >
               <span className="min-w-0 truncate">{sysClock?.zone ?? "—"}</span>
               {sysClock ? <span className="shrink-0">· {sysClock.offset}</span> : null}
             </span>
           </div>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 sm:gap-2.5">
             <HourCycleFade
               calm
               reserve="00:00:00 PM"
               cycle={hourCycle}
-              className="inline-block text-[11px] sm:text-xs text-slate-100 tabular-nums whitespace-nowrap tracking-[0.04em]"
+              className={`inline-block text-slate-100 tabular-nums whitespace-nowrap ${timeType}`}
             >
               <ClockReadout time={sysClock?.time ?? "—:—:—"} compactSeconds />
             </HourCycleFade>
-            <span className="text-[11px] sm:text-xs font-medium tracking-[0.08em] text-cyan-300 tabular-nums whitespace-nowrap shrink-0">
+            <span
+              className={`font-medium text-cyan-300/90 tabular-nums whitespace-nowrap shrink-0 ${dateType}`}
+            >
               {sysClock?.date ?? "—"}
             </span>
           </div>
         </div>
-        {/* Desktop: compact two-line block, still short */}
-        <div className="hidden xl:flex flex-col font-mono uppercase leading-none gap-0.5 2xl:gap-1">
-          <div className="flex items-center justify-between gap-3">
+
+        {/* Desktop — solid secondary (~base), well under the wordmark */}
+        <div className="hidden xl:flex min-w-0 flex-col gap-1 font-mono uppercase leading-none">
+          <div className="flex items-baseline justify-between gap-3">
             <span className="flex items-baseline gap-1.5 shrink-0">
-              <span className="text-[9px] xl:text-[10px] tracking-[0.3em] text-cyan-600">Sys Time</span>
-              <HourCycleControl cycle={hourCycle} onChange={onHourCycle} />
+              <span className="text-[10px] tracking-[0.28em] text-cyan-600">Sys Time</span>
+              <HourCycleControl
+                cycle={hourCycle}
+                onChange={onHourCycle}
+                className="text-[10px]"
+              />
             </span>
             <span
-              className="max-w-[16rem] truncate text-[9px] xl:text-[11px] tracking-[0.14em] text-cyan-500"
+              className="max-w-[16rem] truncate text-[10px] tracking-[0.14em] text-cyan-500/90"
               title={sysClock ? `${sysClock.zone} · ${sysClock.offset}` : undefined}
             >
               {sysClock ? `${sysClock.zone} · ${sysClock.offset}` : "—"}
             </span>
           </div>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2.5">
             <HourCycleFade
               calm
               reserve="00:00:00 PM"
               cycle={hourCycle}
-              className="inline-block text-sm xl:text-base text-slate-100 tabular-nums tracking-[0.18em]"
+              className="inline-block text-base text-slate-100 tabular-nums tracking-[0.12em]"
             >
               <ClockReadout time={sysClock?.time ?? "INITIALIZING..."} compactSeconds />
             </HourCycleFade>
-            <span className="text-sm xl:text-base font-medium tracking-[0.12em] text-cyan-300 tabular-nums">
+            <span className="text-[0.9375rem] font-medium tracking-[0.1em] text-cyan-300/90 tabular-nums">
               {sysClock?.date ?? "—"}
             </span>
           </div>

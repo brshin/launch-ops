@@ -374,10 +374,17 @@ export function ConsoleOverview({
             }`}
           >
             <p
-              className={`truncate uppercase leading-tight text-cyan-500 ${
+              title={stat.label}
+              className={`uppercase leading-tight text-cyan-500 ${
                 tight
-                  ? "text-[10px] tracking-[0.08em]"
-                  : "text-[11px] tracking-[0.08em] @[30rem]:tracking-[0.1em] @[30rem]:text-xs @[30rem]:tracking-[0.12em]"
+                  ? "text-[10px] tracking-[0.06em]"
+                  : "text-[10px] tracking-[0.06em] @[22rem]:text-[11px] @[22rem]:tracking-[0.08em] @[30rem]:text-xs @[30rem]:tracking-[0.1em]"
+              } ${
+                // "All launches" is the long label — allow wrap on narrow
+                // inspector columns instead of clipping to "ALL LAUNC…"
+                stat.key === "lifetime"
+                  ? "whitespace-normal break-words"
+                  : "truncate"
               }`}
             >
               {stat.label}
