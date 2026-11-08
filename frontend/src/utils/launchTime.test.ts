@@ -3,6 +3,7 @@ import {
   getLaunchTime,
   getNetPrecisionCaption,
   hasLaunchWindow,
+  isActiveBoardLaunch,
   isNetPreciseEnough,
   isUpcomingQueueLaunch,
 } from "./launchTime";
@@ -161,6 +162,52 @@ describe("getLaunchTime", () => {
   });
 });
 
+describe("isActiveBoardLaunch", () => {
+  it("drops year/quarter stubs and keeps this-month month buckets", () => {
+    expect(
+      isActiveBoardLaunch(
+        {
+          net: "2026-12-31T00:00:00Z",
+          net_precision: { abbrev: "Y" },
+          status: { abbrev: "TBD" },
+        },
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      isActiveBoardLaunch(
+        {
+          net: "2026-12-31T00:00:00Z",
+          net_precision: { abbrev: "Q4" },
+          status: { abbrev: "TBD" },
+        },
+        NOW,
+      ),
+    ).toBe(false);
+    // NOW is mid-August 2026 in these tests
+    expect(
+      isActiveBoardLaunch(
+        {
+          net: "2026-08-31T00:00:00Z",
+          net_precision: { abbrev: "M" },
+          status: { abbrev: "TBD" },
+        },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isActiveBoardLaunch(
+        {
+          net: "2026-12-31T00:00:00Z",
+          net_precision: { abbrev: "M" },
+          status: { abbrev: "TBD" },
+        },
+        NOW,
+      ),
+    ).toBe(false);
+  });
+});
+
 describe("isUpcomingQueueLaunch", () => {
   it("keeps rows whose NET is still ahead", () => {
     expect(
@@ -181,6 +228,19 @@ describe("isUpcomingQueueLaunch", () => {
         NOW,
       ),
     ).toBe(true);
+  });
+
+  it("drops year-precision stubs even when NET is still ahead", () => {
+    expect(
+      isUpcomingQueueLaunch(
+        {
+          net: "2026-12-31T00:00:00Z",
+          status: { abbrev: "TBD" },
+          net_precision: { abbrev: "Y" },
+        },
+        NOW,
+      ),
+    ).toBe(false);
   });
 
   it("drops past-NET rows even when status is still In Flight", () => {

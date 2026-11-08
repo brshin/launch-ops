@@ -7,10 +7,21 @@ import {
   sortConsoleUpdates,
   type ConsoleUpdate,
 } from "../utils/consoleUpdates";
+import { isActiveBoardLaunch } from "../utils/launchTime";
 import { pickDefaultApiId } from "../utils/queueFocus";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const MAX_BOARD_UPDATES = 24;
+
+function toActiveBoard(data: unknown): Launch[] {
+  if (!Array.isArray(data)) return [];
+  return data.filter(
+    (row): row is Launch =>
+      row != null &&
+      typeof row === "object" &&
+      isActiveBoardLaunch(row as Launch),
+  );
+}
 
 type UseLaunchFeedOptions = {
   /**
@@ -34,7 +45,7 @@ export function useLaunchFeed(options: UseLaunchFeedOptions = {}) {
   useEffect(() => {
     fetch(`${API_URL}/launches`)
       .then((res) => res.json())
-      .then((data) => setLaunches(data))
+      .then((data) => setLaunches(toActiveBoard(data)))
       .catch((err) => console.error(err));
 
     fetch(`${API_URL}/launches/updates?limit=${MAX_BOARD_UPDATES}`)
@@ -78,7 +89,7 @@ export function useLaunchFeed(options: UseLaunchFeedOptions = {}) {
     socket.on("disconnect", onDisconnect);
     socket.on("live-launch-data", (freshData: Launch[]) => {
       console.log("🚀 Real-time telemetry received from server!", freshData);
-      setLaunches(freshData);
+      setLaunches(toActiveBoard(freshData));
     });
     socket.on("live-launch-events", (payload: unknown) => {
       const rows = Array.isArray(payload) ? payload : [];

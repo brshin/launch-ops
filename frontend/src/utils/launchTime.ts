@@ -159,11 +159,58 @@ type UpcomingQueueLaunchInput = {
  * Status alone is unreliable — Space Devs often leaves “In Flight” after
  * the mission is over — so Upcoming counts key off NET vs now.
  */
+function isYearPrecisionToken(token: string): boolean {
+  return token === "Y" || token === "YR" || token === "YEAR";
+}
+
+function isQuarterPrecisionToken(token: string): boolean {
+  return (
+    token === "Q" ||
+    token === "QTR" ||
+    token === "QUARTER" ||
+    /^Q[1-4]$/.test(token)
+  );
+}
+
+function isMonthPrecisionToken(token: string): boolean {
+  return token === "M" || token === "MON" || token === "MONTH";
+}
+
+/**
+ * Near-term console board: drop LL2 year/quarter stubs; keep month buckets
+ * only when NET falls in the current UTC month. MIN/HR/DAY TBD rows stay.
+ */
+export function isActiveBoardLaunch(
+  launch: UpcomingQueueLaunchInput,
+  now: number | Date = Date.now(),
+): boolean {
+  const tokens = precisionTokens(launch.net_precision);
+  if (tokens.length === 0) return true;
+
+  if (tokens.some(isYearPrecisionToken) || tokens.some(isQuarterPrecisionToken)) {
+    return false;
+  }
+
+  if (!tokens.some(isMonthPrecisionToken)) return true;
+
+  if (launch.net == null || launch.net === "") return false;
+  const netMs = toMs(launch.net);
+  if (Number.isNaN(netMs)) return false;
+
+  const net = new Date(netMs);
+  const current = new Date(toMs(now));
+  return (
+    net.getUTCFullYear() === current.getUTCFullYear() &&
+    net.getUTCMonth() === current.getUTCMonth()
+  );
+}
+
 export function isUpcomingQueueLaunch(
   launch: UpcomingQueueLaunchInput,
   now: number | Date = Date.now(),
 ): boolean {
   if (launch.net == null || launch.net === "") return false;
+  if (!isActiveBoardLaunch(launch, now)) return false;
   const status =
     typeof launch.status === "string"
       ? launch.status

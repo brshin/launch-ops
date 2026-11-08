@@ -10,6 +10,7 @@ const Location = require('./models/Location');
 const { mapUpcomingLaunches } = require('./mapLaunch');
 const { mapLocations } = require('./mapLocation');
 const { diffLaunchBoard } = require('./diffLaunchBoard');
+const { isActiveBoardLaunch } = require('./activeBoardLaunch');
 
 const LAUNCHES_CACHE_KEY = 'upcoming-launches';
 const LAUNCH_UPDATES_KEY = 'launch-board-updates';
@@ -41,9 +42,11 @@ connectDB();
 
 const fetchUpcomingLaunches = async() => {
     try {
-        // Default LL2 page size is 10; cap stays well under max 100 for detailed payloads.
+        // One page at LL2's detailed max (100). Usually covers the full upcoming
+        // board in a single request so we stay under ~15 req/hr at */5 cadence.
+        // No follow-`next` — a second page every tick would blow the quota.
         const response = await fetch(
-            'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed&limit=20',
+            'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed&limit=100',
         );
 
         if (!response.ok) {
@@ -95,7 +98,10 @@ const fetchLocations = async () => {
 };
 
 const saveLaunchData = async (data) => {
-    const launches = mapUpcomingLaunches(data);
+    // LL2 page may include year/quarter catalog stubs — keep the near-term console board only.
+    const launches = mapUpcomingLaunches(data).filter((launch) =>
+        isActiveBoardLaunch(launch),
+    );
     const atMs = Date.now();
     let events = [];
 

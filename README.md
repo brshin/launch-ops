@@ -150,11 +150,11 @@ Local `.env` files are ignored by Git and should not be committed.
 The worker requests:
 
 ```text
-GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed&limit=20
+GET https://ll.thespacedevs.com/2.3.0/launches/upcoming/?mode=detailed&limit=100
 GET https://ll.thespacedevs.com/2.3.0/locations/?format=json&limit=100
 ```
 
-Detailed mode is required for webcast URLs. Launches refresh every five minutes (20 rows); locations paginate the full catalog about every twelve hours. Unauthenticated LL2 allows ~15 requests/hour per IP — this cadence stays under that without an API key.
+Detailed mode is required for webcast URLs. Launches refresh every five minutes (one page of up to 100; no `next` follow, so the */5 cadence stays at 12 LL2 calls/hour). The worker and client then keep an **active board**: drop year/quarter NET stubs, and keep month-precision rows only when NET falls in the current UTC month — so “Upcoming” reflects near-term schedule noise-free, not hundreds of Dec 31 TBD placeholders. Locations paginate the full catalog about every twelve hours. Unauthenticated LL2 allows ~15 requests/hour per IP — this cadence stays under that without an API key.
 
 ## Repository layout
 
