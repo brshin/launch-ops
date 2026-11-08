@@ -2,7 +2,7 @@
 
 A real-time dashboard for tracking upcoming rocket launches.
 
-![LaunchOps console showing the launch queue, day-and-night Earth, and selected mission](docs/console.jpg)
+![LaunchOps console showing the launch queue, day-and-night Earth, and overview stats](docs/console.jpg)
 
 LaunchOps combines launch schedules, mission details, local countdowns, webcasts, and a launch-site catalog in a responsive mission-control interface. Data comes from [The Space Devs Launch Library](https://thespacedevs.com/), is cached through Redis and MongoDB, and reaches the browser through REST and Socket.IO.
 
